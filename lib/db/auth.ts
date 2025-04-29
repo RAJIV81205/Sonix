@@ -1,6 +1,6 @@
 import { hash, compare } from 'bcryptjs';
-import { db } from './db';
-import { usersTable } from './db/schema';
+import { db } from '.';
+import { usersTable } from './schema';
 import { eq } from 'drizzle-orm';
 
 export async function hashPassword(password: string): Promise<string> {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createUser, findUserByEmail, findUserByUsername } from '@/lib/auth';
+import { createUser, findUserByEmail, findUserByUsername } from '@/lib/db/auth';
 import { z } from 'zod';
 
 const userSchema = z.object({

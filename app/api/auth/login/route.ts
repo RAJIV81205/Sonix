@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { findUserByEmail, verifyPassword } from '@/lib/auth';
+import { findUserByEmail, verifyPassword } from '@/lib/db/auth';
 import { z } from 'zod';
 import { sign } from 'jsonwebtoken';
 
