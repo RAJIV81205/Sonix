@@ -12,7 +12,8 @@ const Signup = () => {
     username: "",
     name: ""
   })
-  const [error, setError] = useState("")
+
+  const [errors, setErrors] = useState<string[]>([])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -24,7 +25,7 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
+    setErrors([])
 
     try {
       const response = await fetch("/api/auth/register", {
@@ -38,13 +39,21 @@ const Signup = () => {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Something went wrong")
+        // If error is an array, map it to messages
+        if (Array.isArray(data.error)) {
+          const errorMessages = data.error.map((err: any) => `${err.path} - ${err.message}`)
+          setErrors(errorMessages)
+        } else {
+          // Otherwise, fallback to a single error message
+          setErrors([data.error?.message || "Something went wrong"])
+        }
+        return
       }
 
       // Redirect to login page on successful registration
       router.push("/auth/login")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      setErrors(["An unexpected error occurred."])
     }
   }
 
@@ -53,9 +62,11 @@ const Signup = () => {
       <div className="max-w-md w-full bg-[#1a1a1a] rounded-2xl p-8 shadow-2xl">
         <h2 className="text-3xl font-bold text-white text-center mb-6">Create your account</h2>
         
-        {error && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500 text-red-500 rounded-lg text-sm">
-            {error}
+        {errors.length > 0 && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500 text-red-500 rounded-lg text-sm space-y-1">
+            {errors.map((err, idx) => (
+              <div key={idx}>{err}</div>
+            ))}
           </div>
         )}
 
