@@ -3,6 +3,8 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Loader } from 'lucide-react'
+
 
 const Login = () => {
   const router = useRouter()
@@ -10,7 +12,8 @@ const Login = () => {
     email: "",
     password: ""
   })
-  const [error, setError] = useState("")
+  const [error, setError] = useState<string[]>([])
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -21,8 +24,9 @@ const Login = () => {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
+    setLoading(true)
     e.preventDefault()
-    setError("")
+    setError([])
 
     try {
       const response = await fetch("/api/auth/login", {
@@ -36,7 +40,15 @@ const Login = () => {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Invalid email or password")
+        // If error is an array, map it to messages
+        if (Array.isArray(data.error)) {
+          const errorMessages = data.error.map((err: any) => `${err.path} - ${err.message}`)
+          setError(errorMessages)
+        } else {
+          // Otherwise, fallback to a single error message
+          setError([data.error || "Something went wrong"])
+        }
+        return
       }
 
       // Store the token in localStorage
@@ -44,9 +56,11 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(data.user))
 
       // Redirect to home page on successful login
-      router.push("/")
+      router.push("/dashboard")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
+      setError([err instanceof Error ? err.message : "An error occurred"])
+    }finally{
+      setLoading(false)
     }
   }
 
@@ -55,9 +69,11 @@ const Login = () => {
       <div className="max-w-md w-full bg-[#1a1a1a] rounded-2xl p-8 shadow-2xl">
         <h2 className="text-3xl font-bold text-white text-center mb-6">Welcome Back</h2>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500 text-red-500 rounded-lg text-sm">
-            {error}
+        {error.length > 0 && (
+          <div className="mb-4 p-3 bg-red-500/10 border border-red-500 text-red-500 rounded-lg text-sm space-y-1">
+            {error.map((err, idx) => (
+              <div key={idx}>{err}</div>
+            ))}
           </div>
         )}
 
@@ -90,12 +106,23 @@ const Login = () => {
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition duration-300"
-          >
-            Log In
-          </button>
+          {loading ? (
+             <button
+             className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition duration-300 flex flex-row items-center justify-center gap-2"
+           >
+             Processing <Loader className="animate-spin" size={16} />
+           </button>
+
+          ):(
+            <button
+              type="submit"
+              className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition duration-300"
+            >
+              Log In
+            </button>
+          )}
+
+    
         </form>
 
         <p className="mt-6 text-center text-gray-400 text-sm">
