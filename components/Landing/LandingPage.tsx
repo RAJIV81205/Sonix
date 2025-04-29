@@ -4,136 +4,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation"; // Correct import for navigation
 import Image from "next/image";
 import { Pause, SkipForward, SkipBack, Volume2, Music, Headphones, Download, Wifi, Star, Shuffle } from "lucide-react";
+import Navbar from "./Navbar";
+import Hero from "./Hero";
+import TopCharts from "./TopCharts";
 
 export default function LandingPage() {
-  const router = useRouter(); // Initialize the router
 
-  const handleLogin = () => {
-    router.push("/auth/login"); // Use router.push for navigation
-  };
-
-  const handleSignup = () => {
-    router.push("/auth/register")
-  }
 
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-zinc-800">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Music className="h-8 w-8 text-purple-500" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-              Sonix
-            </span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="#features" className="text-zinc-400 hover:text-white transition-colors">
-              Features
-            </Link>
-            <Link href="#pricing" className="text-zinc-400 hover:text-white transition-colors">
-              Pricing
-            </Link>
-            <Link href="#testimonials" className="text-zinc-400 hover:text-white transition-colors">
-              Testimonials
-            </Link>
-            <Link href="#download" className="text-zinc-400 hover:text-white transition-colors">
-              Download
-            </Link>
-          </nav>
-          <div  className="flex items-center gap-4">
-            <button onClick={handleLogin} className="px-4 py-2 text-zinc-400 hover:text-white transition-colors">
-              Log in
-            </button>
-            <button onClick={handleSignup} className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-md">
-              Sign up
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 md:pt-40 md:pb-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-black z-0"></div>
-        <div className="container mx-auto px-4 relative z-10 w-[80vw]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-                Your Music,{" "}
-                <span className="bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-                  Elevated
-                </span>
-              </h1>
-              <p className="text-xl text-zinc-400 max-w-md">
-                Experience music like never before with Sonix. High-quality streaming, personalized playlists, and a
-                beautiful interface.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                onClick={handleSignup}
-                  className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-md"
-                >
-                  Get Started Free
-                </button>
-                <button className="px-8 py-3 border border-zinc-700 text-white hover:bg-zinc-800 rounded-md">
-                  Take a Tour
-                </button>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl blur-xl opacity-50"></div>
-              <div className="relative bg-zinc-900 p-6 rounded-2xl border border-zinc-800">
-                <div className="rounded-lg overflow-hidden mb-6">
-                  <img
-                    src="https://dams.cdn.unippm.com/AlbumImages/370x370/d8fdf18e62a54cd8b3ea095f10d5e306.webp"
-                    alt="Music player interface"
-                    className="object-cover rounded-lg h-[300px] w-[500px]"
-                  />
-                </div>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium">Cosmic Drift</h3>
-                      <p className="text-sm text-zinc-400">Astral Echoes</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                      <span className="text-sm">4.8</span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-zinc-800 rounded-full h-1">
-                    <div className="bg-gradient-to-r from-purple-500 to-blue-500 h-1 rounded-full w-2/3"></div>
-                  </div>
-                  <div className="flex justify-between text-xs text-zinc-400">
-                    <span>2:14</span>
-                    <span>3:45</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <button className="p-2 text-zinc-400 hover:text-white transition-colors">
-                      <Shuffle className="h-5 w-5" />
-                    </button>
-                    <button className="p-2 text-zinc-400 hover:text-white transition-colors">
-                      <SkipBack className="h-5 w-5" />
-                    </button>
-                    <button
-                      className="p-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-full"
-                    >
-                      <Pause className="h-5 w-5" />
-                    </button>
-                    <button className="p-2 text-zinc-400 hover:text-white transition-colors">
-                      <SkipForward className="h-5 w-5" />
-                    </button>
-                    <button className="p-2 text-zinc-400 hover:text-white transition-colors">
-                      <Volume2 className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-black to-transparent"></div>
-      </section>
+      <Hero />
+      <TopCharts />
 
       {/* Features Section */}
       <section id="features" className="py-20 md:py-32 bg-zinc-950">
