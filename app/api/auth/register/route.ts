@@ -1,27 +1,64 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import clientPromise from "@/lib/mongodb";
+import { NextResponse } from 'next/server';
+import { createUser, findUserByEmail, findUserByUsername } from '@/lib/auth';
+import { z } from 'zod';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).end();
-  }
+const userSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  username: z.string().min(3),
+  name: z.string().min(2),
+});
 
+export async function POST(request: Request) {
   try {
-    const client = await clientPromise;
-    const db = client.db("your-database-name");
+    const body = await request.json();
+    const validatedData = userSchema.parse(body);
 
-    const { email, password, username } = req.body;
+    // Check if email already exists
+    const existingEmail = await findUserByEmail(validatedData.email);
+    if (existingEmail) {
+      return NextResponse.json(
+        { error: 'Email already exists' },
+        { status: 400 }
+      );
+    }
 
-    const result = await db.collection("users").insertOne({
-      email,
-      password,
-      username,
-      createdAt: new Date(),
-    });
+    // Check if username already exists
+    const existingUsername = await findUserByUsername(validatedData.username);
+    if (existingUsername) {
+      return NextResponse.json(
+        { error: 'Username already exists' },
+        { status: 400 }
+      );
+    }
 
-    res.status(201).json({ message: "User created successfully!", userId: result.insertedId });
+    // Create new user
+    const user = await createUser(
+      validatedData.email,
+      validatedData.password,
+      validatedData.username,
+      validatedData.name
+    );
+
+    // Remove password from response
+    const { password, ...userWithoutPassword } = user;
+
+    return NextResponse.json(
+      { user: userWithoutPassword },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Something went wrong." });
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: error.errors },
+        { status: 400 }
+      );
+    }
+
+    console.error('Registration error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
