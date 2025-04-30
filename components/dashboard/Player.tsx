@@ -83,7 +83,7 @@ const Player = () => {
             <SkipBack className="w-5 h-5" />
           </button>
           <button
-            className="bg-white text-black rounded-full p-2 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-white text-black rounded-full p-2 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             onClick={() => setIsPlaying(!isPlaying)}
             disabled={!currentSong}
           >
@@ -117,7 +117,7 @@ const Player = () => {
           max={100}
           value={volume}
           onChange={(e) => setVolume(Number(e.target.value))}
-          className="w-28 volume"
+          className="w-28 h-1.5 accent-white rounded-full appearance-none cursor-pointer bg-zinc-700 "
         />
 
       </div>

@@ -7,33 +7,3 @@
 }
 
 
-.volume {
-  -webkit-appearance: none;
-  height: 0.5rem;
-  background: #52525b; /* zinc-600 */
-  border-radius: 0.5rem;
-  cursor: pointer;
-}
-
-.volume::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  height: 0.75rem;
-  width: 0.75rem;
-  border-radius: 9999px;
-  background: white;
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
-  transition: transform 0.15s ease;
-}
-
-.volume::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-}
-
-.volume::-moz-range-thumb {
-  height: 0.75rem;
-  width: 0.75rem;
-  border-radius: 9999px;
-  background: white;
-}
-
-  
