@@ -117,8 +117,9 @@ const Player = () => {
           max={100}
           value={volume}
           onChange={(e) => setVolume(Number(e.target.value))}
-          className="w-24 accent-white cursor-pointer"
+          className="w-28 volume"
         />
+
       </div>
     </div>
   )

@@ -7,28 +7,33 @@
 }
 
 
-@keyframes gradient-x {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
-  
-  .animate-gradient-x {
-    animation: gradient-x 15s ease infinite;
-    background-size: 300% 300%;
-  }
-  
-  .glassmorphism {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-  }
+.volume {
+  -webkit-appearance: none;
+  height: 0.5rem;
+  background: #52525b; /* zinc-600 */
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.volume::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 0.75rem;
+  width: 0.75rem;
+  border-radius: 9999px;
+  background: white;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.volume::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.volume::-moz-range-thumb {
+  height: 0.75rem;
+  width: 0.75rem;
+  border-radius: 9999px;
+  background: white;
+}
+
   

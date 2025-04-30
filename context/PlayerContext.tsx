@@ -11,12 +11,13 @@ interface Song {
 }
 
 interface PlayerContextType {
-  currentSong: Song | null;
-  isPlaying: boolean;
-  setCurrentSong: (song: Song) => void;
-  setIsPlaying: (playing: boolean) => void;
-  audioRef: React.RefObject<HTMLAudioElement>;
-}
+    currentSong: Song | null;
+    isPlaying: boolean;
+    setCurrentSong: (song: Song) => void;
+    setIsPlaying: (playing: boolean) => void;
+    audioRef: React.RefObject<HTMLAudioElement | null>; // ✅ Fix here
+  }
+  
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
