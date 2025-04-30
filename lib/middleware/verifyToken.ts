@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { verify } from 'jsonwebtoken';
 import { findUserByEmail } from '@/lib/db/auth';
 
@@ -7,25 +6,19 @@ export async function verifyToken(request: Request) {
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.split(' ')[1];
 
-    if (!token) {
-      return NextResponse.json({ error: 'No token provided' }, { status: 401 });
-    }
+    if (!token) return null;
 
     const decoded = verify(token, process.env.JWT_SECRET!) as { email: string };
 
-    if (!decoded || !decoded.email) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    if (!decoded?.email) return null;
 
     const user = await findUserByEmail(decoded.email);
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    if (!user) return null;
 
-    return NextResponse.json({ user }, { status: 200 });
+    return user; // Return user data instead of NextResponse
 
-  } catch (error: any) {
-    return NextResponse.json({ error: 'Token verification failed', details: error.message }, { status: 500 });
+  } catch (error) {
+    return null;
   }
 }
