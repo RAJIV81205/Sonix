@@ -11,13 +11,13 @@ interface Song {
 }
 
 interface PlayerContextType {
-    currentSong: Song | null;
-    isPlaying: boolean;
-    setCurrentSong: (song: Song) => void;
-    setIsPlaying: (playing: boolean) => void;
-    audioRef: React.RefObject<HTMLAudioElement | null>; // ✅ Fix here
-  }
-  
+  currentSong: Song | null;
+  isPlaying: boolean;
+  setCurrentSong: (song: Song) => void;
+  setIsPlaying: (playing: boolean) => void;
+  setPlaylist: (songs: Song[]) => void;
+  audioRef: React.RefObject<HTMLAudioElement | null>;
+}
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
@@ -25,6 +25,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [playlist, setPlaylist] = useState<Song[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
 
@@ -111,7 +112,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [currentSong]);
 
   return (
-    <PlayerContext.Provider value={{ currentSong, isPlaying, setCurrentSong, setIsPlaying, audioRef }}>
+    <PlayerContext.Provider value={{ currentSong, isPlaying, setCurrentSong, setIsPlaying, setPlaylist, audioRef }}>
       {children}
       <audio ref={audioRef} />
     </PlayerContext.Provider>

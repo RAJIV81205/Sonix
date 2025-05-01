@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyJwtToken } from "@/lib/auth";
+import { verifyToken } from "@/lib/middleware/verifyToken";
 import { db } from "@/lib/db";
 import { playlistsTable, playlistSongsTable } from "@/lib/db/schema";
 import { eq, count, sql } from "drizzle-orm";
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const decoded = await verifyJwtToken(token);
+    const decoded = await verifyToken(token);
     if (!decoded || !decoded.userId) {
       return NextResponse.json(
         { message: "Unauthorized: Invalid token" },

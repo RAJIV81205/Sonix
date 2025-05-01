@@ -1,24 +1,15 @@
 import { verify } from 'jsonwebtoken';
-import { findUserByEmail } from '@/lib/db/auth';
 
-export async function verifyToken(request: Request) {
+export async function verifyToken(token: string) {
   try {
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader?.split(' ')[1];
-
-    if (!token) return null;
-
-    const decoded = verify(token, process.env.JWT_SECRET!) as { email: string };
-
-    if (!decoded?.email) return null;
-
-    const user = await findUserByEmail(decoded.email);
-
-    if (!user) return null;
-
-    return user; // Return user data instead of NextResponse
-
+    const decoded = verify(token, process.env.JWT_SECRET!) as { 
+      userId: number;
+      email: string;
+    };
+    
+    return decoded;
   } catch (error) {
+    console.error('JWT verification error:', error);
     return null;
   }
-}
+} 

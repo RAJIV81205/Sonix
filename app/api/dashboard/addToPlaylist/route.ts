@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyJwtToken } from "@/lib/auth";
+import { verifyToken } from "@/lib/middleware/verifyToken";
 import { addSong, addSongToPlaylist } from "@/lib/db/song";
 import { db } from "@/lib/db";
 import { playlistSongsTable } from "@/lib/db/schema";
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const decoded = await verifyJwtToken(token);
+    const decoded = await verifyToken(token);
     if (!decoded || !decoded.userId) {
       return NextResponse.json(
         { message: "Unauthorized: Invalid token" },
