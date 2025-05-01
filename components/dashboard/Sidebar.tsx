@@ -66,7 +66,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-full bg-gradient-to-b from-black to-zinc-900 text-white p-5 flex flex-col gap-6 border-r border-zinc-800 shadow-xl h-full">
+    <div className="w-full bg-gradient-to-b from-black to-zinc-900 text-white p-5 flex flex-col gap-6 border-r border-zinc-800 shadow-xl min-h-screen">
       {/* Logo Section */}
       <div className="flex items-center gap-3">
         <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-2.5 rounded-xl shadow-lg shadow-purple-500/20">
