@@ -20,7 +20,7 @@ export default function MobileSidebar() {
     };
   }, [isOpen]);
 
-  const handleItemClick = (item) => {
+  const handleItemClick = (item:any) => {
     setActiveItem(item);
     setIsOpen(false);
   };
