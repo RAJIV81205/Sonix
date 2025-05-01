@@ -217,7 +217,7 @@ const MobileMain = () => {
   
   const addSongToPlaylist = async (playlistId: string, song: Song) => {
     try {
-      setAddingToPlaylist(song.id);
+      setAddingToPlaylist(playlistId);
 
       const response = await fetch('/api/dashboard/addToPlaylist', {
         method: 'POST',
@@ -260,6 +260,17 @@ const MobileMain = () => {
     await fetchPlaylists();
   };
 
+  const getPlaylistColor = (index: number) => {
+    const colors = [
+      "from-teal-500 to-emerald-500",
+      "from-amber-500 to-orange-500",
+      "from-blue-500 to-indigo-500",
+      "from-pink-500 to-rose-500",
+      "from-emerald-500 to-cyan-500"
+    ];
+    return colors[index % colors.length];
+  };
+
   // Recently played item component
   const RecentPlayItem = ({ song }: { song: Song }) => (
     <div className="flex flex-col">
@@ -293,7 +304,7 @@ const MobileMain = () => {
     if (!showAddToPlaylistModal) return null;
     
     return (
-      <div className="fixed inset-0 bg-black/80 z-[100] flex items-end">
+      <div className="fixed inset-0 bg-black/80 z-100 flex items-end">
         <div className="w-full bg-zinc-900 rounded-t-xl max-h-[70vh] overflow-y-auto">
           <div className="flex items-center justify-between p-4 border-b border-zinc-800 sticky top-0 bg-zinc-900">
             <h2 className="text-lg font-bold">Add to Playlist</h2>
@@ -308,19 +319,19 @@ const MobileMain = () => {
                 <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
               </div>
             ) : playlists.length > 0 ? (
-              <div className="space-y-1 ">
-                {playlists.map((playlist) => (
+              <div className="space-y-1">
+                {playlists.map((playlist, index) => (
                   <button
                     key={playlist.id}
                     className="w-full flex items-center gap-3 p-4 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-colors"
                     onClick={() => addSongToPlaylist(playlist.id, showAddToPlaylistModal)}
-                    disabled={addingToPlaylist === showAddToPlaylistModal.id}
+                    disabled={addingToPlaylist === playlist.id}
                   >
-                    <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center">
-                      {addingToPlaylist === showAddToPlaylistModal.id ? (
-                        <Loader2 className="w-5 h-5 text-purple-500 animate-spin" />
+                    <div className={`w-10 h-10 bg-gradient-to-br ${getPlaylistColor(index)} rounded-md flex items-center justify-center`}>
+                      {addingToPlaylist === playlist.id ? (
+                        <Loader2 className="w-5 h-5 text-white animate-spin" />
                       ) : (
-                        <Music className="w-5 h-5 text-zinc-400" />
+                        <Music className="w-5 h-5 text-white" />
                       )}
                     </div>
                     <div className="text-left">
@@ -366,9 +377,17 @@ const MobileMain = () => {
           />
 
           {showSuggestions && (
-            <div className="absolute w-full mt-2 bg-zinc-800 rounded-md shadow-lg max-h-80 overflow-y-auto z-50">
+            <div className="absolute w-full mt-2 bg-zinc-800 rounded-md shadow-lg max-h-[60vh] overflow-y-auto z-50">
               <div className="p-3">
-                <h3 className="text-sm font-semibold mb-2">Search Results</h3>
+                <h3 className="text-sm font-semibold mb-2 flex items-center justify-between">
+                  <span>Search Results</span>
+                  <button 
+                    onClick={() => setShowSuggestions(false)}
+                    className="p-1 rounded-full hover:bg-zinc-700"
+                  >
+                    <X size={16} />
+                  </button>
+                </h3>
 
                 {searching ? (
                   <>
@@ -408,14 +427,17 @@ const MobileMain = () => {
                       ) : (
                         <button
                           className="p-2 text-zinc-400 hover:text-purple-500"
-                          onClick={() => {
+                          onClick={async () => {
                             const primaryArtist = item.more_info.artistMap.primary_artists[0];
+                            // Fetch the song URL before adding to playlist
+                            const downloadUrl = await fetchSongUrl(item.more_info.encrypted_media_url);
+                            
                             const song: Song = {
                               id: item.id,
                               name: item.title,
                               artist: primaryArtist?.name || 'Unknown Artist',
                               image: item.image,
-                              url: '', // Will be fetched in API
+                              url: downloadUrl || '', // Use the fetched URL
                             };
                             handleAddToPlaylist(song);
                           }}
@@ -435,19 +457,23 @@ const MobileMain = () => {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 p-4 overflow-y-auto pb-24">
+      <div className="flex-1 p-4 overflow-y-auto pb-20">
         {/* Recently Played Section */}
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4">Recently Played</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {recentlyPlayed.length > 0 ? (
-              recentlyPlayed.slice(0, 6).map((song) => (
+          
+          {recentlyPlayed.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4">
+              {recentlyPlayed.slice(0, 6).map((song) => (
                 <RecentPlayItem key={song.id} song={song} />
-              ))
-            ) : (
-              <p className="text-zinc-400 col-span-2">No recently played songs yet.</p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <p className="text-zinc-400">No recently played songs</p>
+              <p className="text-xs text-zinc-500 mt-1">Your recently played tracks will appear here</p>
+            </div>
+          )}
         </div>
 
         {/* Made For You Section */}

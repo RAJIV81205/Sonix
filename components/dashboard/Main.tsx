@@ -240,7 +240,7 @@ const Main = () => {
 
   const addSongToPlaylist = async (playlistId: string, song: Song) => {
     try {
-      setAddingToPlaylist(song.id);
+      setAddingToPlaylist(playlistId);
 
       const response = await fetch('/api/dashboard/addToPlaylist', {
         method: 'POST',
@@ -320,29 +320,31 @@ const Main = () => {
               {showPlaylistDropdown === item.id && (
                 <div 
                   ref={playlistDropdownRef}
-                  className="absolute right-0 top-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl z-20 w-40"
+                  className="absolute right-0 top-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl z-50 w-40"
                 >
                   <div className="py-1 max-h-48 overflow-y-auto">
                     {playlists.length > 0 ? (
                       playlists.map(playlist => (
                         <button
                           key={playlist.id}
-                          onClick={() => {
-                            // Convert SearchResultItem to Song
+                          onClick={async () => {
+                            // Convert SearchResultItem to Song and get URL
                             const primaryArtist = item.more_info.artistMap.primary_artists[0];
+                            // Fetch URL before adding
+                            const downloadUrl = await fetchSongUrl(item.more_info.encrypted_media_url);
                             const song: Song = {
                               id: item.id,
                               name: item.title,
                               artist: primaryArtist?.name || 'Unknown Artist',
                               image: item.image,
-                              url: '', // Will be fetched in the API
+                              url: downloadUrl || '',
                             };
                             addSongToPlaylist(playlist.id, song);
                           }}
-                          disabled={addingToPlaylist === item.id}
+                          disabled={addingToPlaylist === playlist.id}
                           className="w-full text-left px-3 py-1.5 text-sm hover:bg-zinc-800 text-zinc-300 hover:text-white truncate flex items-center"
                         >
-                          {addingToPlaylist === item.id ? (
+                          {addingToPlaylist === playlist.id ? (
                             <Loader2 className="w-3 h-3 mr-2 animate-spin" />
                           ) : (
                             <Music className="w-3 h-3 mr-2" />
@@ -368,7 +370,7 @@ const Main = () => {
     return (
       <div className="flex items-center justify-between p-2 hover:bg-zinc-800/50 rounded-lg group">
         <div
-          className="flex items-center gap-3 cursor-pointer flex-grow"
+          className="flex items-center gap-3 cursor-pointer flex-grow overflow-hidden"
           onClick={() => {
             setCurrentSong(song);
             setIsPlaying(true);
@@ -381,7 +383,7 @@ const Main = () => {
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="flex-grow">
+          <div className="flex-grow overflow-hidden">
             <h3 className="text-sm font-medium truncate">{song.name}</h3>
             <p className="text-xs text-zinc-400 truncate">
               {song.artist}
@@ -403,7 +405,7 @@ const Main = () => {
             {showPlaylistDropdown === song.id && (
               <div 
                 ref={playlistDropdownRef}
-                className="absolute right-0 top-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl z-20 w-40"
+                className="absolute right-0 top-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl z-50 w-40"
               >
                 <div className="py-1 max-h-48 overflow-y-auto">
                   {playlists.length > 0 ? (
@@ -411,10 +413,10 @@ const Main = () => {
                       <button
                         key={playlist.id}
                         onClick={() => addSongToPlaylist(playlist.id, song)}
-                        disabled={addingToPlaylist === song.id}
+                        disabled={addingToPlaylist === playlist.id}
                         className="w-full text-left px-3 py-1.5 text-sm hover:bg-zinc-800 text-zinc-300 hover:text-white truncate flex items-center"
                       >
-                        {addingToPlaylist === song.id ? (
+                        {addingToPlaylist === playlist.id ? (
                           <Loader2 className="w-3 h-3 mr-2 animate-spin" />
                         ) : (
                           <Music className="w-3 h-3 mr-2" />
@@ -506,14 +508,14 @@ const Main = () => {
         </div>
 
         {/* Made For You Section */}
-        <div>
+        <div className="mb-8">
           <h2 className="text-xl md:text-2xl font-bold mb-4">Made For You</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-4">
             {[1, 2, 3, 4, 5].map((item) => (
               <div key={item} className="bg-zinc-800/50 p-2 md:p-4 rounded-lg hover:bg-zinc-700/50 transition-colors cursor-pointer">
                 <div className="aspect-square bg-zinc-700 rounded-lg mb-2 md:mb-3"></div>
-                <h3 className="font-medium text-sm md:text-base">Album Title {item}</h3>
-                <p className="text-xs md:text-sm text-zinc-400">Artist Name</p>
+                <h3 className="font-medium text-sm md:text-base truncate">Album Title {item}</h3>
+                <p className="text-xs md:text-sm text-zinc-400 truncate">Artist Name</p>
               </div>
             ))}
           </div>
