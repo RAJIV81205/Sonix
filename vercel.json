@@ -13,7 +13,7 @@
       }
     ],
     "functions": {
-      "api/debug-jiosaavn": {
+      "app/api/debug-jiosaavn/route.ts": {
         "memory": 1024,
         "maxDuration": 10
       }
