@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User, Loader2 } from 'lucide-react';
+import { Search, Bell, User, Loader2, Plus, Music, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, useRef } from 'react';
 import { usePlayer } from '@/context/PlayerContext';
@@ -38,6 +38,12 @@ interface Song {
   url: string;
 }
 
+interface Playlist {
+  id: string;
+  name: string;
+  songCount?: number;
+}
+
 const MobileMain = () => {
   const router = useRouter();
   const { setCurrentSong, setIsPlaying } = usePlayer();
@@ -47,6 +53,10 @@ const MobileMain = () => {
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [loadingSong, setLoadingSong] = useState<string | null>(null);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
+  const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState<Song | null>(null);
+  const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
   const suggestionBoxRef = useRef<HTMLDivElement | null>(null);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
 
@@ -79,6 +89,30 @@ const MobileMain = () => {
       setRecentlyPlayed(JSON.parse(stored));
     }
   }, []);
+  
+  // Fetch playlists when needed
+  const fetchPlaylists = async () => {
+    if (!token) return;
+    
+    try {
+      setIsLoadingPlaylists(true);
+      const response = await fetch('/api/dashboard/getUserPlaylists', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPlaylists(data.playlists);
+      }
+    } catch (error) {
+      console.error("Error fetching playlists:", error);
+      toast.error("Couldn't load your playlists");
+    } finally {
+      setIsLoadingPlaylists(false);
+    }
+  };
 
   const handleSearch = async (query: string) => {
     try {
@@ -174,45 +208,153 @@ const MobileMain = () => {
       setIsPlaying(true);
       setShowSuggestions(false);
       toast.success(`Now playing: ${item.title}`);
-
-      try {
-        const response = await fetch('/api/dashboard/saveSong', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(song),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Error saving song:', errorData);
-          toast.error('Failed to save song. Please try again.');
-          return;
-        }
-        const data = await response.json();
-        if (data.error) {
-          console.error('Error saving song:', data.error);
-          toast.error('Failed to save song. Please try again.');
-          return;
-        }
-      } catch (error) {
-        console.error('Error saving song:', error);
-        toast.error('Failed to save song. Please try again.');
-      }
+      setLoadingSong(null);
     } catch (error) {
       console.error('Error selecting song:', error);
-      toast.error('Failed to play song. Please try again.');
-    } finally {
       setLoadingSong(null);
     }
   };
+  
+  const addSongToPlaylist = async (playlistId: string, song: Song) => {
+    try {
+      setAddingToPlaylist(song.id);
+
+      const response = await fetch('/api/dashboard/addToPlaylist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          playlistId,
+          song,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add song to playlist');
+      }
+
+      const data = await response.json();
+      
+      // Check if song already exists in playlist
+      if (data.alreadyExists) {
+        toast.error(`"${song.name}" is already in this playlist`);
+      } else {
+        toast.success(`Added "${song.name}" to playlist`);
+      }
+      
+      // Close modal
+      setShowAddToPlaylistModal(null);
+    } catch (error) {
+      console.error('Error adding song to playlist:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to add song to playlist');
+    } finally {
+      setAddingToPlaylist(null);
+    }
+  };
+  
+  const handleAddToPlaylist = async (song: Song) => {
+    setShowAddToPlaylistModal(song);
+    await fetchPlaylists();
+  };
+
+  // Recently played item component
+  const RecentPlayItem = ({ song }: { song: Song }) => (
+    <div className="flex flex-col">
+      <div 
+        className="relative aspect-square bg-zinc-800 rounded-lg mb-2 overflow-hidden cursor-pointer"
+        onClick={() => {
+          setCurrentSong(song);
+          setIsPlaying(true);
+        }}
+      >
+        <img src={song.image} alt={song.name} className="w-full h-full object-cover" />
+        
+        {/* Add to playlist button */}
+        <button 
+          className="absolute bottom-2 right-2 p-2 rounded-full bg-black/60 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddToPlaylist(song);
+          }}
+        >
+          <Plus size={18} />
+        </button>
+      </div>
+      <h3 className="font-medium text-sm truncate">{song.name}</h3>
+      <p className="text-xs text-zinc-400 truncate">{song.artist}</p>
+    </div>
+  );
+
+  // Add to playlist modal
+  const AddToPlaylistModal = () => {
+    if (!showAddToPlaylistModal) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black/80 z-[100] flex items-end">
+        <div className="w-full bg-zinc-900 rounded-t-xl max-h-[70vh] overflow-y-auto">
+          <div className="flex items-center justify-between p-4 border-b border-zinc-800 sticky top-0 bg-zinc-900">
+            <h2 className="text-lg font-bold">Add to Playlist</h2>
+            <button onClick={() => setShowAddToPlaylistModal(null)} className="p-2">
+              <X size={24} />
+            </button>
+          </div>
+          
+          <div className="p-2 pb-safe">
+            {isLoadingPlaylists ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+              </div>
+            ) : playlists.length > 0 ? (
+              <div className="space-y-1 ">
+                {playlists.map((playlist) => (
+                  <button
+                    key={playlist.id}
+                    className="w-full flex items-center gap-3 p-4 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-colors"
+                    onClick={() => addSongToPlaylist(playlist.id, showAddToPlaylistModal)}
+                    disabled={addingToPlaylist === showAddToPlaylistModal.id}
+                  >
+                    <div className="w-10 h-10 bg-zinc-800 rounded flex items-center justify-center">
+                      {addingToPlaylist === showAddToPlaylistModal.id ? (
+                        <Loader2 className="w-5 h-5 text-purple-500 animate-spin" />
+                      ) : (
+                        <Music className="w-5 h-5 text-zinc-400" />
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium">{playlist.name}</p>
+                      <p className="text-xs text-zinc-500">{playlist.songCount || 0} songs</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center">
+                <p className="text-zinc-400">You don't have any playlists yet.</p>
+                <button 
+                  className="mt-4 px-4 py-2 bg-purple-600 rounded-full text-white font-medium"
+                  onClick={() => {
+                    setShowAddToPlaylistModal(null);
+                    router.push('/dashboard/library');
+                  }}
+                >
+                  Create a Playlist
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="w-full h-full flex flex-col pb-24 pt-14">
+    <div className="w-full h-full flex flex-col bg-gradient-to-b from-black to-zinc-900">
       {/* Top Bar */}
-      <div className="sticky top-14 z-30 bg-black/80 backdrop-blur-sm p-4">
-        <div className="relative" ref={suggestionBoxRef}>
+      <div className="flex items-center justify-between p-4 pt-20">
+        <div className="relative w-full" ref={suggestionBoxRef}>
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 w-5 h-5" />
           <input
             type="text"
@@ -224,18 +366,18 @@ const MobileMain = () => {
           />
 
           {showSuggestions && (
-            <div className="absolute w-full mt-2 bg-zinc-900 rounded-xl shadow-lg max-h-80 overflow-y-auto z-50">
+            <div className="absolute w-full mt-2 bg-zinc-800 rounded-md shadow-lg max-h-80 overflow-y-auto z-50">
               <div className="p-3">
-                <h3 className="text-sm font-semibold mb-2 text-white">Search Results</h3>
+                <h3 className="text-sm font-semibold mb-2">Search Results</h3>
 
                 {searching ? (
                   <>
                     {[1, 2, 3].map((item) => (
-                      <div key={item} className="flex items-center gap-3 p-2 hover:bg-zinc-800/50 rounded-lg">
-                        <div className="w-10 h-10 bg-zinc-800 rounded-lg animate-pulse"></div>
+                      <div key={item} className="flex items-center gap-3 p-2 hover:bg-zinc-700/50 rounded">
+                        <div className="w-10 h-10 bg-zinc-700 rounded animate-pulse"></div>
                         <div className="flex-1">
-                          <div className="h-4 bg-zinc-800 rounded w-3/4 mb-2 animate-pulse"></div>
-                          <div className="h-3 bg-zinc-800 rounded w-1/2 animate-pulse"></div>
+                          <div className="h-4 bg-zinc-700 rounded w-3/4 mb-2 animate-pulse"></div>
+                          <div className="h-3 bg-zinc-700 rounded w-1/2 animate-pulse"></div>
                         </div>
                       </div>
                     ))}
@@ -244,22 +386,42 @@ const MobileMain = () => {
                   searchResults.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-3 p-2 hover:bg-zinc-800/50 rounded-lg cursor-pointer"
-                      onClick={() => handleSongSelect(item)}
+                      className="flex items-center justify-between gap-3 p-2 hover:bg-zinc-700/50 rounded"
                     >
-                      <div className="w-10 h-10 bg-zinc-800 rounded-lg overflow-hidden">
-                        {item.image && (
+                      <div 
+                        className="flex items-center gap-3 flex-grow cursor-pointer"
+                        onClick={() => handleSongSelect(item)}
+                      >
+                        <div className="w-10 h-10 bg-zinc-700 rounded overflow-hidden flex-shrink-0">
                           <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                        )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-sm truncate">{item.title}</p>
+                          <p className="text-xs text-zinc-400 truncate">
+                            {item.more_info?.artistMap?.primary_artists?.[0]?.name || 'Unknown Artist'}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm text-white">{item.title}</p>
-                        <p className="text-xs text-zinc-400">
-                          {item.more_info?.artistMap?.primary_artists?.[0]?.name || 'Unknown Artist'}
-                        </p>
-                      </div>
-                      {loadingSong === item.id && (
-                        <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+                      
+                      {loadingSong === item.id ? (
+                        <Loader2 className="w-4 h-4 text-purple-500 animate-spin mr-2" />
+                      ) : (
+                        <button
+                          className="p-2 text-zinc-400 hover:text-purple-500"
+                          onClick={() => {
+                            const primaryArtist = item.more_info.artistMap.primary_artists[0];
+                            const song: Song = {
+                              id: item.id,
+                              name: item.title,
+                              artist: primaryArtist?.name || 'Unknown Artist',
+                              image: item.image,
+                              url: '', // Will be fetched in API
+                            };
+                            handleAddToPlaylist(song);
+                          }}
+                        >
+                          <Plus size={20} />
+                        </button>
                       )}
                     </div>
                   ))
@@ -273,24 +435,14 @@ const MobileMain = () => {
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-4 overflow-y-auto pb-24">
         {/* Recently Played Section */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4 text-white">Recently Played</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <h2 className="text-xl font-bold mb-4">Recently Played</h2>
+          <div className="grid grid-cols-2 gap-4">
             {recentlyPlayed.length > 0 ? (
-              recentlyPlayed.map((song) => (
-                <div
-                  key={song.id}
-                  className="bg-zinc-800/50 p-3 rounded-xl hover:bg-zinc-700/50 transition-colors cursor-pointer"
-                  onClick={() => { setCurrentSong(song); setIsPlaying(true); }}
-                >
-                  <div className="aspect-square bg-zinc-700 rounded-xl mb-2 overflow-hidden">
-                    <img src={song.image} alt={song.name} className="w-full h-full object-cover" />
-                  </div>
-                  <h3 className="font-medium text-sm text-white truncate">{song.name}</h3>
-                  <p className="text-xs text-zinc-400 truncate">{song.artist}</p>
-                </div>
+              recentlyPlayed.slice(0, 6).map((song) => (
+                <RecentPlayItem key={song.id} song={song} />
               ))
             ) : (
               <p className="text-zinc-400 col-span-2">No recently played songs yet.</p>
@@ -300,18 +452,21 @@ const MobileMain = () => {
 
         {/* Made For You Section */}
         <div>
-          <h2 className="text-xl font-bold mb-4 text-white">Made For You</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <h2 className="text-xl font-bold mb-4">Made For You</h2>
+          <div className="grid grid-cols-2 gap-4">
             {[1, 2, 3, 4].map((item) => (
-              <div key={item} className="bg-zinc-800/50 p-3 rounded-xl hover:bg-zinc-700/50 transition-colors cursor-pointer">
-                <div className="aspect-square bg-zinc-700 rounded-xl mb-2"></div>
-                <h3 className="font-medium text-sm text-white">Album Title {item}</h3>
+              <div key={item} className="flex flex-col">
+                <div className="aspect-square bg-zinc-800 rounded-lg mb-2"></div>
+                <h3 className="font-medium text-sm">Album Title {item}</h3>
                 <p className="text-xs text-zinc-400">Artist Name</p>
               </div>
             ))}
           </div>
         </div>
       </div>
+      
+      {/* Add to Playlist Modal */}
+      <AddToPlaylistModal />
     </div>
   );
 };

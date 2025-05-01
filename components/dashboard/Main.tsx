@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User, Loader2 } from 'lucide-react';
+import { Search, Bell, User, Loader2, Plus, Music } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, useRef } from 'react';
 import { usePlayer } from '@/context/PlayerContext';
@@ -39,6 +39,12 @@ interface Song {
   url: string;
 }
 
+interface Playlist {
+  id: string;
+  name: string;
+  songCount: number;
+}
+
 const Main = () => {
   const router = useRouter();
   const { setCurrentSong, setIsPlaying } = usePlayer();
@@ -48,7 +54,11 @@ const Main = () => {
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [loadingSong, setLoadingSong] = useState<string | null>(null);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
+  const [showPlaylistDropdown, setShowPlaylistDropdown] = useState<string | null>(null);
   const suggestionBoxRef = useRef<HTMLDivElement | null>(null);
+  const playlistDropdownRef = useRef<HTMLDivElement | null>(null);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
 
   useEffect(() => {
@@ -89,6 +99,41 @@ const Main = () => {
     if (stored) {
       setRecentlyPlayed(JSON.parse(stored));
     }
+  }, []);
+
+  useEffect(() => {
+    // Load user playlists on mount
+    const fetchPlaylists = async () => {
+      try {
+        if (!token) return;
+
+        const response = await fetch('/api/dashboard/getUserPlaylists', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setPlaylists(data.playlists);
+        }
+      } catch (error) {
+        console.error("Error fetching playlists:", error);
+      }
+    };
+
+    fetchPlaylists();
+  }, [token]);
+
+  useEffect(() => {
+    // Close playlist dropdown when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (playlistDropdownRef.current && !playlistDropdownRef.current.contains(event.target as Node)) {
+        setShowPlaylistDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleSearch = async (query: string) => {
@@ -186,41 +231,207 @@ const Main = () => {
       setIsPlaying(true);
       setShowSuggestions(false);
       toast.success(`Now playing: ${item.title}`);
-      //SAVE SONG TO DB
-
-      try {
-        const response = await fetch('/api/dashboard/saveSong', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(song),
-        });
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('Error saving song:', errorData);
-          
-          return;
-        }
-        const data = await response.json();
-        if (data.error) {
-          console.error('Error saving song:', data.error);
-          
-          return;
-        }
-
-      } catch (error) {
-        console.error('Error saving song:', error);
-        
-
-      }
+      setLoadingSong(null);
+   
     } catch (error) {
       console.error('Error selecting song:', error);
-      toast.error('Failed to play song. Please try again.');
-    } finally {
-      setLoadingSong(null);
     }
+  };
+
+  const addSongToPlaylist = async (playlistId: string, song: Song) => {
+    try {
+      setAddingToPlaylist(song.id);
+
+      const response = await fetch('/api/dashboard/addToPlaylist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          playlistId,
+          song,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add song to playlist');
+      }
+
+      const data = await response.json();
+      
+      // Check if song already exists in playlist
+      if (data.alreadyExists) {
+        toast.error(`"${song.name}" is already in this playlist`);
+      } else {
+        toast.success(`Added "${song.name}" to playlist`);
+      }
+      
+      // Close dropdown
+      setShowPlaylistDropdown(null);
+    } catch (error) {
+      console.error('Error adding song to playlist:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to add song to playlist');
+    } finally {
+      setAddingToPlaylist(null);
+    }
+  };
+
+  // Search result item component with add to playlist
+  const SearchResultItem = ({ item }: { item: SearchResultItem }) => {
+    return (
+      <div className="flex items-center justify-between p-2 hover:bg-zinc-800/50 rounded-lg group">
+        <div
+          className="flex items-center gap-3 cursor-pointer flex-grow"
+          onClick={() => handleSongSelect(item)}
+        >
+          <div className="w-10 h-10 min-w-[40px] bg-zinc-800 rounded-md overflow-hidden">
+            <img
+              src={item.image}
+              alt={item.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="flex-grow">
+            <h3 className="text-sm font-medium truncate">{item.title}</h3>
+            <p className="text-xs text-zinc-400 truncate">
+              {item.subtitle}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center">
+          {loadingSong === item.id ? (
+            <div className="mr-2">
+              <Loader2 className="w-5 h-5 text-purple-500 animate-spin" />
+            </div>
+          ) : (
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPlaylistDropdown(showPlaylistDropdown === item.id ? null : item.id);
+                }}
+                className="p-1.5 opacity-0 group-hover:opacity-100 rounded-full hover:bg-purple-500/20 text-purple-500 focus:opacity-100 transition-opacity"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+              
+              {showPlaylistDropdown === item.id && (
+                <div 
+                  ref={playlistDropdownRef}
+                  className="absolute right-0 top-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl z-20 w-40"
+                >
+                  <div className="py-1 max-h-48 overflow-y-auto">
+                    {playlists.length > 0 ? (
+                      playlists.map(playlist => (
+                        <button
+                          key={playlist.id}
+                          onClick={() => {
+                            // Convert SearchResultItem to Song
+                            const primaryArtist = item.more_info.artistMap.primary_artists[0];
+                            const song: Song = {
+                              id: item.id,
+                              name: item.title,
+                              artist: primaryArtist?.name || 'Unknown Artist',
+                              image: item.image,
+                              url: '', // Will be fetched in the API
+                            };
+                            addSongToPlaylist(playlist.id, song);
+                          }}
+                          disabled={addingToPlaylist === item.id}
+                          className="w-full text-left px-3 py-1.5 text-sm hover:bg-zinc-800 text-zinc-300 hover:text-white truncate flex items-center"
+                        >
+                          {addingToPlaylist === item.id ? (
+                            <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                          ) : (
+                            <Music className="w-3 h-3 mr-2" />
+                          )}
+                          {playlist.name}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="text-xs text-zinc-500 px-3 py-2">No playlists found</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // Recently played item component with add to playlist
+  const RecentPlayItem = ({ song }: { song: Song }) => {
+    return (
+      <div className="flex items-center justify-between p-2 hover:bg-zinc-800/50 rounded-lg group">
+        <div
+          className="flex items-center gap-3 cursor-pointer flex-grow"
+          onClick={() => {
+            setCurrentSong(song);
+            setIsPlaying(true);
+          }}
+        >
+          <div className="w-10 h-10 min-w-[40px] bg-zinc-800 rounded-md overflow-hidden">
+            <img
+              src={song.image}
+              alt={song.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="flex-grow">
+            <h3 className="text-sm font-medium truncate">{song.name}</h3>
+            <p className="text-xs text-zinc-400 truncate">
+              {song.artist}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center">
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPlaylistDropdown(showPlaylistDropdown === song.id ? null : song.id);
+              }}
+              className="p-1.5 opacity-0 group-hover:opacity-100 rounded-full hover:bg-purple-500/20 text-purple-500 focus:opacity-100 transition-opacity"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+            
+            {showPlaylistDropdown === song.id && (
+              <div 
+                ref={playlistDropdownRef}
+                className="absolute right-0 top-full mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl z-20 w-40"
+              >
+                <div className="py-1 max-h-48 overflow-y-auto">
+                  {playlists.length > 0 ? (
+                    playlists.map(playlist => (
+                      <button
+                        key={playlist.id}
+                        onClick={() => addSongToPlaylist(playlist.id, song)}
+                        disabled={addingToPlaylist === song.id}
+                        className="w-full text-left px-3 py-1.5 text-sm hover:bg-zinc-800 text-zinc-300 hover:text-white truncate flex items-center"
+                      >
+                        {addingToPlaylist === song.id ? (
+                          <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                        ) : (
+                          <Music className="w-3 h-3 mr-2" />
+                        )}
+                        {playlist.name}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-xs text-zinc-500 px-3 py-2">No playlists found</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -257,26 +468,7 @@ const Main = () => {
                   </>
                 ) : searchResults.length > 0 ? (
                   searchResults.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-3 p-2 hover:bg-zinc-700/50 rounded cursor-pointer"
-                      onClick={() => handleSongSelect(item)}
-                    >
-                      <div className="w-10 h-10 bg-zinc-700 rounded overflow-hidden">
-                        {item.image && (
-                          <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{item.title}</p>
-                        <p className="text-xs text-zinc-400">
-                          {item.more_info?.artistMap?.primary_artists?.[0]?.name || 'Unknown Artist'}
-                        </p>
-                      </div>
-                      {loadingSong === item.id && (
-                        <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
-                      )}
-                    </div>
+                    <SearchResultItem key={item.id} item={item} />
                   ))
                 ) : (
                   <p className="text-zinc-400 text-sm p-2">No results found</p>
@@ -305,19 +497,7 @@ const Main = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-4">
             {recentlyPlayed.length > 0 ? (
               recentlyPlayed.map((song) => (
-                <div
-                  key={song.id}
-                  className="bg-zinc-800/50 p-2 md:p-4 rounded-lg hover:bg-zinc-700/50 transition-colors cursor-pointer"
-                  onClick={() => { setCurrentSong(song)
-                     setIsPlaying(true)}
-                  }
-                >
-                  <div className="aspect-square bg-zinc-700 rounded-lg mb-2 md:mb-3 overflow-hidden">
-                    <img src={song.image} alt={song.name} className="w-full h-full object-cover" />
-                  </div>
-                  <h3 className="font-medium truncate text-sm md:text-base">{song.name}</h3>
-                  <p className="text-xs md:text-sm text-zinc-400 truncate">{song.artist}</p>
-                </div>
+                <RecentPlayItem key={song.id} song={song} />
               ))
             ) : (
               <p className="text-zinc-400">No recently played songs yet.</p>

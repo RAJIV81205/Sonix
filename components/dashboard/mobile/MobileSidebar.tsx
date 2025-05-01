@@ -1,12 +1,23 @@
 "use client"
 
-import { Home, Search, Library, Plus, Heart, X, Menu, Compass, Music, Mic, Clock, Headphones } from 'lucide-react';
+import { Home, Search, Library, Plus, Heart, X, Menu, Compass, Music, Mic, Clock, Headphones, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import MobileAddPlaylistPopup from './MobileAddPlaylistPopup';
+import { toast } from 'react-hot-toast';
+
+interface Playlist {
+  id: string;
+  name: string;
+  songCount?: number;
+}
 
 export default function MobileSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeItem, setActiveItem] = useState('home');
+  const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState(false);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Prevent body scroll when sidebar is open
   useEffect(() => {
@@ -20,9 +31,58 @@ export default function MobileSidebar() {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    // Fetch user playlists on mount
+    const fetchPlaylists = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('/api/dashboard/getUserPlaylists', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setPlaylists(data.playlists);
+        }
+      } catch (error) {
+        console.error("Error fetching playlists:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      fetchPlaylists();
+    }
+  }, [isOpen]);
+
   const handleItemClick = (item:any) => {
     setActiveItem(item);
     setIsOpen(false);
+  };
+
+  const handlePlaylistCreated = (playlistId: string, playlistName: string) => {
+    // Add the new playlist to the state
+    setPlaylists(prev => [
+      { id: playlistId, name: playlistName, songCount: 0 },
+      ...prev
+    ]);
+  };
+
+  // Function to get playlist color based on index
+  const getPlaylistColor = (index: number) => {
+    const colors = [
+      "from-teal-500 to-emerald-500",
+      "from-amber-500 to-orange-500",
+      "from-blue-500 to-indigo-500",
+      "from-pink-500 to-rose-500",
+      "from-emerald-500 to-cyan-500"
+    ];
+    return colors[index % colors.length];
   };
 
   return (
@@ -177,7 +237,10 @@ export default function MobileSidebar() {
           <div>
             <h2 className="text-xs uppercase tracking-wider text-zinc-500 font-semibold mb-3 px-1">Playlists</h2>
             <div className="space-y-2">
-              <button className="w-full flex items-center gap-4 p-4 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors">
+              <button 
+                className="w-full flex items-center gap-4 p-4 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                onClick={() => setShowAddPlaylistPopup(true)}
+              >
                 <div className="bg-zinc-400/20 p-2 rounded-lg">
                   <Plus className="w-5 h-5" />
                 </div>
@@ -194,28 +257,39 @@ export default function MobileSidebar() {
                 </div>
               </div>
               
-              <div className="w-full flex items-center gap-4 p-4 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors">
-                <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-md flex items-center justify-center">
-                  <Music className="w-5 h-5 text-white" />
+              {/* User Playlists */}
+              {loading ? (
+                <div className="flex items-center justify-center p-4">
+                  <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
                 </div>
-                <div>
-                  <p className="font-medium text-lg">Weekend Vibes</p>
-                  <p className="text-xs text-zinc-500">32 songs</p>
-                </div>
-              </div>
-              
-              <div className="w-full flex items-center gap-4 p-4 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-500 rounded-md flex items-center justify-center">
-                  <Music className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-lg">Focus Flow</p>
-                  <p className="text-xs text-zinc-500">45 songs</p>
-                </div>
-              </div>
+              ) : (
+                playlists.map((playlist, index) => (
+                  <Link 
+                    href={`/dashboard/playlist/${playlist.id}`}
+                    key={playlist.id}
+                    className="w-full flex items-center gap-4 p-4 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <div className={`w-10 h-10 bg-gradient-to-br ${getPlaylistColor(index)} rounded-md flex items-center justify-center`}>
+                      <Music className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-lg">{playlist.name}</p>
+                      <p className="text-xs text-zinc-500">{playlist.songCount || 0} songs</p>
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
         </div>
+
+        {/* Add Playlist Popup */}
+        <MobileAddPlaylistPopup 
+          isOpen={showAddPlaylistPopup} 
+          onClose={() => setShowAddPlaylistPopup(false)} 
+          onSuccess={handlePlaylistCreated}
+        />
       </div>
     </>
   );
