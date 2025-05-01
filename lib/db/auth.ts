@@ -19,7 +19,7 @@ export async function createUser(email: string, password: string, username: stri
     password: hashedPassword,
     username,
     name,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toLocaleString(),
   }).returning();
 
   return user[0];

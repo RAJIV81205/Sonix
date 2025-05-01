@@ -171,7 +171,7 @@ const Main = () => {
         url: downloadUrl,
       };
 
-      
+
 
       // Update recentlyPlayed list in localStorage
       const stored = localStorage.getItem('recentlyPlayed');
@@ -189,7 +189,7 @@ const Main = () => {
       //SAVE SONG TO DB
 
       try {
-        const response = await fetch ('/api/dashboard/saveSong', {
+        const response = await fetch('/api/dashboard/saveSong', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -209,11 +209,11 @@ const Main = () => {
           toast.error('Failed to save song. Please try again.');
           return;
         }
-        
+
       } catch (error) {
         console.error('Error saving song:', error);
         toast.error('Failed to save song. Please try again.');
-        
+
       }
     } catch (error) {
       console.error('Error selecting song:', error);
@@ -308,36 +308,38 @@ const Main = () => {
                 <div
                   key={song.id}
                   className="bg-zinc-800/50 p-4 rounded-lg hover:bg-zinc-700/50 transition-colors cursor-pointer"
-                  onClick={() => setCurrentSong(song)}
+                  onClick={() => { setCurrentSong(song)
+                     setIsPlaying(true)}
+                  }
                 >
-                  <div className="aspect-square bg-zinc-700 rounded-lg mb-3 overflow-hidden">
-                    <img src={song.image} alt={song.name} className="w-full h-full object-cover" />
-                  </div>
-                  <h3 className="font-medium truncate">{song.name}</h3>
-                  <p className="text-sm text-zinc-400 truncate">{song.artist}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-zinc-400">No recently played songs yet.</p>
+            <div className="aspect-square bg-zinc-700 rounded-lg mb-3 overflow-hidden">
+              <img src={song.image} alt={song.name} className="w-full h-full object-cover" />
+            </div>
+            <h3 className="font-medium truncate">{song.name}</h3>
+            <p className="text-sm text-zinc-400 truncate">{song.artist}</p>
+          </div>
+          ))
+          ) : (
+          <p className="text-zinc-400">No recently played songs yet.</p>
             )}
-          </div>
         </div>
+      </div>
 
-        {/* Made For You Section */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Made For You</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {[1, 2, 3, 4, 5].map((item) => (
-              <div key={item} className="bg-zinc-800/50 p-4 rounded-lg hover:bg-zinc-700/50 transition-colors cursor-pointer">
-                <div className="aspect-square bg-zinc-700 rounded-lg mb-3"></div>
-                <h3 className="font-medium">Album Title {item}</h3>
-                <p className="text-sm text-zinc-400">Artist Name</p>
-              </div>
-            ))}
-          </div>
+      {/* Made For You Section */}
+      <div>
+        <h2 className="text-2xl font-bold mb-4">Made For You</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((item) => (
+            <div key={item} className="bg-zinc-800/50 p-4 rounded-lg hover:bg-zinc-700/50 transition-colors cursor-pointer">
+              <div className="aspect-square bg-zinc-700 rounded-lg mb-3"></div>
+              <h3 className="font-medium">Album Title {item}</h3>
+              <p className="text-sm text-zinc-400">Artist Name</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
+    </div >
   );
 };
 

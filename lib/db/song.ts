@@ -17,7 +17,7 @@ export async function addSong(
             artist,
             image,
             url,
-            createdAt: new Date().toISOString(),
+            createdAt: new Date().toLocaleString(),
         })
         .returning();
 
