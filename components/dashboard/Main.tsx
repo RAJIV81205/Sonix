@@ -224,7 +224,7 @@ const Main = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col bg-gradient-to-b from-black to-zinc-900">
       {/* Top Bar */}
       <div className="flex items-center justify-between p-4">
         <div className="relative w-1/3" ref={suggestionBoxRef}>
