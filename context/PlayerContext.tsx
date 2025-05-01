@@ -22,12 +22,98 @@ interface PlayerContextType {
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
-  const [currentSong, setCurrentSong] = useState<Song | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  // Initialize state from localStorage if available
+  const [currentSong, setCurrentSongState] = useState<Song | null>(null);
+  const [isPlaying, setIsPlayingState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [playlist, setPlaylist] = useState<Song[]>([]);
+  const [playlist, setPlaylistState] = useState<Song[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
+  const hasInitializedRef = useRef(false);
+
+  // Load saved state from localStorage on component mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !hasInitializedRef.current) {
+      try {
+        const savedSong = localStorage.getItem('currentSong');
+        if (savedSong) {
+          const parsedSong = JSON.parse(savedSong);
+          setCurrentSongState(parsedSong);
+          
+          // Set up audio source if we have audio element and song data
+          if (audioRef.current && parsedSong?.url) {
+            audioRef.current.src = parsedSong.url;
+            
+            // Try to restore playback position if available
+            const savedPosition = localStorage.getItem('currentPosition');
+            if (savedPosition) {
+              const position = parseFloat(savedPosition);
+              if (!isNaN(position)) {
+                audioRef.current.currentTime = position;
+              }
+            }
+          }
+        }
+        
+        const savedPlaylist = localStorage.getItem('playlist');
+        if (savedPlaylist) {
+          setPlaylistState(JSON.parse(savedPlaylist));
+        }
+        
+        const wasPlaying = localStorage.getItem('isPlaying');
+        if (wasPlaying === 'true') {
+          // We'll attempt to resume playback after the canplay event
+          setIsPlayingState(true);
+        }
+        
+        hasInitializedRef.current = true;
+      } catch (error) {
+        console.error('Error loading saved player state:', error);
+      }
+    }
+  }, []);
+
+  // Save playback position periodically
+  useEffect(() => {
+    if (!audioRef.current || !currentSong) return;
+    
+    const savePosition = () => {
+      if (typeof window !== 'undefined' && audioRef.current) {
+        localStorage.setItem('currentPosition', audioRef.current.currentTime.toString());
+        localStorage.setItem('isPlaying', isPlaying.toString());
+      }
+    };
+    
+    // Save position every 5 seconds and when component unmounts
+    const interval = setInterval(savePosition, 5000);
+    
+    return () => {
+      clearInterval(interval);
+      savePosition(); // Save on unmount too
+    };
+  }, [currentSong, isPlaying]);
+
+  // Wrapper functions to update both state and localStorage
+  const setCurrentSong = (song: Song) => {
+    setCurrentSongState(song);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('currentSong', JSON.stringify(song));
+    }
+  };
+
+  const setIsPlaying = (playing: boolean) => {
+    setIsPlayingState(playing);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('isPlaying', playing.toString());
+    }
+  };
+
+  const setPlaylist = (songs: Song[]) => {
+    setPlaylistState(songs);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('playlist', JSON.stringify(songs));
+    }
+  };
 
   // Handle play/pause when isPlaying changes
   useEffect(() => {
@@ -72,6 +158,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!currentSong || !audioRef.current) return;
     
+    // Skip if this is just the initial load and URL is already set
+    if (audioRef.current.src === currentSong.url) return;
+    
     // Stop any current playback and mark as loading
     if (audioRef.current.played.length > 0) {
       audioRef.current.pause();
@@ -109,7 +198,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     return () => {
       audioRef.current?.removeEventListener('canplay', handleCanPlay);
     };
-  }, [currentSong]);
+  }, [currentSong, isPlaying]);
 
   return (
     <PlayerContext.Provider value={{ currentSong, isPlaying, setCurrentSong, setIsPlaying, setPlaylist, audioRef }}>

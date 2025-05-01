@@ -17,6 +17,7 @@ const Player = () => {
   const [volume, setVolume] = useState(80)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   // Format time in MM:SS
   const formatTime = (time: number) => {
@@ -24,6 +25,17 @@ const Player = () => {
     const seconds = Math.floor(time % 60)
     return `${minutes}:${seconds.toString().padStart(2, "0")}`
   }
+
+  // Initialize volume from localStorage if available
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !hasInitialized) {
+      const savedVolume = localStorage.getItem('playerVolume');
+      if (savedVolume) {
+        setVolume(Number(savedVolume));
+      }
+      setHasInitialized(true);
+    }
+  }, [hasInitialized]);
 
   // Handle time updates
   useEffect(() => {
@@ -48,6 +60,11 @@ const Player = () => {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume / 100
+      
+      // Save volume setting to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('playerVolume', volume.toString());
+      }
     }
   }, [volume, audioRef])
 
