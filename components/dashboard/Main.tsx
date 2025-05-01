@@ -1,35 +1,35 @@
 "use client";
 
-import { Search, Bell, User } from 'lucide-react';
+import { Search, Bell, User, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, useRef } from 'react';
 import { usePlayer } from '@/context/PlayerContext';
+import { toast } from 'react-hot-toast'; // Assuming you have toast installed
 
-// Single consolidated interface for search results
+// Updated interface to match the provided data structure
 interface SearchResultItem {
   id: string;
-  name: string;
+  title: string;
+  subtitle: string;
   type: string;
-  artists: {
-    primary: Array<{
-      id: string;
-      name: string;
-      image: Array<{
-        quality: string;
-        url: string;
+  image: string;
+  perma_url: string;
+  more_info: {
+    duration: string;
+    album_id: string;
+    album: string;
+    label: string;
+    encrypted_media_url: string;
+    artistMap: {
+      primary_artists: Array<{
+        id: string;
+        name: string;
+        image: string;
+        perma_url: string;
       }>;
-    }>;
+    };
   };
-  image: Array<{
-    quality: string;
-    url: string;
-  }>;
-  downloadUrl: Array<{
-    quality: string;
-    url: string;
-  }>;
-};
-
+}
 
 const Main = () => {
   const router = useRouter();
@@ -38,6 +38,7 @@ const Main = () => {
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [searching, setSearching] = useState<boolean>(false);
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
+  const [loadingSong, setLoadingSong] = useState<string | null>(null);
   const suggestionBoxRef = useRef<HTMLDivElement | null>(null);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
 
@@ -88,35 +89,92 @@ const Main = () => {
         body: JSON.stringify({ query }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        console.error('Error fetching search results:', data);
+        const errorData = await response.json();
+        console.error('Error fetching search results:', errorData);
+        toast.error('Failed to search. Please try again.');
         setSearching(false);
         return;
       }
+      
+      const data = await response.json();
+      console.log('Search results:', data);
 
-      setSearchResults(data.data.data.results || []);
+      // Handle the search results
+      setSearchResults(data.songs || []);
     } catch (error) {
       console.error('Error:', error);
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setSearching(false);
     }
   };
 
-  const handleSongSelect = (item: SearchResultItem) => {
-    const primaryArtist = item.artists.primary[0];
-    const song = {
-      id: item.id,
-      name: item.name,
-      artist: primaryArtist?.name || 'Unknown Artist',
-      image: item.image[0]?.url || '',
-      url: item.downloadUrl[4]?.url || '',
-    };
+  const fetchSongUrl = async (encryptedUrl: string): Promise<string | null> => {
+    try {
+      const response = await fetch('/api/dashboard/getSongUrl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ encryptedUrl }),
+      });
 
-    setCurrentSong(song);
-    setIsPlaying(true);
-    setShowSuggestions(false);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error fetching song URL:', errorData);
+        toast.error('Failed to get song URL. Please try again.');
+        return null;
+      }
+      
+      const data = await response.json();
+      return data.downloadUrl || null;
+    } catch (error) {
+      console.error('Error fetching song URL:', error);
+      toast.error('Failed to get song URL. Please try again.');
+      return null;
+    }
+  };
+
+  const handleSongSelect = async (item: SearchResultItem) => {
+    try {
+      // Set loading state for this specific song
+      setLoadingSong(item.id);
+      
+      const encryptedUrl = item.more_info.encrypted_media_url;
+      if (!encryptedUrl) {
+        toast.error('Song URL not available');
+        return;
+      }
+      
+      // Fetch the download URL when the song is selected
+      const downloadUrl = await fetchSongUrl(encryptedUrl);
+      
+      if (!downloadUrl) {
+        toast.error('Could not get song URL');
+        return;
+      }
+      
+      const primaryArtist = item.more_info.artistMap.primary_artists[0];
+      const song = {
+        id: item.id,
+        name: item.title,
+        artist: primaryArtist?.name || 'Unknown Artist',
+        image: item.image,
+        url: downloadUrl,
+      };
+
+      setCurrentSong(song);
+      setIsPlaying(true);
+      setShowSuggestions(false);
+      toast.success(`Now playing: ${item.title}`);
+    } catch (error) {
+      console.error('Error selecting song:', error);
+      toast.error('Failed to play song. Please try again.');
+    } finally {
+      setLoadingSong(null);
+    }
   };
 
   return (
@@ -162,25 +220,30 @@ const Main = () => {
                       onClick={() => handleSongSelect(item)}
                     >
                       <div className="w-10 h-10 bg-zinc-700 rounded overflow-hidden">
-                        {item.image?.[0] && (
+                        {item.image && (
                           <img
-                            src={item.image.find(img => img.quality === "50x50")?.url || item.image[0].url}
-                            alt={item.name}
+                            src={item.image}
+                            alt={item.title}
                             className="w-full h-full object-cover"
                           />
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{item.name}</p>
+                        <p className="font-medium text-sm">{item.title}</p>
                         <p className="text-xs text-zinc-400">
-                          {item.artists?.primary?.[0]?.name || 'Unknown Artist'}
+                          {item.more_info?.artistMap?.primary_artists?.[0]?.name || 'Unknown Artist'}
                         </p>
                       </div>
+                      {loadingSong === item.id && (
+                        <div className="flex items-center justify-center">
+                          <Loader2 className="w-4 h-4 text-purple-500 animate-spin" />
+                        </div>
+                      )}
                     </div>
                   ))
-                ) : (
+                ) : searchQuery.trim() ? (
                   <p className="text-zinc-400 text-sm p-2">No results found</p>
-                )}
+                ) : null}
               </div>
             </div>
           )}
