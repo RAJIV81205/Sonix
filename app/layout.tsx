@@ -20,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
-        <Toaster position="top-right" />
+        <Toaster position="bottom-center"   reverseOrder={false}/>
         {children}
       </body>
     </html>
