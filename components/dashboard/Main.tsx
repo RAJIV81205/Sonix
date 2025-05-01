@@ -6,6 +6,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { usePlayer } from '@/context/PlayerContext';
 import { toast } from 'react-hot-toast';
 
+
 interface SearchResultItem {
   id: string;
   title: string;
@@ -170,6 +171,8 @@ const Main = () => {
         url: downloadUrl,
       };
 
+      
+
       // Update recentlyPlayed list in localStorage
       const stored = localStorage.getItem('recentlyPlayed');
       const recentSongs: Song[] = stored ? JSON.parse(stored) : [];
@@ -183,6 +186,35 @@ const Main = () => {
       setIsPlaying(true);
       setShowSuggestions(false);
       toast.success(`Now playing: ${item.title}`);
+      //SAVE SONG TO DB
+
+      try {
+        const response = await fetch ('/api/dashboard/saveSong', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(song),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Error saving song:', errorData);
+          toast.error('Failed to save song. Please try again.');
+          return;
+        }
+        const data = await response.json();
+        if (data.error) {
+          console.error('Error saving song:', data.error);
+          toast.error('Failed to save song. Please try again.');
+          return;
+        }
+        
+      } catch (error) {
+        console.error('Error saving song:', error);
+        toast.error('Failed to save song. Please try again.');
+        
+      }
     } catch (error) {
       console.error('Error selecting song:', error);
       toast.error('Failed to play song. Please try again.');
