@@ -200,19 +200,19 @@ const Main = () => {
         if (!response.ok) {
           const errorData = await response.json();
           console.error('Error saving song:', errorData);
-          toast.error('Failed to save song. Please try again.');
+          
           return;
         }
         const data = await response.json();
         if (data.error) {
           console.error('Error saving song:', data.error);
-          toast.error('Failed to save song. Please try again.');
+          
           return;
         }
 
       } catch (error) {
         console.error('Error saving song:', error);
-        toast.error('Failed to save song. Please try again.');
+        
 
       }
     } catch (error) {
