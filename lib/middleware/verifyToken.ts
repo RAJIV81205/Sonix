@@ -1,6 +1,6 @@
 import { verify } from 'jsonwebtoken';
 
-export async function verifyToken(token: string) {
+export async function verifyToken(token : any) {
   try {
     const decoded = verify(token, process.env.JWT_SECRET!) as { 
       userId: number;

@@ -3,10 +3,10 @@ import { verifyToken } from "@/lib/middleware/verifyToken";
 
 export async function POST(request: Request) {
   try {
-    console.log("🔍 [DEBUG] API route hit: /api/dashboard/search");
-
-    const user = await verifyToken(request);
-    console.log("🧾 [DEBUG] Decoded User:", user);
+  
+    const token = request.headers.get("authorization")?.split(" ")[1];
+    const user = await verifyToken(token);
+    
 
     if (!user) {
       console.log("🚫 [DEBUG] Unauthorized request");
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    console.log("📨 [DEBUG] Request Body:", body);
+   
 
     const query = body.query;
     if (!query) {
