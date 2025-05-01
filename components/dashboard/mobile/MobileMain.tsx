@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, useRef } from 'react';
 import { usePlayer } from '@/context/PlayerContext';
 import { toast } from 'react-hot-toast';
+import MobileAddPlaylistPopup from './MobileAddPlaylistPopup';
 
 interface SearchResultItem {
   id: string;
@@ -57,6 +58,7 @@ const MobileMain = () => {
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState<Song | null>(null);
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
+  const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState(false);
   const suggestionBoxRef = useRef<HTMLDivElement | null>(null);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
 
@@ -271,6 +273,17 @@ const MobileMain = () => {
     return colors[index % colors.length];
   };
 
+  // Handle new playlist creation
+  const handlePlaylistCreated = (playlistId: string, playlistName: string) => {
+    // Add the new playlist to the state
+    setPlaylists(prev => [
+      { id: playlistId, name: playlistName, songCount: 0 },
+      ...prev
+    ]);
+    // Close the popup
+    setShowAddPlaylistPopup(false);
+  };
+
   // Recently played item component
   const RecentPlayItem = ({ song }: { song: Song }) => (
     <div className="flex flex-col">
@@ -348,7 +361,7 @@ const MobileMain = () => {
                   className="mt-4 px-4 py-2 bg-purple-600 rounded-full text-white font-medium"
                   onClick={() => {
                     setShowAddToPlaylistModal(null);
-                    router.push('/dashboard/library');
+                    setShowAddPlaylistPopup(true);
                   }}
                 >
                   Create a Playlist
@@ -493,8 +506,15 @@ const MobileMain = () => {
       
       {/* Add to Playlist Modal */}
       <AddToPlaylistModal />
+      
+      {/* Add Playlist Popup */}
+      <MobileAddPlaylistPopup 
+        isOpen={showAddPlaylistPopup} 
+        onClose={() => setShowAddPlaylistPopup(false)} 
+        onSuccess={handlePlaylistCreated}
+      />
     </div>
   );
 };
 
-export default MobileMain; 
+export default MobileMain;

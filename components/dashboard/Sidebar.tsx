@@ -150,7 +150,7 @@ export default function Sidebar() {
             <div className="py-3 text-center">
               <div className="animate-pulse bg-zinc-800/50 h-12 rounded-lg w-full"></div>
             </div>
-          ) : (
+          ) : playlists.length > 0 ? (
             playlists.map((playlist, index) => (
               <Link 
                 href={`/dashboard/playlist/${playlist.id}`} 
@@ -168,6 +168,22 @@ export default function Sidebar() {
                 </div>
               </Link>
             ))
+          ) : (
+            // Big "Create Playlist" button when no playlists exist
+            <button 
+              onClick={() => setShowAddPlaylistPopup(true)}
+              className="w-full bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg p-5 transition-all duration-300 shadow-lg hover:shadow-purple-500/20 text-center group"
+            >
+              <div className="flex flex-col items-center justify-center gap-3">
+                <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <Plus className="w-7 h-7 text-white group-hover:scale-110 transition-transform" />
+                </div>
+                <div>
+                  <p className="font-semibold text-white">Create Playlist</p>
+                  <p className="text-xs text-white/70 mt-1">Start your music collection</p>
+                </div>
+              </div>
+            </button>
           )}
         </div>
       </div>
