@@ -55,10 +55,10 @@ const Player = () => {
   const progress = duration ? (currentTime / duration) * 100 : 0
 
   return (
-    <div className="w-full h-20 bg-zinc-900 border-t border-zinc-800 flex items-center px-4">
+    <div className="w-full h-16 md:h-20 bg-zinc-900 border-t border-zinc-800 flex items-center px-2 md:px-4">
       {/* Current Song Info */}
-      <div className="flex items-center gap-4 w-1/4">
-        <div className="w-14 h-14 bg-zinc-800 rounded overflow-hidden">
+      <div className="flex items-center gap-2 md:gap-4 w-1/3 md:w-1/4">
+        <div className="w-10 h-10 md:w-14 md:h-14 bg-zinc-800 rounded overflow-hidden">
           {currentSong?.image && (
             <img
               src={currentSong.image}
@@ -67,36 +67,36 @@ const Player = () => {
             />
           )}
         </div>
-        <div>
-          <h3 className="font-medium">{currentSong?.name || "No song playing"}</h3>
-          <p className="text-sm text-zinc-400">{currentSong?.artist || "Select a song"}</p>
+        <div className="hidden sm:block">
+          <h3 className="font-medium text-sm md:text-base">{currentSong?.name || "No song playing"}</h3>
+          <p className="text-xs md:text-sm text-zinc-400">{currentSong?.artist || "Select a song"}</p>
         </div>
       </div>
 
       {/* Player Controls */}
       <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="flex items-center gap-6 mb-2">
+        <div className="flex items-center gap-2 md:gap-6 mb-1 md:mb-2">
           <button className="text-zinc-400 hover:text-white transition-colors">
-            <Shuffle className="w-5 h-5" />
+            <Shuffle className="w-4 h-4 md:w-5 md:h-5" />
           </button>
           <button className="text-zinc-400 hover:text-white transition-colors">
-            <SkipBack className="w-5 h-5" />
+            <SkipBack className="w-4 h-4 md:w-5 md:h-5" />
           </button>
           <button
-            className="bg-white text-black rounded-full p-2 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="bg-white text-black rounded-full p-1.5 md:p-2 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             onClick={() => setIsPlaying(!isPlaying)}
             disabled={!currentSong}
           >
-            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            {isPlaying ? <Pause className="w-4 h-4 md:w-5 md:h-5" /> : <Play className="w-4 h-4 md:w-5 md:h-5" />}
           </button>
           <button className="text-zinc-400 hover:text-white transition-colors">
-            <SkipForward className="w-5 h-5" />
+            <SkipForward className="w-4 h-4 md:w-5 md:h-5" />
           </button>
           <button className="text-zinc-400 hover:text-white transition-colors">
-            <Repeat className="w-5 h-5" />
+            <Repeat className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
-        <div className="w-full max-w-xl flex items-center gap-2">
+        <div className="w-full max-w-xl flex items-center gap-1 md:gap-2">
           <span className="text-xs text-zinc-400">{formatTime(currentTime)}</span>
           <div className="flex-1 h-1 bg-zinc-700 rounded-full">
             <div
@@ -109,7 +109,7 @@ const Player = () => {
       </div>
 
       {/* Volume Control */}
-      <div className="w-1/4 flex items-center justify-end gap-2">
+      <div className="hidden md:flex items-center justify-end gap-2 w-1/4">
         <Volume2 className="w-5 h-5 text-zinc-400" />
         <input
           type="range"
@@ -117,9 +117,8 @@ const Player = () => {
           max={100}
           value={volume}
           onChange={(e) => setVolume(Number(e.target.value))}
-          className="w-28 h-1.5 accent-white rounded-full appearance-none cursor-pointer bg-zinc-700 "
+          className="w-28 h-1.5 accent-white rounded-full appearance-none cursor-pointer bg-zinc-700"
         />
-
       </div>
     </div>
   )
