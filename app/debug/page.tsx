@@ -4,10 +4,10 @@ import { useState } from 'react';
 
 export default function JioSaavnDebugger() {
   const [query, setQuery] = useState('espresso');
-  const [results, setResults] = useState([]);
-  const [diagnostics, setDiagnostics] = useState(null);
+  const [results, setResults] = useState<any[]>([]);
+  const [diagnostics, setDiagnostics] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -35,7 +35,12 @@ export default function JioSaavnDebugger() {
       setResults(data.results || []);
       setDiagnostics(data.diagnostics || null);
     } catch (err) {
-      setError(err.message);
+      // Handle the error properly with type checking
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -90,7 +95,7 @@ export default function JioSaavnDebugger() {
                     alt={item.title} 
                     className="w-16 h-16 object-cover rounded"
                     onError={(e) => {
-                      e.currentTarget.src = '/api/placeholder/64/64';
+                      (e.target as HTMLImageElement).src = '/api/placeholder/64/64';
                     }}
                   />
                 )}
