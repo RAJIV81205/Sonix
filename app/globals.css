@@ -7,3 +7,56 @@
 }
 
 
+@keyframes sound-wave {
+    0% {
+      height: 8px;
+    }
+    50% {
+      height: 32px;
+    }
+    100% {
+      height: 8px;
+    }
+  }
+  
+  .wave-animation {
+    display: inline-block;
+    width: 3px;
+    margin: 0 2px;
+    border-radius: 3px;
+    background: linear-gradient(to bottom, #a855f7, #8b5cf6);
+    animation: sound-wave 1s ease-in-out infinite;
+  }
+  
+  .wave-1 {
+    animation-delay: 0s;
+    height: 8px;
+  }
+  
+  .wave-2 {
+    animation-delay: 0.2s;
+    height: 16px;
+  }
+  
+  .wave-3 {
+    animation-delay: 0.4s;
+    height: 24px;
+  }
+  
+  .wave-4 {
+    animation-delay: 0.6s;
+    height: 16px;
+  }
+  
+  .wave-5 {
+    animation-delay: 0.8s;
+    height: 32px;
+  }
+  
+  /* Optional: For responsive design */
+  @media (max-width: 640px) {
+    .wave-animation {
+      width: 2px;
+      margin: 0 1px;
+    }
+  }

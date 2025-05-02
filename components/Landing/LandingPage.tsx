@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation"; // Correct import for navigation
 import Image from "next/image";
-import { Pause, SkipForward, SkipBack, Volume2, Music, Headphones, Download, Wifi, Star, Shuffle } from "lucide-react";
+import { Pause, SkipForward, SkipBack, Volume2, Music, Headphones, Download, Wifi, Star, Shuffle , TrendingUp} from "lucide-react";
 import Navbar from "./Navbar";
 import Hero from "./Hero";
 import TopCharts from "./TopCharts";
@@ -21,196 +21,175 @@ export default function LandingPage() {
       <TopCharts />
 
       {/* Features Section */}
-      <section id="features" className="py-20 md:py-32 bg-zinc-950">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">Why Choose Sonix</h2>
-            <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-              Discover the features that make Sonix the ultimate music experience
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800 hover:border-purple-500/50 transition-colors">
-              <div className="bg-gradient-to-br from-purple-500 to-blue-500 w-14 h-14 rounded-full flex items-center justify-center mb-6">
-                <Headphones className="h-7 w-7" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">High-Quality Audio</h3>
-              <p className="text-zinc-400">
-                Experience crystal clear sound with our lossless audio streaming technology.
-              </p>
-            </div>
-            <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800 hover:border-purple-500/50 transition-colors">
-              <div className="bg-gradient-to-br from-purple-500 to-blue-500 w-14 h-14 rounded-full flex items-center justify-center mb-6">
-                <Download className="h-7 w-7" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Offline Listening</h3>
-              <p className="text-zinc-400">
-                Download your favorite tracks and playlists to enjoy them without an internet connection.
-              </p>
-            </div>
-            <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800 hover:border-purple-500/50 transition-colors">
-              <div className="bg-gradient-to-br from-purple-500 to-blue-500 w-14 h-14 rounded-full flex items-center justify-center mb-6">
-                <Wifi className="h-7 w-7" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">Cross-Device Sync</h3>
-              <p className="text-zinc-400">
-                Seamlessly switch between devices without missing a beat. Your music follows you.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      
+      {/* Pricing Section - Enhanced with blur effects and interactive cards */}
+      <section id="pricing" className="py-20 md:py-32 bg-black relative">
+        {/* Background elements */}
+        <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-gray-900 to-transparent z-0"></div>
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-600/10 rounded-full filter blur-[80px] z-0"></div>
+        <div className="absolute top-1/2 right-20 w-72 h-72 bg-blue-600/10 rounded-full filter blur-[70px] z-0"></div>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 md:py-32">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-6 md:px-8 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">Choose Your Plan</h2>
-            <p className="text-xl text-zinc-400 max-w-2xl mx-auto">Flexible pricing options to suit your needs</p>
+            <div className="flex items-center gap-2 text-purple-500 mb-3 justify-center">
+              <TrendingUp size={18} />
+              <span className="text-sm font-medium uppercase tracking-wider">Plans & Pricing</span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">Choose Your Plan</h2>
+            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">Flexible pricing options to suit your needs</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+            <div className="bg-gray-800/60 rounded-xl border border-gray-700/50 overflow-hidden hover:transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl hover:shadow-purple-900/10 hover:border-gray-600/50 group">
               <div className="p-8">
-                <h3 className="text-xl font-bold mb-2">Free</h3>
-                <p className="text-zinc-400 mb-6">Basic features for casual listeners</p>
+                <h3 className="text-xl font-bold mb-2 text-white">Free</h3>
+                <p className="text-gray-400 mb-6">Basic features for casual listeners</p>
                 <div className="flex items-baseline mb-6">
-                  <span className="text-4xl font-bold">$0</span>
-                  <span className="text-zinc-400 ml-2">/month</span>
+                  <span className="text-4xl font-bold text-white">$0</span>
+                  <span className="text-gray-400 ml-2">/month</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span>Ad-supported listening</span>
+                    <span className="text-gray-300">Ad-supported listening</span>
                   </li>
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span>Basic audio quality</span>
+                    <span className="text-gray-300">Basic audio quality</span>
                   </li>
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span>Limited skips</span>
+                    <span className="text-gray-300">Limited skips</span>
                   </li>
                 </ul>
               </div>
               <div className="px-8 pb-8">
-                <button className="w-full px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-md">Get Started</button>
+                <button className="w-full px-4 py-3 bg-gray-700/70 hover:bg-gray-700 text-white rounded-lg transition duration-300">Get Started</button>
               </div>
             </div>
-            <div className="bg-zinc-900 rounded-2xl border border-purple-500 overflow-hidden relative">
+            <div className="bg-gray-800/60 rounded-xl border border-purple-500 overflow-hidden relative hover:transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl hover:shadow-purple-900/20 group">
               <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-purple-600 to-blue-600 text-center py-1 text-xs font-medium">
                 MOST POPULAR
               </div>
               <div className="p-8 pt-12">
-                <h3 className="text-xl font-bold mb-2">Premium</h3>
-                <p className="text-zinc-400 mb-6">Enhanced features for music lovers</p>
+                <h3 className="text-xl font-bold mb-2 text-white">Premium</h3>
+                <p className="text-gray-400 mb-6">Enhanced features for music lovers</p>
                 <div className="flex items-baseline mb-6">
-                  <span className="text-4xl font-bold">$9.99</span>
-                  <span className="text-zinc-400 ml-2">/month</span>
+                  <span className="text-4xl font-bold text-white">$9.99</span>
+                  <span className="text-gray-400 ml-2">/month</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span>Ad-free listening</span>
+                    <span className="text-gray-300">Ad-free listening</span>
                   </li>
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span>High quality audio</span>
+                    <span className="text-gray-300">High quality audio</span>
                   </li>
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span>Unlimited skips</span>
+                    <span className="text-gray-300">Unlimited skips</span>
                   </li>
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span>Offline listening</span>
+                    <span className="text-gray-300">Offline listening</span>
                   </li>
                 </ul>
               </div>
               <div className="px-8 pb-8">
-                <button className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-md">
+                <button className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg transition duration-300">
                   Get Premium
                 </button>
               </div>
             </div>
-            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+            <div className="bg-gray-800/60 rounded-xl border border-gray-700/50 overflow-hidden hover:transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl hover:shadow-purple-900/10 hover:border-gray-600/50 group">
               <div className="p-8">
-                <h3 className="text-xl font-bold mb-2">Family</h3>
-                <p className="text-zinc-400 mb-6">Share the experience with loved ones</p>
+                <h3 className="text-xl font-bold mb-2 text-white">Family</h3>
+                <p className="text-gray-400 mb-6">Share the experience with loved ones</p>
                 <div className="flex items-baseline mb-6">
-                  <span className="text-4xl font-bold">$14.99</span>
-                  <span className="text-zinc-400 ml-2">/month</span>
+                  <span className="text-4xl font-bold text-white">$14.99</span>
+                  <span className="text-gray-400 ml-2">/month</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span>Up to 6 accounts</span>
+                    <span className="text-gray-300">Up to 6 accounts</span>
                   </li>
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span>Premium for everyone</span>
+                    <span className="text-gray-300">Premium for everyone</span>
                   </li>
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span>Parental controls</span>
+                    <span className="text-gray-300">Parental controls</span>
                   </li>
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span>Lossless audio</span>
+                    <span className="text-gray-300">Lossless audio</span>
                   </li>
                 </ul>
               </div>
               <div className="px-8 pb-8">
-                <button className="w-full px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-md">Get Family Plan</button>
+                <button className="w-full px-4 py-3 bg-gray-700/70 hover:bg-gray-700 text-white rounded-lg transition duration-300">Get Family Plan</button>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 md:py-32 bg-zinc-950">
-        <div className="container mx-auto px-4">
+      {/* Testimonials Section - Updated with the glow effect and improved cards */}
+      <section id="testimonials" className="py-20 md:py-32 bg-gradient-to-b from-black to-gray-900 relative">
+        {/* Background elements */}
+        <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-black to-transparent z-0"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full filter blur-[80px] z-0"></div>
+        <div className="absolute top-1/3 left-20 w-64 h-64 bg-blue-600/10 rounded-full filter blur-[60px] z-0"></div>
+
+        <div className="container mx-auto px-6 md:px-8 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">What Our Users Say</h2>
-            <p className="text-xl text-zinc-400 max-w-2xl mx-auto">Join thousands of satisfied music lovers</p>
+            <div className="flex items-center gap-2 text-purple-500 mb-3 justify-center">
+              <Star size={18} />
+              <span className="text-sm font-medium uppercase tracking-wider">Testimonials</span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">What Our Users Say</h2>
+            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">Join thousands of satisfied music lovers</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
+            <div className="bg-gray-800/60 p-8 rounded-xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-900/10 group">
               <div className="flex items-center gap-1 mb-4">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
                 ))}
               </div>
-              <p className="text-zinc-300 mb-6">
+              <p className="text-gray-300 mb-6">
                 "Sonix has completely transformed how I experience music. The sound quality is unmatched and the
                 interface is beautiful."
               </p>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-zinc-800 rounded-full overflow-hidden">
+                <div className="w-12 h-12 bg-gray-700 rounded-full overflow-hidden">
                   <Image
-                    src="/placeholder.svg?height=48&width=48"
+                    src="/api/placeholder/48/48"
                     alt="User avatar"
                     width={48}
                     height={48}
@@ -218,25 +197,25 @@ export default function LandingPage() {
                   />
                 </div>
                 <div>
-                  <h4 className="font-medium">Alex Johnson</h4>
-                  <p className="text-sm text-zinc-400">Premium User</p>
+                  <h4 className="font-medium text-white group-hover:text-purple-300 transition-colors">Alex Johnson</h4>
+                  <p className="text-sm text-gray-400">Premium User</p>
                 </div>
               </div>
             </div>
-            <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
+            <div className="bg-gray-800/60 p-8 rounded-xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-900/10 group">
               <div className="flex items-center gap-1 mb-4">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
                 ))}
               </div>
-              <p className="text-zinc-300 mb-6">
+              <p className="text-gray-300 mb-6">
                 "The family plan is perfect for us. Everyone gets their own personalized experience, and the parental
                 controls give me peace of mind."
               </p>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-zinc-800 rounded-full overflow-hidden">
+                <div className="w-12 h-12 bg-gray-700 rounded-full overflow-hidden">
                   <Image
-                    src="/placeholder.svg?height=48&width=48"
+                    src="/api/placeholder/48/48"
                     alt="User avatar"
                     width={48}
                     height={48}
@@ -244,25 +223,25 @@ export default function LandingPage() {
                   />
                 </div>
                 <div>
-                  <h4 className="font-medium">Sarah Miller</h4>
-                  <p className="text-sm text-zinc-400">Family Plan User</p>
+                  <h4 className="font-medium text-white group-hover:text-purple-300 transition-colors">Sarah Miller</h4>
+                  <p className="text-sm text-gray-400">Family Plan User</p>
                 </div>
               </div>
             </div>
-            <div className="bg-zinc-900 p-8 rounded-2xl border border-zinc-800">
+            <div className="bg-gray-800/60 p-8 rounded-xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-900/10 group">
               <div className="flex items-center gap-1 mb-4">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
                 ))}
               </div>
-              <p className="text-zinc-300 mb-6">
+              <p className="text-gray-300 mb-6">
                 "As a music producer, I appreciate the lossless audio quality. Sonix lets me hear every detail exactly
                 as intended."
               </p>
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-zinc-800 rounded-full overflow-hidden">
+                <div className="w-12 h-12 bg-gray-700 rounded-full overflow-hidden">
                   <Image
-                    src="/placeholder.svg?height=48&width=48"
+                    src="/api/placeholder/48/48"
                     alt="User avatar"
                     width={48}
                     height={48}
@@ -270,8 +249,8 @@ export default function LandingPage() {
                   />
                 </div>
                 <div>
-                  <h4 className="font-medium">David Chen</h4>
-                  <p className="text-sm text-zinc-400">Premium User</p>
+                  <h4 className="font-medium text-white group-hover:text-purple-300 transition-colors">David Chen</h4>
+                  <p className="text-sm text-gray-400">Premium User</p>
                 </div>
               </div>
             </div>
@@ -281,7 +260,8 @@ export default function LandingPage() {
 
       {/* Download Section */}
       <section id="download" className="py-20 md:py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 to-black z-0"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-black z-0"></div>
+        
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold mb-4">Get Sonix Today</h2>
@@ -348,25 +328,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 md:py-32 bg-gradient-to-r from-purple-900/30 to-blue-900/30">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6">Ready to Experience Sonix?</h2>
-            <p className="text-xl text-zinc-300 mb-8">
-              Join millions of music lovers and start your journey today. No credit card required for free trial.
-            </p>
-            <button
-              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-md"
-            >
-              Start Free Trial
-            </button>
-          </div>
-        </div>
-      </section>
+     
 
       {/* Footer */}
-      <footer className="bg-zinc-950 border-t border-zinc-900 py-12 md:py-16">
+      <footer className="bg-gradient-to-t from-gray-900 to-black z-0  py-12 md:py-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div>
