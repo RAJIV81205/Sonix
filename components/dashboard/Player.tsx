@@ -9,7 +9,7 @@ import {
   Shuffle,
   Repeat,
 } from "lucide-react"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { usePlayer } from "@/context/PlayerContext"
 
 const Player = () => {
@@ -17,7 +17,9 @@ const Player = () => {
   const [volume, setVolume] = useState(80)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
   const [hasInitialized, setHasInitialized] = useState(false)
+  const progressBarRef = useRef<HTMLDivElement>(null)
 
   // Format time in MM:SS
   const formatTime = (time: number) => {
@@ -43,7 +45,10 @@ const Player = () => {
     if (!audio) return
 
     const updateTime = () => {
-      setCurrentTime(audio.currentTime)
+      // Only update time if not currently dragging the slider
+      if (!isDragging) {
+        setCurrentTime(audio.currentTime)
+      }
       setDuration(audio.duration || 0)
     }
 
@@ -54,7 +59,7 @@ const Player = () => {
       audio.removeEventListener("timeupdate", updateTime)
       audio.removeEventListener("loadedmetadata", updateTime)
     }
-  }, [audioRef])
+  }, [audioRef, isDragging])
 
   // Apply volume to audio element
   useEffect(() => {
@@ -67,6 +72,54 @@ const Player = () => {
       }
     }
   }, [volume, audioRef])
+
+  // Handle seeking in the timeline
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBarRef.current || !audioRef.current || !duration) return;
+
+    const progressBar = progressBarRef.current;
+    const rect = progressBar.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const newPosition = (offsetX / rect.width) * duration;
+    
+    setCurrentTime(newPosition);
+    audioRef.current.currentTime = newPosition;
+  };
+
+  // Handle mouse down on the progress bar
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    handleSeek(e);
+  };
+
+  // Handle mouse move while dragging
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isDragging) {
+      handleSeek(e);
+    }
+  };
+
+  // Handle mouse up to end dragging
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add global mouse up handler
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (isDragging) {
+        setIsDragging(false);
+      }
+    };
+
+    if (isDragging) {
+      window.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [isDragging]);
 
   // Calculate progress bar %
   const progress = duration ? (currentTime / duration) * 100 : 0
@@ -115,7 +168,13 @@ const Player = () => {
         </div>
         <div className="w-full max-w-xl flex items-center gap-1 md:gap-2">
           <span className="text-xs text-zinc-400">{formatTime(currentTime)}</span>
-          <div className="flex-1 h-1 bg-zinc-700 rounded-full">
+          <div 
+            ref={progressBarRef}
+            className="flex-1 h-1 bg-zinc-700 rounded-full cursor-pointer"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+          >
             <div
               className="h-full bg-white rounded-full"
               style={{ width: `${progress}%` }}

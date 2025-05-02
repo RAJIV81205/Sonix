@@ -15,7 +15,7 @@ import {
   X,
   Loader2
 } from "lucide-react"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { usePlayer } from "@/context/PlayerContext"
 import { toast } from "react-hot-toast"
 
@@ -30,11 +30,13 @@ const MobilePlayer = () => {
   const [volume, setVolume] = useState(80)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [showPlaylistModal, setShowPlaylistModal] = useState(false)
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false)
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null)
+  const progressBarRef = useRef<HTMLDivElement>(null)
 
   // Format time in MM:SS
   const formatTime = (time: number) => {
@@ -49,7 +51,10 @@ const MobilePlayer = () => {
     if (!audio) return
 
     const updateTime = () => {
-      setCurrentTime(audio.currentTime)
+      // Only update time if not currently dragging the slider
+      if (!isDragging) {
+        setCurrentTime(audio.currentTime)
+      }
       setDuration(audio.duration || 0)
     }
 
@@ -60,7 +65,7 @@ const MobilePlayer = () => {
       audio.removeEventListener("timeupdate", updateTime)
       audio.removeEventListener("loadedmetadata", updateTime)
     }
-  }, [audioRef])
+  }, [audioRef, isDragging])
 
   // Apply volume to audio element
   useEffect(() => {
@@ -68,6 +73,60 @@ const MobilePlayer = () => {
       audioRef.current.volume = volume / 100
     }
   }, [volume, audioRef])
+
+  // Handle seeking in the timeline
+  const handleSeek = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!progressBarRef.current || !audioRef.current || !duration) return;
+
+    const progressBar = progressBarRef.current;
+    const rect = progressBar.getBoundingClientRect();
+    
+    // Get the x position based on whether it's a touch or mouse event
+    let clientX: number;
+    if ('touches' in e) {
+      clientX = e.touches[0].clientX;
+    } else {
+      clientX = e.clientX;
+    }
+    
+    const offsetX = clientX - rect.left;
+    const newPosition = Math.max(0, Math.min((offsetX / rect.width) * duration, duration));
+    
+    setCurrentTime(newPosition);
+    audioRef.current.currentTime = newPosition;
+  };
+
+  // Touch event handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    handleSeek(e);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isDragging) {
+      handleSeek(e);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  // Mouse event handlers (for completeness)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    handleSeek(e);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging) {
+      handleSeek(e);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   // Fetch playlists when modal opens
   const fetchPlaylists = async () => {
@@ -102,6 +161,25 @@ const MobilePlayer = () => {
       fetchPlaylists();
     }
   }, [showPlaylistModal]);
+
+  // Add global event listeners for mouse/touch events
+  useEffect(() => {
+    const handleGlobalUp = () => {
+      if (isDragging) {
+        setIsDragging(false);
+      }
+    };
+
+    if (isDragging) {
+      window.addEventListener('mouseup', handleGlobalUp);
+      window.addEventListener('touchend', handleGlobalUp);
+    }
+
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalUp);
+      window.removeEventListener('touchend', handleGlobalUp);
+    };
+  }, [isDragging]);
 
   // Add current song to playlist
   const addSongToPlaylist = async (playlistId: string) => {
@@ -239,7 +317,16 @@ const MobilePlayer = () => {
 
         {/* Progress Bar */}
         <div className="px-8 py-4">
-          <div className="w-full h-1 bg-zinc-800 rounded-full">
+          <div 
+            ref={progressBarRef}
+            className="w-full h-1 bg-zinc-800 rounded-full cursor-pointer"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+          >
             <div
               className="h-full bg-white rounded-full"
               style={{ width: `${progress}%` }}
@@ -370,4 +457,4 @@ const MobilePlayer = () => {
   )
 }
 
-export default MobilePlayer 
+export default MobilePlayer
