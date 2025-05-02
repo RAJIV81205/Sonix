@@ -18,7 +18,7 @@ export default function DashboardLayout({
     // Check if window is defined (client-side)
     if (typeof window !== 'undefined') {
       const checkMobile = () => {
-        setIsMobile(window.innerWidth < 768); // 768px is our md breakpoint
+        setIsMobile(window.innerWidth < 950); // 768px is our md breakpoint
       };
 
       // Initial check

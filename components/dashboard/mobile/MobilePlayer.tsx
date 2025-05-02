@@ -202,7 +202,7 @@ const MobilePlayer = () => {
 
       {/* Expanded Player */}
       <div 
-        className={`fixed inset-0 bg-gradient-to-b from-zinc-900 to-black z-50 transition-transform duration-300 ${
+        className={`fixed inset-0 bg-gradient-to-b from-zinc-900 to-black z-50 transition-transform duration-300 overflow-scroll ${
           isExpanded ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
