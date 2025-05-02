@@ -39,11 +39,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         if (savedSong) {
           const parsedSong = JSON.parse(savedSong);
           setCurrentSongState(parsedSong);
-          
+
           // Set up audio source if we have audio element and song data
           if (audioRef.current && parsedSong?.url) {
             audioRef.current.src = parsedSong.url;
-            
+
             // Try to restore playback position if available
             const savedPosition = localStorage.getItem('currentPosition');
             if (savedPosition) {
@@ -54,18 +54,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
             }
           }
         }
-        
+
         const savedPlaylist = localStorage.getItem('playlist');
         if (savedPlaylist) {
           setPlaylistState(JSON.parse(savedPlaylist));
         }
-        
-        const wasPlaying = localStorage.getItem('isPlaying');
-        if (wasPlaying === 'true') {
-          // We'll attempt to resume playback after the canplay event
-          setIsPlayingState(true);
-        }
-        
+
+        setIsPlaying(false)
+
         hasInitializedRef.current = true;
       } catch (error) {
         console.error('Error loading saved player state:', error);
@@ -76,17 +72,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   // Save playback position periodically
   useEffect(() => {
     if (!audioRef.current || !currentSong) return;
-    
+
     const savePosition = () => {
       if (typeof window !== 'undefined' && audioRef.current) {
         localStorage.setItem('currentPosition', audioRef.current.currentTime.toString());
-        localStorage.setItem('isPlaying', isPlaying.toString());
       }
     };
-    
+
     // Save position every 5 seconds and when component unmounts
     const interval = setInterval(savePosition, 5000);
-    
+
     return () => {
       clearInterval(interval);
       savePosition(); // Save on unmount too
@@ -125,13 +120,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         // We can't actually abort the promise, but we can track it
         playPromiseRef.current = null;
       }
-      
+
       // Start a new play request
       const playPromise = audioRef.current.play();
-      
+
       if (playPromise !== undefined) {
         playPromiseRef.current = playPromise;
-        
+
         playPromise
           .then(() => {
             playPromiseRef.current = null;
@@ -140,7 +135,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
             // Only handle errors if this is still the active play request
             if (playPromiseRef.current === playPromise) {
               playPromiseRef.current = null;
-              
+
               // Ignore AbortError as it's expected when changing tracks quickly
               if (error.name !== 'AbortError') {
                 console.error('Error playing audio:', error);
@@ -157,22 +152,22 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   // Handle song changes
   useEffect(() => {
     if (!currentSong || !audioRef.current) return;
-    
+
     // Skip if this is just the initial load and URL is already set
     if (audioRef.current.src === currentSong.url) return;
-    
+
     // Stop any current playback and mark as loading
     if (audioRef.current.played.length > 0) {
       audioRef.current.pause();
     }
     setIsLoading(true);
-    
+
     // Set the new audio source
     audioRef.current.src = currentSong.url;
-    
+
     const handleCanPlay = () => {
       setIsLoading(false);
-      
+
       // Only auto-play if isPlaying was true
       if (isPlaying && audioRef.current) {
         const newPlayPromise = audioRef.current.play();
@@ -187,14 +182,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         }
       }
     };
-    
+
     // Clean up existing listeners
     audioRef.current.removeEventListener('canplay', handleCanPlay);
-    
+
     // Add the new listener and load
     audioRef.current.addEventListener('canplay', handleCanPlay);
     audioRef.current.load();
-    
+
     return () => {
       audioRef.current?.removeEventListener('canplay', handleCanPlay);
     };
