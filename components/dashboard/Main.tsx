@@ -283,7 +283,7 @@ const Main = () => {
     return (
       <div className="flex items-center justify-between p-2 hover:bg-zinc-800/50 rounded-lg group">
         <div
-          className="flex items-center gap-3 cursor-pointer flex-grow"
+          className="flex items-center gap-3 cursor-pointer flex-grow overflow-hidden"
           onClick={() => handleSongSelect(item)}
         >
           <div className="w-10 h-10 min-w-[40px] bg-zinc-800 rounded-md overflow-hidden">
@@ -293,9 +293,9 @@ const Main = () => {
               className="w-full h-full object-cover"
             />
           </div>
-          <div className="flex-grow">
-            <h3 className="text-sm font-medium truncate">{item.title}</h3>
-            <p className="text-xs text-zinc-400 truncate">
+          <div className="flex-grow overflow-hidden">
+            <h3 className="text-sm font-medium truncate ">{item.title}</h3>
+            <p className="text-xs text-zinc-400 truncate ">
               {item.subtitle}
             </p>
           </div>

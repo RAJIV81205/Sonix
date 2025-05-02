@@ -19,17 +19,17 @@ export default function DashboardLayout({
   useEffect(() => {
     // Set clientMounted to true when component mounts
     setClientMounted(true);
-    
+
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 950);
     };
-    
+
     // Initial check
     checkMobile();
-    
+
     // Add event listener for window resize
     window.addEventListener('resize', checkMobile);
-    
+
     // Cleanup
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
@@ -38,7 +38,8 @@ export default function DashboardLayout({
   if (!clientMounted) {
     return (
       <div className="w-full h-screen bg-gradient-to-b from-[#121212] to-[#181818] text-white flex items-center justify-center">
-        {/* You can add a loading spinner or animation here if desired */}
+        <div className="loader"></div>
+       
       </div>
     );
   }
@@ -61,13 +62,13 @@ export default function DashboardLayout({
             <div className="w-full md:w-auto md:col-span-1 border-2 border-gray-100/20 rounded-3xl overflow-y-scroll">
               <Sidebar />
             </div>
-            
+
             {/* Main content - scrollable */}
             <div className="flex-1 md:col-span-4 border-2 border-gray-100/20 rounded-3xl overflow-y-auto h-full">
               {children}
             </div>
           </div>
-          
+
           {/* Player - fixed at bottom */}
           <div className="w-full fixed bottom-0 z-10 bg-black">
             <Player />
