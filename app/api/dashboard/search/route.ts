@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     const searchUrl = `https://www.jiosaavn.com/api.php?p=1&q=${encodeURIComponent(query)}&_format=json&_marker=0&api_version=4&ctx=wap6dot0&n=20&__call=search.getResults`;
-    console.log("🔗 [DEBUG] Request URL:", searchUrl);
+    
 
     // Headers based on the network panel you shared
     const customHeaders = {
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       "Cookie": "DL=english; L=english; CT=IN; geo_country=IN; _pl=wap6dot0-"
     };
     
-    console.log("📋 [DEBUG] Request Headers:", customHeaders);
+   
 
     const searchResponse = await fetch(searchUrl, {
       method: "GET",

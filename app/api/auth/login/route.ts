@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const token = sign(
       { userId: user.id, email: user.email },
       process.env.JWT_SECRET!,
-      { expiresIn: '1d' }
+      { expiresIn: '30d' }
     );
 
     // Remove password from response
