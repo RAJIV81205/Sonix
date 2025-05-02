@@ -90,9 +90,27 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   // Wrapper functions to update both state and localStorage
   const setCurrentSong = (song: Song) => {
+    // Check if this is the same song that's currently playing
+    if (currentSong && song.id === currentSong.id && audioRef.current) {
+      // Reset playback to beginning
+      audioRef.current.currentTime = 0;
+      
+      // If song was paused, start playing it again
+      if (!isPlaying) {
+        setIsPlaying(true);
+      }
+      
+      // No need to change the currentSong state, just ensure it's stored in localStorage
+      localStorage.setItem('currentSong', JSON.stringify(song));
+      return;
+    }
+
+    // Handle new song selection
     setCurrentSongState(song);
     if (typeof window !== 'undefined') {
       localStorage.setItem('currentSong', JSON.stringify(song));
+      // Reset the saved position when changing songs
+      localStorage.removeItem('currentPosition');
     }
   };
 
