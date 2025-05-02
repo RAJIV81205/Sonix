@@ -3,16 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation"; // Correct import for navigation
 import Image from "next/image";
-import { Pause, SkipForward, SkipBack, Volume2, Music, Headphones, Download, Wifi, Star, Shuffle , TrendingUp} from "lucide-react";
+import { Pause, SkipForward, SkipBack, Volume2, Music, Headphones, Download, Wifi, Star, Shuffle, TrendingUp } from "lucide-react";
 import Navbar from "./Navbar";
 import Hero from "./Hero";
 import TopCharts from "./TopCharts";
 
 export default function LandingPage() {
-
-
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
       {/* Header */}
       <Navbar />
 
@@ -23,7 +21,7 @@ export default function LandingPage() {
       {/* Features Section */}
       
       {/* Pricing Section - Enhanced with blur effects and interactive cards */}
-      <section id="pricing" className="py-20 md:py-32 bg-black relative">
+      <section id="pricing" className="py-20 md:py-32 bg-black relative overflow-hidden">
         {/* Background elements */}
         <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-gray-900 to-transparent z-0"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-600/10 rounded-full filter blur-[80px] z-0"></div>
@@ -160,7 +158,7 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section - Updated with the glow effect and improved cards */}
-      <section id="testimonials" className="py-20 md:py-32 bg-gradient-to-b from-black to-gray-900 relative">
+      <section id="testimonials" className="py-20 md:py-32 bg-gradient-to-b from-black to-gray-900 relative overflow-hidden">
         {/* Background elements */}
         <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-black to-transparent z-0"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full filter blur-[80px] z-0"></div>
@@ -328,11 +326,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-     
-
       {/* Footer */}
-      <footer className="bg-gradient-to-t from-gray-900 to-black z-0  py-12 md:py-16">
-        <div className="container mx-auto px-4">
+      <footer className="bg-gradient-to-t from-gray-900 to-black py-12 md:py-16 relative overflow-hidden">
+        <div className="container mx-auto px-4 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
             <div>
               <Link href="/" className="flex items-center gap-2 mb-6">
