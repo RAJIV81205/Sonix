@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Music, Disc3, TrendingUp, Album, AlertTriangle } from 'lucide-react';
+import { usePlayer } from '@/context/PlayerContext';
+import { toast } from 'react-hot-toast';
 
 // Define types
 interface Track {
@@ -23,7 +25,17 @@ interface SearchResponse {
   songs: any[];
 }
 
+interface Song {
+  id: string;
+  name: string;
+  artist: string;
+  image: string;
+  url: string;
+}
+
 const MusicSearchBar: React.FC = () => {
+  const { setCurrentSong, setIsPlaying } = usePlayer();
+  const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [songs, setSongs] = useState<Track[]>([]);
   const [albums, setAlbums] = useState<Track[]>([]);
@@ -84,7 +96,7 @@ const MusicSearchBar: React.FC = () => {
         plays: "2.1B"
       }
     ];
-    
+
     setTrendingTracks(mockTrendingTracks);
   }, []);
 
@@ -102,7 +114,7 @@ const MusicSearchBar: React.FC = () => {
     wait: number
   ): ((...args: Parameters<F>) => void) => {
     let timeout: NodeJS.Timeout | null = null;
-    
+
     return (...args: Parameters<F>) => {
       if (timeout) clearTimeout(timeout);
       timeout = setTimeout(() => func(...args), wait);
@@ -117,11 +129,11 @@ const MusicSearchBar: React.FC = () => {
       setError(null);
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
     setLastSearchTime(Date.now());
-    
+
     try {
       const token = getAuthToken();
       if (!token) {
@@ -162,31 +174,31 @@ const MusicSearchBar: React.FC = () => {
       // Process songs response
       const songsData: SearchResponse = await songsResponse.json();
       const songResults = songsData.songs || [];
-      
+
       // Process albums response
       const albumsData = albumsResponse.ok ? await albumsResponse.json() : { results: [] };
       const albumResults = albumsData.results || [];
-      
+
       // Process and categorize results
       const processedSongs: Track[] = [];
       const processedAlbums: Track[] = [];
-      
+
       if (Array.isArray(songResults)) {
         songResults.forEach((item: any) => {
           // Check if the item has necessary data
           if (!item) return;
-          
+
           // Process songs
           if (item.type?.toLowerCase() === 'song' || (!item.type && item.more_info?.song_pids)) {
             processedSongs.push({
               id: item.id || `song-${Date.now()}-${Math.random()}`,
               title: item.title || item.song || 'Unknown Title',
-              artist: item.more_info?.singers || item.more_info?.primary_artists || item.primaryArtists || 'Unknown Artist',
-              album: item.more_info?.album || item.album || '',
+              artist:  item.more_info?.music || item.more_info?.artistMap?.primary_artists?.[0]?.name || item.primaryArtists || 'Unknown Artist',
+              album: item.subtitle || '',
               coverUrl: item.image || item.albumartwork_large || '/api/placeholder/64/64',
               type: 'song'
             });
-          } 
+          }
           // Process albums
           else if (item.type?.toLowerCase() === 'album' || (!item.type && item.more_info?.album_id)) {
             processedAlbums.push({
@@ -224,12 +236,12 @@ const MusicSearchBar: React.FC = () => {
           }
         });
       }
-      
+
       // Process dedicated album results
       if (Array.isArray(albumResults)) {
         albumResults.forEach((item: any) => {
           if (!item) return;
-          
+
           processedAlbums.push({
             id: item.id || item.albumid || `album-${Date.now()}-${Math.random()}`,
             title: item.title || item.album || 'Unknown Album',
@@ -240,13 +252,13 @@ const MusicSearchBar: React.FC = () => {
           });
         });
       }
-      
+
       // Log the processed results for debugging
       console.log(`Found ${processedSongs.length} songs and ${processedAlbums.length} albums`);
-      
+
       setSongs(processedSongs);
       setAlbums(processedAlbums);
-      
+
     } catch (error: any) {
       console.error('Search error:', error);
       setError(error.message || 'Failed to search. Please try again later.');
@@ -256,7 +268,7 @@ const MusicSearchBar: React.FC = () => {
       // Ensure loading state lasts at least 500ms for better UX
       const elapsed = Date.now() - lastSearchTime;
       const minLoadingTime = 500;
-      
+
       if (elapsed < minLoadingTime) {
         setTimeout(() => {
           setIsLoading(false);
@@ -281,10 +293,123 @@ const MusicSearchBar: React.FC = () => {
     debouncedSearch(query);
   };
 
+
+  const getSongUrl = async (id: string) => {
+    try {
+      const response = await fetch(`https://saavn.dev/api/songs/${id}`);
+      const data = await response.json();
+  
+      if (!data.success || !data.data || !data.data.length) {
+        throw new Error('Invalid song data');
+      }
+      
+
+      const songData = data.data[0];
+      
+
+      let artistName = 'Unknown Artist';
+      if (songData.artists && songData.artists.primary && songData.artists.primary.length > 0) {
+        artistName = songData.artists.primary[0].name;
+      }
+      
+
+      const song: Song = {
+        id: songData.id,
+        name: songData.name,
+        artist: artistName,
+        image: songData.image && songData.image.length > 0 ? songData.image[2].url : '',
+        url: songData.downloadUrl && songData.downloadUrl.length > 0 ? songData.downloadUrl[4].url : '',
+      };
+      
+
+      const stored = localStorage.getItem('recentlyPlayed');
+      const recentSongs: Song[] = stored ? JSON.parse(stored) : [];
+      const filtered = recentSongs.filter((s) => s.id !== song.id);
+      filtered.unshift(song);
+      const limited = filtered.slice(0, 20);
+      localStorage.setItem('recentlyPlayed', JSON.stringify(limited));
+      setRecentlyPlayed(limited);
+  
+      setCurrentSong(song);
+      setIsPlaying(true);
+      toast.success(`Now playing: ${song.name}`);
+    } catch (error) {
+      console.error('Error fetching song URL:', error);
+      toast.error('Failed to fetch song URL');
+    }
+  };
+  
+
+
+  const getAlbumUrl = async (id:string)=>{
+    try {
+      const response = await fetch(`https://saavn.dev/api/albums?id=${id}`);
+      const data = await response.json();
+      
+      if (!data.success || !data.data ) {
+        throw new Error('Invalid album data');
+      }
+      
+      // Get the album data and songs - data is an array
+      const albumData = data.data;
+      
+      if (albumData.songs && albumData.songs.length > 0) {
+        const firstSong = albumData.songs[0];
+        
+        // Get artist name from the first song
+        let artistName = 'Unknown Artist';
+        if (firstSong.artists && firstSong.artists.primary && firstSong.artists.primary.length > 0) {
+          artistName = firstSong.artists.primary[0].name;
+        }
+        
+        // Create a song object from the first track
+        const song: Song = {
+          id: firstSong.id,
+          name: firstSong.name,
+          artist: artistName,
+          // Get image URL from the image array
+          image: firstSong.image && firstSong.image.length > 0 ? 
+                firstSong.image[2].url : 
+                (albumData.image && albumData.image.length > 0 ? albumData.image[2].url : ''),
+          // Get download URL from the downloadUrl array
+          url: firstSong.downloadUrl && firstSong.downloadUrl.length > 0 ? firstSong.downloadUrl[4].url : '',
+        };
+        
+        console.log('Album song:', song);
+        
+        // Update recently played
+        const stored = localStorage.getItem('recentlyPlayed');
+        const recentSongs: Song[] = stored ? JSON.parse(stored) : [];
+        const filtered = recentSongs.filter((s) => s.id !== song.id);
+        filtered.unshift(song);
+        const limited = filtered.slice(0, 20);
+        localStorage.setItem('recentlyPlayed', JSON.stringify(limited));
+        setRecentlyPlayed(limited);
+        
+        // Play the song
+        setCurrentSong(song);
+        setIsPlaying(true);
+        toast.success(`Now playing: ${song.name} from ${albumData.name}`);
+      } else {
+        toast.error('No songs found in this album');
+      }
+    } catch (error) {
+      console.error('Error fetching album data:', error);
+      toast.error('Failed to fetch album data');
+    }
+  }
+
   // Track item component
   const TrackItem: React.FC<TrackItemProps> = ({ track, trending }) => {
     return (
-      <div className="flex items-center p-3 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors duration-200 ease-in-out">
+      <div className="flex items-center p-3 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors duration-200 ease-in-out" onClick={() => {
+        track.type === 'album' ? (
+          getAlbumUrl(track.id)
+        ) : (
+          getSongUrl(track.id)
+        )
+      }
+      }>
         <div className="relative flex-shrink-0">
           <img src={track.coverUrl} alt={track.title} className="w-12 h-12 rounded" />
           <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity rounded">
@@ -300,19 +425,21 @@ const MusicSearchBar: React.FC = () => {
           <p className="text-gray-400 text-xs truncate">{track.artist}</p>
           {track.album && <p className="text-gray-500 text-xs truncate">{track.album}</p>}
         </div>
-        {trending && track.plays && (
-          <div className="flex items-center text-green-500 text-xs flex-shrink-0 ml-2">
-            <TrendingUp className="w-4 h-4 mr-1" />
-            <span>{track.plays}</span>
-          </div>
-        )}
+  {
+    trending && track.plays && (
+      <div className="flex items-center text-green-500 text-xs flex-shrink-0 ml-2">
+        <TrendingUp className="w-4 h-4 mr-1" />
+        <span>{track.plays}</span>
       </div>
+    )
+  }
+      </div >
     );
   };
 
-  return (
-    <div className="bg-gradient-to-b from-black to-zinc-900 text-white p-4 sm:p-6 rounded-lg w-full mx-auto min-h-screen">
-      <style jsx global>{`
+return (
+  <div className="bg-gradient-to-b from-black to-zinc-900 text-white p-4 sm:p-6 rounded-lg w-full mx-auto min-h-screen">
+    <style jsx global>{`
         /* Custom scrollbar styling */
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
@@ -339,157 +466,157 @@ const MusicSearchBar: React.FC = () => {
         }
       `}</style>
 
-      <div className="relative mb-6 opacity-100 transform translate-y-0 transition-all duration-300">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
-        </div>
-        <input
-          type="text"
-          className="bg-gray-800 text-white w-full pl-10 pr-4 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
-          placeholder="Search for songs, artists, or albums..."
-          value={searchQuery}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSearch(e.target.value)}
-        />
-        {isLoading && (
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-purple-500"></div>
-          </div>
-        )}
+    <div className="relative mb-6 opacity-100 transform translate-y-0 transition-all duration-300">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <Search className="h-5 w-5 text-gray-400" />
       </div>
+      <input
+        type="text"
+        className="bg-gray-800 text-white w-full pl-10 pr-4 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
+        placeholder="Search for songs, artists, or albums..."
+        value={searchQuery}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleSearch(e.target.value)}
+      />
+      {isLoading && (
+        <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-purple-500"></div>
+        </div>
+      )}
+    </div>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg flex items-start">
-          <AlertTriangle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
-          <p className="text-red-200 text-sm">{error}</p>
+    {error && (
+      <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg flex items-start">
+        <AlertTriangle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+        <p className="text-red-200 text-sm">{error}</p>
+      </div>
+    )}
+
+    <div className="space-y-4">
+      {isLoading && searchQuery.trim() !== '' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Songs Loading Skeleton */}
+          <div className="bg-gray-900/40 rounded-lg p-4">
+            <div className="flex items-center mb-4">
+              <div className="w-5 h-5 bg-purple-500/30 rounded-full mr-2 animate-pulse"></div>
+              <div className="h-6 bg-gray-700/50 rounded w-20 animate-pulse"></div>
+            </div>
+
+            <div className="space-y-3 max-h-[400px]">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-center p-3 rounded-lg bg-gray-800/30 animate-pulse">
+                  <div className="w-12 h-12 bg-gray-700/50 rounded"></div>
+                  <div className="ml-3 flex-grow">
+                    <div className="h-4 bg-gray-700/50 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-700/30 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Albums Loading Skeleton */}
+          <div className="bg-gray-900/40 rounded-lg p-4">
+            <div className="flex items-center mb-4">
+              <div className="w-5 h-5 bg-purple-500/30 rounded-full mr-2 animate-pulse"></div>
+              <div className="h-6 bg-gray-700/50 rounded w-20 animate-pulse"></div>
+            </div>
+
+            <div className="space-y-3 max-h-[400px]">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="flex items-center p-3 rounded-lg bg-gray-800/30 animate-pulse">
+                  <div className="w-12 h-12 bg-gray-700/50 rounded"></div>
+                  <div className="ml-3 flex-grow">
+                    <div className="h-4 bg-gray-700/50 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-700/30 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="space-y-4">
-        {isLoading && searchQuery.trim() !== '' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Songs Loading Skeleton */}
-            <div className="bg-gray-900/40 rounded-lg p-4">
-              <div className="flex items-center mb-4">
-                <div className="w-5 h-5 bg-purple-500/30 rounded-full mr-2 animate-pulse"></div>
-                <div className="h-6 bg-gray-700/50 rounded w-20 animate-pulse"></div>
-              </div>
-              
-              <div className="space-y-3 max-h-[400px]">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="flex items-center p-3 rounded-lg bg-gray-800/30 animate-pulse">
-                    <div className="w-12 h-12 bg-gray-700/50 rounded"></div>
-                    <div className="ml-3 flex-grow">
-                      <div className="h-4 bg-gray-700/50 rounded w-3/4 mb-2"></div>
-                      <div className="h-3 bg-gray-700/30 rounded w-1/2"></div>
+      {!isLoading && searchQuery.trim() !== '' ? (
+        <>
+          {(songs.length > 0 || albums.length > 0) ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Songs Section */}
+              <div className="bg-gray-900/40 rounded-lg p-4 flex flex-col max-h-[500px]">
+                <div className="flex items-center mb-4">
+                  <Music className="w-5 h-5 text-purple-500 mr-2" />
+                  <h2 className="text-lg font-semibold flex-grow">Songs</h2>
+                  <span className="text-gray-400 text-sm">{songs.length} results</span>
+                </div>
+
+                <div className="space-y-1 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                  {songs.length > 0 ? (
+                    songs.map(track => (
+                      <TrackItem key={track.id} track={track} trending={false} />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-400">
+                      No songs found
                     </div>
-                  </div>
-                ))}
+                  )}
+                </div>
+              </div>
+
+              {/* Albums Section */}
+              <div className="bg-gray-900/40 rounded-lg p-4 flex flex-col max-h-[500px]">
+                <div className="flex items-center mb-4">
+                  <Album className="w-5 h-5 text-purple-500 mr-2" />
+                  <h2 className="text-lg font-semibold flex-grow">Albums</h2>
+                  <span className="text-gray-400 text-sm">{albums.length} results</span>
+                </div>
+
+                <div className="space-y-1 overflow-y-auto pr-2 custom-scrollbar flex-1">
+                  {albums.length > 0 ? (
+                    albums.map(track => (
+                      <TrackItem key={track.id} track={track} trending={false} />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-400">
+                      No albums found
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-
-            {/* Albums Loading Skeleton */}
-            <div className="bg-gray-900/40 rounded-lg p-4">
-              <div className="flex items-center mb-4">
-                <div className="w-5 h-5 bg-purple-500/30 rounded-full mr-2 animate-pulse"></div>
-                <div className="h-6 bg-gray-700/50 rounded w-20 animate-pulse"></div>
+          ) : (
+            <div className="text-center py-12 px-4">
+              <div className="inline-block p-4 rounded-full bg-gray-800 mb-4">
+                <Search className="w-8 h-8 text-gray-400" />
               </div>
-              
-              <div className="space-y-3 max-h-[400px]">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="flex items-center p-3 rounded-lg bg-gray-800/30 animate-pulse">
-                    <div className="w-12 h-12 bg-gray-700/50 rounded"></div>
-                    <div className="ml-3 flex-grow">
-                      <div className="h-4 bg-gray-700/50 rounded w-3/4 mb-2"></div>
-                      <div className="h-3 bg-gray-700/30 rounded w-1/2"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <h3 className="text-lg font-medium text-white mb-2">No results found</h3>
+              <p className="text-gray-400">
+                No matches found for "{searchQuery}". Try different keywords or check your spelling.
+              </p>
             </div>
-          </div>
-        )}
-
-        {!isLoading && searchQuery.trim() !== '' ? (
+          )}
+        </>
+      ) : (
+        !isLoading && (
           <>
-            {(songs.length > 0 || albums.length > 0) ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Songs Section */}
-                <div className="bg-gray-900/40 rounded-lg p-4 flex flex-col max-h-[500px]">
-                  <div className="flex items-center mb-4">
-                    <Music className="w-5 h-5 text-purple-500 mr-2" />
-                    <h2 className="text-lg font-semibold flex-grow">Songs</h2>
-                    <span className="text-gray-400 text-sm">{songs.length} results</span>
-                  </div>
-                  
-                  <div className="space-y-1 overflow-y-auto pr-2 custom-scrollbar flex-1">
-                    {songs.length > 0 ? (
-                      songs.map(track => (
-                        <TrackItem key={track.id} track={track} trending={false} />
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-gray-400">
-                        No songs found
-                      </div>
-                    )}
-                  </div>
-                </div>
+            <div className="flex items-center mb-4">
+              <Disc3 className="w-5 h-5 text-purple-500 mr-2" />
+              <h2 className="text-lg font-semibold">Global Music Charts</h2>
+            </div>
 
-                {/* Albums Section */}
-                <div className="bg-gray-900/40 rounded-lg p-4 flex flex-col max-h-[500px]">
-                  <div className="flex items-center mb-4">
-                    <Album className="w-5 h-5 text-purple-500 mr-2" />
-                    <h2 className="text-lg font-semibold flex-grow">Albums</h2>
-                    <span className="text-gray-400 text-sm">{albums.length} results</span>
-                  </div>
-                  
-                  <div className="space-y-1 overflow-y-auto pr-2 custom-scrollbar flex-1">
-                    {albums.length > 0 ? (
-                      albums.map(track => (
-                        <TrackItem key={track.id} track={track} trending={false} />
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-gray-400">
-                        No albums found
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-12 px-4">
-                <div className="inline-block p-4 rounded-full bg-gray-800 mb-4">
-                  <Search className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-white mb-2">No results found</h3>
-                <p className="text-gray-400">
-                  No matches found for "{searchQuery}". Try different keywords or check your spelling.
-                </p>
-              </div>
-            )}
+            <div className="space-y-1">
+              {trendingTracks.map((track) => (
+                <TrackItem
+                  key={track.id}
+                  track={track}
+                  trending={true}
+                />
+              ))}
+            </div>
           </>
-        ) : (
-          !isLoading && (
-            <>
-              <div className="flex items-center mb-4">
-                <Disc3 className="w-5 h-5 text-purple-500 mr-2" />
-                <h2 className="text-lg font-semibold">Global Music Charts</h2>
-              </div>
-              
-              <div className="space-y-1">
-                {trendingTracks.map((track) => (
-                  <TrackItem 
-                    key={track.id} 
-                    track={track} 
-                    trending={true} 
-                  />
-                ))}
-              </div>
-            </>
-          )
-        )}
-      </div>
+        )
+      )}
     </div>
-  );
+  </div>
+);
 };
 
 export default MusicSearchBar;
