@@ -145,15 +145,16 @@ const MobileMain = () => {
     }
   };
 
-  const fetchSongUrl = async (encryptedUrl: string): Promise<string | null> => {
+  // Add this function to fetch song URL from encrypted media URL
+  const fetchSongUrl = async (encryptedMediaUrl: string): Promise<string | null> => {
     try {
-      const response = await fetch('/api/dashboard/getSongUrl', {
+      const response = await fetch('/api/dashboard/getMediaUrl', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ encryptedUrl }),
+        body: JSON.stringify({ encryptedMediaUrl }),
       });
 
       if (!response.ok) {
@@ -164,7 +165,7 @@ const MobileMain = () => {
       }
 
       const data = await response.json();
-      return data.downloadUrl || null;
+      return data.url || null;
     } catch (error) {
       console.error('Error fetching song URL:', error);
       toast.error('Failed to get song URL. Please try again.');
@@ -172,30 +173,57 @@ const MobileMain = () => {
     }
   };
 
+  const getSongDetails = async (id: string): Promise<Song | null> => {
+    try {
+      const response = await fetch('/api/dashboard/getSongUrl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error fetching song details:', errorData);
+        toast.error('Failed to get song details. Please try again.');
+        return null;
+      }
+
+      const data = await response.json();
+      
+      if (!data.data || !data.data[0]) {
+        toast.error('Song data not found');
+        return null;
+      }
+      
+      const songData = data.data[0];
+      
+      return {
+        id: songData.id,
+        name: songData.name,
+        artist: songData.artists?.primary[0]?.name || 'Unknown Artist',
+        image: songData.image[2]?.url || '',
+        url: songData.downloadUrl[4]?.url || '',
+      };
+    } catch (error) {
+      console.error('Error fetching song details:', error);
+      toast.error('Failed to get song details. Please try again.');
+      return null;
+    }
+  };
+
   const handleSongSelect = async (item: SearchResultItem) => {
     try {
       setLoadingSong(item.id);
-      const encryptedUrl = item.more_info.encrypted_media_url;
-      if (!encryptedUrl) {
-        toast.error('Song URL not available');
+      
+      const song = await getSongDetails(item.id);
+      
+      if (!song) {
+        setLoadingSong(null);
         return;
       }
-
-      const downloadUrl = await fetchSongUrl(encryptedUrl);
-      if (!downloadUrl) {
-        toast.error('Could not get song URL');
-        return;
-      }
-
-      const primaryArtist = item.more_info.artistMap.primary_artists[0];
-      const song: Song = {
-        id: item.id,
-        name: item.title,
-        artist: primaryArtist?.name || 'Unknown Artist',
-        image: item.image,
-        url: downloadUrl,
-        
-      };
 
       // Update recentlyPlayed list in localStorage
       const stored = localStorage.getItem('recentlyPlayed');
@@ -210,9 +238,10 @@ const MobileMain = () => {
       setIsPlaying(true);
       setShowSuggestions(false);
       toast.success(`Now playing: ${item.title}`);
-      setLoadingSong(null);
     } catch (error) {
-      console.error('Error selecting song:', error);
+      console.error('Error playing song:', error);
+      toast.error('Failed to play song. Please try again.');
+    } finally {
       setLoadingSong(null);
     }
   };
@@ -441,18 +470,17 @@ const MobileMain = () => {
                         <button
                           className="p-2 text-zinc-400 hover:text-purple-500"
                           onClick={async () => {
-                            const primaryArtist = item.more_info.artistMap.primary_artists[0];
-                            // Fetch the song URL before adding to playlist
-                            const downloadUrl = await fetchSongUrl(item.more_info.encrypted_media_url);
-                            
-                            const song: Song = {
-                              id: item.id,
-                              name: item.title,
-                              artist: primaryArtist?.name || 'Unknown Artist',
-                              image: item.image,
-                              url: downloadUrl || '', // Use the fetched URL
-                            };
-                            handleAddToPlaylist(song);
+                            try {
+                              // Use getSongDetails to get the full song information
+                              const songDetails = await getSongDetails(item.id);
+                              
+                              if (songDetails) {
+                                handleAddToPlaylist(songDetails);
+                              }
+                            } catch (error) {
+                              console.error("Error adding song to playlist:", error);
+                              toast.error("Failed to add song to playlist");
+                            }
                           }}
                         >
                           <Plus size={20} />

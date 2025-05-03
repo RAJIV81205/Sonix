@@ -165,7 +165,7 @@ const Main = () => {
     }
   };
 
-  // Function to get song details from JioSaavn API by ID
+  
   const getSongDetails = async (id: string): Promise<Song | null> => {
     try {
       const response = await fetch('/api/dashboard/getSongUrl', {
@@ -192,13 +192,14 @@ const Main = () => {
       }
       
       const songData = data.data[0];
-      
+
+    
       return {
         id: songData.id,
         name: songData.name,
         artist: songData.artists?.primary[0]?.name || 'Unknown Artist',
         image: songData.image[2]?.url || '',
-        url: songData.downloadUrl[4]?.url || '',
+        url: songData.downloadUrl[4]?.url.replace("http","https") || '',
       };
     } catch (error) {
       console.error('Error fetching song details:', error);

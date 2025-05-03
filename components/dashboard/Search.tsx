@@ -447,7 +447,7 @@ const MusicSearchBar: React.FC = () => {
   };
 
 return (
-  <div className="bg-gradient-to-b from-black to-zinc-900 text-white p-4 sm:p-6 rounded-lg w-full mx-auto h-[85vh]">
+  <div className="bg-gradient-to-b from-black to-zinc-900 text-white p-4 sm:p-6 rounded-lg w-full mx-auto h-[852vh]">
     <style jsx global>{`
         /* Custom scrollbar styling */
         .custom-scrollbar::-webkit-scrollbar {
