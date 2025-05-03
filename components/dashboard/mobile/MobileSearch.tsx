@@ -440,7 +440,7 @@ const MobileSearch = () => {
   };
 
   return (
-    <div className="bg-gradient-to-b from-black to-zinc-900 text-white p-3 rounded-lg w-full mx-auto min-h-screen">
+    <div className="bg-gradient-to-b from-black to-zinc-900 text-white p-3 rounded-lg w-full mx-auto min-h-screen py-20">
       <style jsx global>{`
         /* Custom scrollbar styling */
         .custom-scrollbar::-webkit-scrollbar {
@@ -468,7 +468,7 @@ const MobileSearch = () => {
         }
       `}</style>
 
-      <div className="relative mb-4 opacity-100 transform translate-y-0 transition-all duration-300 mt-20">
+      <div className="relative mb-4 opacity-100 transform translate-y-0 transition-all duration-300 ">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-4 w-4 text-gray-400" />
         </div>
