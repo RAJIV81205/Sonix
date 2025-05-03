@@ -296,11 +296,33 @@ const MobileSearch = () => {
 
   const getSongUrl = async (id: string) => {
     try {
-      const response = await fetch(`https://saavn.dev/api/songs/${id}`);
+      const token = getAuthToken();
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
+
+      const response = await fetch('/api/dashboard/getSongUrl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error fetching song details:', errorData);
+        toast.error('Failed to get song details. Please try again.');
+        return;
+      }
+
       const data = await response.json();
-  
-      if (!data.success || !data.data || !data.data.length) {
-        throw new Error('Invalid song data');
+      
+      if (!data.data || !data.data[0]) {
+        toast.error('Song data not found');
+        return;
       }
       
       const songData = data.data[0];
@@ -314,8 +336,10 @@ const MobileSearch = () => {
         id: songData.id,
         name: songData.name,
         artist: artistName,
-        image: songData.image && songData.image.length > 0 ? songData.image[2].url : '',
-        url: songData.downloadUrl && songData.downloadUrl.length > 0 ? songData.downloadUrl[4].url : '',
+        image: songData.image && songData.image.length > 0 ? 
+               (songData.image[2].url || '').replace(/^http:/, 'https:') : '',
+        url: songData.downloadUrl && songData.downloadUrl.length > 0 ? 
+             (songData.downloadUrl[4].url || '').replace(/^http:/, 'https:') : '',
       };
       
       const stored = localStorage.getItem('recentlyPlayed');
@@ -335,16 +359,38 @@ const MobileSearch = () => {
     }
   };
   
-  const getAlbumUrl = async (id:string)=>{
+  const getAlbumUrl = async (id: string) => {
     try {
-      const response = await fetch(`https://saavn.dev/api/albums?id=${id}`);
+      const token = getAuthToken();
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
+
+      const response = await fetch('/api/dashboard/getSongUrl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ id, type: 'album' }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error fetching album details:', errorData);
+        toast.error('Failed to get album details. Please try again.');
+        return;
+      }
+
       const data = await response.json();
       
-      if (!data.success || !data.data ) {
-        throw new Error('Invalid album data');
+      if (!data.data) {
+        toast.error('Album data not found');
+        return;
       }
       
-      // Get the album data and songs - data is an array
+      // Get the album data and songs
       const albumData = data.data;
       
       if (albumData.songs && albumData.songs.length > 0) {
@@ -362,9 +408,11 @@ const MobileSearch = () => {
             name: song.name,
             artist: artistName,
             image: song.image && song.image.length > 0 ? 
-                  song.image[2].url : 
-                  (albumData.image && albumData.image.length > 0 ? albumData.image[2].url : ''),
-            url: song.downloadUrl && song.downloadUrl.length > 0 ? song.downloadUrl[4].url : '',
+                  (song.image[2].url || '').replace(/^http:/, 'https:') : 
+                  (albumData.image && albumData.image.length > 0 ? 
+                   (albumData.image[2].url || '').replace(/^http:/, 'https:') : ''),
+            url: song.downloadUrl && song.downloadUrl.length > 0 ? 
+                 (song.downloadUrl[4].url || '').replace(/^http:/, 'https:') : '',
           };
         });
         

@@ -198,8 +198,8 @@ const Main = () => {
         id: songData.id,
         name: songData.name,
         artist: songData.artists?.primary[0]?.name || 'Unknown Artist',
-        image: songData.image[2]?.url || '',
-        url: songData.downloadUrl[4]?.url.replace("http","https") || '',
+        image: songData.image[2]?.url ? (songData.image[2].url).replace(/^http:/, 'https:') : '',
+        url: songData.downloadUrl[4]?.url ? (songData.downloadUrl[4].url).replace(/^http:/, 'https:') : '',
       };
     } catch (error) {
       console.error('Error fetching song details:', error);
