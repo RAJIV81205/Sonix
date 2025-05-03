@@ -34,7 +34,7 @@ interface Song {
 }
 
 const MusicSearchBar: React.FC = () => {
-  const { setCurrentSong, setIsPlaying } = usePlayer();
+  const { setCurrentSong, setIsPlaying, setPlaylist } = usePlayer();
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [songs, setSongs] = useState<Track[]>([]);
@@ -354,42 +354,51 @@ const MusicSearchBar: React.FC = () => {
       const albumData = data.data;
       
       if (albumData.songs && albumData.songs.length > 0) {
-        const firstSong = albumData.songs[0];
+        // Create an array of Song objects from all tracks in the album
+        const albumSongs: Song[] = albumData.songs.map((song: any) => {
+          // Get artist name
+          let artistName = 'Unknown Artist';
+          if (song.artists && song.artists.primary && song.artists.primary.length > 0) {
+            artistName = song.artists.primary[0].name;
+          }
+          
+          // Create the song object
+          return {
+            id: song.id,
+            name: song.name,
+            artist: artistName,
+            image: song.image && song.image.length > 0 ? 
+                  song.image[2].url : 
+                  (albumData.image && albumData.image.length > 0 ? albumData.image[2].url : ''),
+            url: song.downloadUrl && song.downloadUrl.length > 0 ? song.downloadUrl[4].url : '',
+          };
+        });
         
-        // Get artist name from the first song
-        let artistName = 'Unknown Artist';
-        if (firstSong.artists && firstSong.artists.primary && firstSong.artists.primary.length > 0) {
-          artistName = firstSong.artists.primary[0].name;
+        // Filter out any songs that don't have a valid URL
+        const validSongs = albumSongs.filter(song => song.url);
+        
+        if (validSongs.length === 0) {
+          toast.error('No playable songs found in this album');
+          return;
         }
         
-        // Create a song object from the first track
-        const song: Song = {
-          id: firstSong.id,
-          name: firstSong.name,
-          artist: artistName,
-          // Get image URL from the image array
-          image: firstSong.image && firstSong.image.length > 0 ? 
-                firstSong.image[2].url : 
-                (albumData.image && albumData.image.length > 0 ? albumData.image[2].url : ''),
-          // Get download URL from the downloadUrl array
-          url: firstSong.downloadUrl && firstSong.downloadUrl.length > 0 ? firstSong.downloadUrl[4].url : '',
-        };
+        // Update playlist with all songs from the album
+        setPlaylist(validSongs);
         
-        console.log('Album song:', song);
+        // Play the first song
+        setCurrentSong(validSongs[0]);
+        setIsPlaying(true);
         
-        // Update recently played
+        // Update recently played with the first song
         const stored = localStorage.getItem('recentlyPlayed');
         const recentSongs: Song[] = stored ? JSON.parse(stored) : [];
-        const filtered = recentSongs.filter((s) => s.id !== song.id);
-        filtered.unshift(song);
+        const filtered = recentSongs.filter((s) => s.id !== validSongs[0].id);
+        filtered.unshift(validSongs[0]);
         const limited = filtered.slice(0, 20);
         localStorage.setItem('recentlyPlayed', JSON.stringify(limited));
         setRecentlyPlayed(limited);
         
-        // Play the song
-        setCurrentSong(song);
-        setIsPlaying(true);
-        toast.success(`Now playing: ${song.name} from ${albumData.name}`);
+        toast.success(`Now playing: ${validSongs[0].name} from ${albumData.name}`);
       } else {
         toast.error('No songs found in this album');
       }

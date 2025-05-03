@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { Music, PlayCircle } from 'lucide-react'
+import { Music, PlayCircle, Play } from 'lucide-react'
 import LoadingSpinner from '../LoadingSpinner'
 import { usePlayer } from '@/context/PlayerContext'
 
@@ -71,7 +71,15 @@ const PlaylistPage = () => {
   const handlePlaySong = (song: Song, index: number) => {
     if (playlist) {
       setCurrentSong(song)
-      setPlayerPlaylist(playlist.songs)
+      setPlayerPlaylist(playlist.songs, index)
+      setIsPlaying(true)
+    }
+  }
+
+  const handlePlayAll = () => {
+    if (playlist && playlist.songs.length > 0) {
+      setPlayerPlaylist(playlist.songs, 0)
+      setCurrentSong(playlist.songs[0])
       setIsPlaying(true)
     }
   }
@@ -113,6 +121,15 @@ const PlaylistPage = () => {
           <p className="text-zinc-400">
             {playlist.songs.length} songs • Created on {new Date(playlist.createdAt).toLocaleDateString()}
           </p>
+          {playlist.songs.length > 0 && (
+            <button 
+              onClick={handlePlayAll}
+              className="mt-4 flex items-center gap-2 bg-white text-black py-2 px-6 rounded-full hover:bg-opacity-90 transition-colors"
+            >
+              <Play size={20} className="fill-black" />
+              <span className="font-medium">Play All</span>
+            </button>
+          )}
         </div>
       </div>
 

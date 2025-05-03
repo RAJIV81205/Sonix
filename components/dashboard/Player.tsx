@@ -13,7 +13,7 @@ import React, { useState, useEffect, useRef } from "react"
 import { usePlayer } from "@/context/PlayerContext"
 
 const Player = () => {
-  const { currentSong, isPlaying, setIsPlaying, audioRef } = usePlayer()
+  const { currentSong, isPlaying, setIsPlaying, audioRef, playNext, playPrevious, playlist } = usePlayer()
   const [volume, setVolume] = useState(80)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -149,7 +149,11 @@ const Player = () => {
           <button className="text-zinc-400 hover:text-white transition-colors">
             <Shuffle className="w-4 h-4 md:w-5 md:h-5" />
           </button>
-          <button className="text-zinc-400 hover:text-white transition-colors">
+          <button 
+            className="text-zinc-400 hover:text-white transition-colors"
+            onClick={playPrevious}
+            disabled={!currentSong || playlist.length === 0}
+          >
             <SkipBack className="w-4 h-4 md:w-5 md:h-5" />
           </button>
           <button
@@ -159,7 +163,11 @@ const Player = () => {
           >
             {isPlaying ? <Pause className="w-4 h-4 md:w-5 md:h-5" /> : <Play className="w-4 h-4 md:w-5 md:h-5" />}
           </button>
-          <button className="text-zinc-400 hover:text-white transition-colors">
+          <button 
+            className="text-zinc-400 hover:text-white transition-colors"
+            onClick={playNext}
+            disabled={!currentSong || playlist.length === 0}
+          >
             <SkipForward className="w-4 h-4 md:w-5 md:h-5" />
           </button>
           <button className="text-zinc-400 hover:text-white transition-colors">

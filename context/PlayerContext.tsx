@@ -13,9 +13,13 @@ interface Song {
 interface PlayerContextType {
   currentSong: Song | null;
   isPlaying: boolean;
+  playlist: Song[];
+  currentSongIndex: number;
   setCurrentSong: (song: Song) => void;
   setIsPlaying: (playing: boolean) => void;
-  setPlaylist: (songs: Song[]) => void;
+  setPlaylist: (songs: Song[], startIndex?: number) => void;
+  playNext: () => void;
+  playPrevious: () => void;
   audioRef: React.RefObject<HTMLAudioElement | null>;
 }
 
@@ -27,6 +31,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [isPlaying, setIsPlayingState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [playlist, setPlaylistState] = useState<Song[]>([]);
+  const [currentSongIndex, setCurrentSongIndex] = useState<number>(-1);
   const audioRef = useRef<HTMLAudioElement>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
   const hasInitializedRef = useRef(false);
@@ -57,7 +62,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
         const savedPlaylist = localStorage.getItem('playlist');
         if (savedPlaylist) {
-          setPlaylistState(JSON.parse(savedPlaylist));
+          const parsedPlaylist = JSON.parse(savedPlaylist);
+          setPlaylistState(parsedPlaylist);
+          
+          // Restore current song index if available
+          const savedIndex = localStorage.getItem('currentSongIndex');
+          if (savedIndex) {
+            setCurrentSongIndex(parseInt(savedIndex, 10));
+          }
         }
 
         setIsPlaying(false)
@@ -68,6 +80,21 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       }
     }
   }, []);
+
+  // Auto-play next song when current one ends
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleEnded = () => {
+      playNext();
+    };
+
+    audio.addEventListener('ended', handleEnded);
+    return () => {
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, [playlist, currentSongIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save playback position periodically
   useEffect(() => {
@@ -88,8 +115,102 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [currentSong, isPlaying]);
 
+  // Play next song from playlist
+  const playNext = () => {
+    if (playlist.length === 0) return;
+    
+    if (currentSongIndex < playlist.length - 1) {
+      // Play next song in playlist
+      const nextIndex = currentSongIndex + 1;
+      const nextSong = playlist[nextIndex];
+      
+      setCurrentSongIndex(nextIndex);
+      setCurrentSongState(nextSong);
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('currentSong', JSON.stringify(nextSong));
+        localStorage.setItem('currentSongIndex', nextIndex.toString());
+        localStorage.removeItem('currentPosition');
+      }
+      
+      // Ensure we're playing
+      setIsPlaying(true);
+    } else if (playlist.length > 0) {
+      // Loop back to first song
+      const nextSong = playlist[0];
+      
+      setCurrentSongIndex(0);
+      setCurrentSongState(nextSong);
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('currentSong', JSON.stringify(nextSong));
+        localStorage.setItem('currentSongIndex', '0');
+        localStorage.removeItem('currentPosition');
+      }
+      
+      // Ensure we're playing
+      setIsPlaying(true);
+    }
+  };
+
+  // Play previous song from playlist
+  const playPrevious = () => {
+    if (playlist.length === 0) return;
+    
+    // If we're more than 3 seconds into a song, restart it instead of going to previous
+    if (audioRef.current && audioRef.current.currentTime > 3) {
+      audioRef.current.currentTime = 0;
+      return;
+    }
+    
+    if (currentSongIndex > 0) {
+      // Play previous song in playlist
+      const prevIndex = currentSongIndex - 1;
+      const prevSong = playlist[prevIndex];
+      
+      setCurrentSongIndex(prevIndex);
+      setCurrentSongState(prevSong);
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('currentSong', JSON.stringify(prevSong));
+        localStorage.setItem('currentSongIndex', prevIndex.toString());
+        localStorage.removeItem('currentPosition');
+      }
+      
+      // Ensure we're playing
+      setIsPlaying(true);
+    } else if (playlist.length > 0) {
+      // Loop back to last song
+      const lastIndex = playlist.length - 1;
+      const lastSong = playlist[lastIndex];
+      
+      setCurrentSongIndex(lastIndex);
+      setCurrentSongState(lastSong);
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('currentSong', JSON.stringify(lastSong));
+        localStorage.setItem('currentSongIndex', lastIndex.toString());
+        localStorage.removeItem('currentPosition');
+      }
+      
+      // Ensure we're playing
+      setIsPlaying(true);
+    }
+  };
+
   // Wrapper functions to update both state and localStorage
   const setCurrentSong = (song: Song) => {
+    // Find song in playlist to get the index
+    const songIndex = playlist.findIndex(s => s.id === song.id);
+    
+    // If song exists in playlist, update the current index
+    if (songIndex >= 0) {
+      setCurrentSongIndex(songIndex);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('currentSongIndex', songIndex.toString());
+      }
+    }
+    
     // Check if this is the same song that's currently playing
     if (currentSong && song.id === currentSong.id && audioRef.current) {
       // Reset playback to beginning
@@ -121,10 +242,21 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const setPlaylist = (songs: Song[]) => {
+  const setPlaylist = (songs: Song[], startIndex: number = 0) => {
     setPlaylistState(songs);
+    
+    // Set current song index if valid
+    if (startIndex >= 0 && startIndex < songs.length) {
+      setCurrentSongIndex(startIndex);
+    } else if (songs.length > 0) {
+      setCurrentSongIndex(0);
+    } else {
+      setCurrentSongIndex(-1);
+    }
+    
     if (typeof window !== 'undefined') {
       localStorage.setItem('playlist', JSON.stringify(songs));
+      localStorage.setItem('currentSongIndex', currentSongIndex.toString());
     }
   };
 
@@ -214,7 +346,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [currentSong, isPlaying]);
 
   return (
-    <PlayerContext.Provider value={{ currentSong, isPlaying, setCurrentSong, setIsPlaying, setPlaylist, audioRef }}>
+    <PlayerContext.Provider value={{ 
+      currentSong, 
+      isPlaying, 
+      playlist, 
+      currentSongIndex,
+      setCurrentSong, 
+      setIsPlaying, 
+      setPlaylist, 
+      playNext, 
+      playPrevious, 
+      audioRef 
+    }}>
       {children}
       <audio ref={audioRef} />
     </PlayerContext.Provider>
