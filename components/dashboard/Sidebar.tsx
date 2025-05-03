@@ -58,22 +58,22 @@ export default function Sidebar() {
     const colors = [
       "from-teal-500 to-emerald-500",
       "from-amber-500 to-orange-500",
-      "from-blue-500 to-indigo-500",
-      "from-pink-500 to-rose-500",
+      "from-purple-500 to-indigo-500",
+      "from-indigo-500 to-violet-500",
       "from-emerald-500 to-cyan-500"
     ];
     return colors[index % colors.length];
   };
 
   return (
-    <div className="w-full bg-gradient-to-b from-black to-zinc-900 text-white p-5 flex flex-col gap-6 border-r border-zinc-800 shadow-xl min-h-screen">
+    <div className="w-full bg-black text-white p-5 flex flex-col gap-6 border-r border-zinc-800 shadow-xl min-h-screen">
       {/* Logo Section */}
       <div className="flex items-center gap-3">
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-2.5 rounded-xl shadow-lg shadow-purple-500/20">
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20">
           <Headphones className="text-white w-5 h-5" />
         </div>
         <div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">Sonix</h1>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-indigo-500 bg-clip-text text-transparent">Sonix</h1>
           <p className="text-xs text-zinc-400">Music Experience</p>
         </div>
       </div>
@@ -85,16 +85,16 @@ export default function Sidebar() {
       <div>
         <h2 className="text-xs uppercase tracking-wider text-zinc-500 font-semibold mb-3 px-1">Main</h2>
         <nav className="flex flex-col gap-1">
-          <Link href="/dashboard" className="flex items-center gap-3 hover:bg-zinc-800/50 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
-            <Home className="w-5 h-5 text-zinc-400 group-hover:text-purple-400 transition-colors" />
+          <Link href="/dashboard" className="flex items-center gap-3 hover:bg-zinc-900 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
+            <Home className="w-5 h-5 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
             <span className="text-sm font-medium">Home</span>
           </Link>
-          <Link href="/dashboard/search" className="flex items-center gap-3 hover:bg-zinc-800/50 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
-            <Search className="w-5 h-5 text-zinc-400 group-hover:text-purple-400 transition-colors" />
+          <Link href="/dashboard/search" className="flex items-center gap-3 hover:bg-zinc-900 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
+            <Search className="w-5 h-5 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
             <span className="text-sm font-medium">Search</span>
           </Link>
-          <Link href="/dashboard/explore" className="flex items-center gap-3 hover:bg-zinc-800/50 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
-            <Compass className="w-5 h-5 text-zinc-400 group-hover:text-purple-400 transition-colors" />
+          <Link href="/dashboard/explore" className="flex items-center gap-3 hover:bg-zinc-900 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
+            <Compass className="w-5 h-5 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
             <span className="text-sm font-medium">Explore</span>
           </Link>
         </nav>
@@ -104,16 +104,16 @@ export default function Sidebar() {
       <div>
         <h2 className="text-xs uppercase tracking-wider text-zinc-500 font-semibold mb-3 px-1">Your Library</h2>
         <nav className="flex flex-col gap-1">
-          <Link href="/dashboard/library" className="flex items-center gap-3 hover:bg-zinc-800/50 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
-            <Library className="w-5 h-5 text-zinc-400 group-hover:text-purple-400 transition-colors" />
+          <Link href="/dashboard/library" className="flex items-center gap-3 hover:bg-zinc-900 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
+            <Library className="w-5 h-5 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
             <span className="text-sm font-medium">Collections</span>
           </Link>
-          <Link href="/dashboard/recent" className="flex items-center gap-3 hover:bg-zinc-800/50 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
-            <Clock className="w-5 h-5 text-zinc-400 group-hover:text-purple-400 transition-colors" />
+          <Link href="/dashboard/recent" className="flex items-center gap-3 hover:bg-zinc-900 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
+            <Clock className="w-5 h-5 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
             <span className="text-sm font-medium">Recent Plays</span>
           </Link>
-          <Link href="/dashboard/artists" className="flex items-center gap-3 hover:bg-zinc-800/50 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
-            <Mic className="w-5 h-5 text-zinc-400 group-hover:text-purple-400 transition-colors" />
+          <Link href="/dashboard/artists" className="flex items-center gap-3 hover:bg-zinc-900 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
+            <Mic className="w-5 h-5 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
             <span className="text-sm font-medium">Artists</span>
           </Link>
         </nav>
@@ -127,16 +127,16 @@ export default function Sidebar() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs uppercase tracking-wider text-zinc-500 font-semibold px-1">Playlists</h2>
           <button 
-            className="p-1.5 rounded-md hover:bg-zinc-800/70 transition-colors"
+            className="p-1.5 rounded-md hover:bg-zinc-900 transition-colors"
             onClick={() => setShowAddPlaylistPopup(true)}
           >
-            <Plus className="w-4 h-4 text-zinc-400" />
+            <Plus className="w-4 h-4 text-indigo-400" />
           </button>
         </div>
         
         <div className="space-y-2">
-          <div className="flex items-center gap-3 hover:bg-zinc-800/50 py-2 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-md flex items-center justify-center shadow-md shadow-purple-500/10">
+          <div className="flex items-center gap-3 hover:bg-zinc-900 py-2 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-md flex items-center justify-center shadow-md shadow-indigo-500/10">
               <Heart className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -148,14 +148,14 @@ export default function Sidebar() {
           {/* User Playlists */}
           {loading ? (
             <div className="py-3 text-center">
-              <div className="animate-pulse bg-zinc-800/50 h-12 rounded-lg w-full"></div>
+              <div className="animate-pulse bg-zinc-900 h-12 rounded-lg w-full"></div>
             </div>
           ) : playlists.length > 0 ? (
             playlists.map((playlist, index) => (
               <Link 
                 href={`/dashboard/playlist/${playlist.id}`} 
                 key={playlist.id}
-                className="flex items-center gap-3 hover:bg-zinc-800/50 py-2 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group"
+                className="flex items-center gap-3 hover:bg-zinc-900 py-2 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group"
               >
                 <div className={`w-10 h-10 bg-gradient-to-br ${getPlaylistColor(index)} rounded-md flex items-center justify-center shadow-md`}>
                   <Music className="w-5 h-5 text-white" />
@@ -172,7 +172,7 @@ export default function Sidebar() {
             // Big "Create Playlist" button when no playlists exist
             <button 
               onClick={() => setShowAddPlaylistPopup(true)}
-              className="w-full bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg p-5 transition-all duration-300 shadow-lg hover:shadow-purple-500/20 text-center group"
+              className="w-full bg-gradient-to-br from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-lg p-5 transition-all duration-300 shadow-lg hover:shadow-indigo-500/20 text-center group"
             >
               <div className="flex flex-col items-center justify-center gap-3">
                 <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">

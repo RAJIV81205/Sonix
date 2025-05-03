@@ -88,19 +88,19 @@ export default function MobileSidebar() {
   return (
     <>
       {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 bg-black/95 z-50 px-4 py-3 border-b border-zinc-800">
+      <div className="fixed top-0 left-0 right-0 bg-black z-50 px-4 py-3 border-b border-zinc-900">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-2 rounded-full">
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-2 rounded-full shadow-lg shadow-indigo-500/20">
               <Headphones className="text-white w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">Sonix</h1>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-indigo-500 bg-clip-text text-transparent">Sonix</h1>
               <p className="text-xs text-zinc-400">Music Experience</p>
             </div>
           </div>
           <button
-            className="p-2 hover:bg-zinc-800/50 rounded-full"
+            className="p-2 hover:bg-zinc-900 rounded-full transition-colors"
             onClick={() => setIsOpen(true)}
           >
             <Menu className="w-6 h-6 text-white" />
@@ -118,24 +118,24 @@ export default function MobileSidebar() {
 
       {/* Mobile Sidebar Menu */}
       <div 
-        className={`fixed inset-0 bg-gradient-to-b from-zinc-900 to-black z-50 transition-transform duration-300 ${
+        className={`fixed inset-0 bg-black z-50 transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Menu Header */}
-        <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+        <div className="flex items-center justify-between p-4 border-b border-zinc-900">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-2.5 rounded-xl">
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20">
               <Headphones className="text-white w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">Sonix</h1>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-indigo-500 bg-clip-text text-transparent">Sonix</h1>
               <p className="text-xs text-zinc-400">Music Experience</p>
             </div>
           </div>
           <button 
             onClick={() => setIsOpen(false)}
-            className="p-2 hover:bg-zinc-800/50 rounded-full"
+            className="p-2 hover:bg-zinc-900 rounded-full transition-colors"
           >
             <X className="w-6 h-6 text-white" />
           </button>
@@ -151,12 +151,12 @@ export default function MobileSidebar() {
                 href="/dashboard"
                 className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
                   activeItem === 'home' 
-                    ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white' 
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    ? 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-white' 
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors'
                 }`}
                 onClick={() => handleItemClick('home')}
               >
-                <Home className="w-6 h-6" />
+                <Home className={`w-6 h-6 ${activeItem === 'home' ? 'text-purple-400' : ''}`} />
                 <span className="font-medium text-lg">Home</span>
               </Link>
               
@@ -164,12 +164,12 @@ export default function MobileSidebar() {
                 href="/dashboard/search"
                 className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
                   activeItem === 'search' 
-                    ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white' 
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    ? 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-white' 
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors'
                 }`}
                 onClick={() => handleItemClick('search')}
               >
-                <Search className="w-6 h-6" />
+                <Search className={`w-6 h-6 ${activeItem === 'search' ? 'text-purple-400' : ''}`} />
                 <span className="font-medium text-lg">Search</span>
               </Link>
               
@@ -177,12 +177,12 @@ export default function MobileSidebar() {
                 href="/dashboard/explore"
                 className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
                   activeItem === 'explore' 
-                    ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white' 
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    ? 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-white' 
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors'
                 }`}
                 onClick={() => handleItemClick('explore')}
               >
-                <Compass className="w-6 h-6" />
+                <Compass className={`w-6 h-6 ${activeItem === 'explore' ? 'text-purple-400' : ''}`} />
                 <span className="font-medium text-lg">Explore</span>
               </Link>
             </nav>
@@ -196,12 +196,12 @@ export default function MobileSidebar() {
                 href="/dashboard/library"
                 className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
                   activeItem === 'library' 
-                    ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white' 
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    ? 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-white' 
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors'
                 }`}
                 onClick={() => handleItemClick('library')}
               >
-                <Library className="w-6 h-6" />
+                <Library className={`w-6 h-6 ${activeItem === 'library' ? 'text-purple-400' : ''}`} />
                 <span className="font-medium text-lg">Collections</span>
               </Link>
               
@@ -209,12 +209,12 @@ export default function MobileSidebar() {
                 href="/dashboard/recent"
                 className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
                   activeItem === 'recent' 
-                    ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white' 
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    ? 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-white' 
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors'
                 }`}
                 onClick={() => handleItemClick('recent')}
               >
-                <Clock className="w-6 h-6" />
+                <Clock className={`w-6 h-6 ${activeItem === 'recent' ? 'text-purple-400' : ''}`} />
                 <span className="font-medium text-lg">Recent Plays</span>
               </Link>
               
@@ -222,12 +222,12 @@ export default function MobileSidebar() {
                 href="/dashboard/artists"
                 className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
                   activeItem === 'artists' 
-                    ? 'bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-white' 
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    ? 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-white' 
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors'
                 }`}
                 onClick={() => handleItemClick('artists')}
               >
-                <Mic className="w-6 h-6" />
+                <Mic className={`w-6 h-6 ${activeItem === 'artists' ? 'text-purple-400' : ''}`} />
                 <span className="font-medium text-lg">Artists</span>
               </Link>
             </nav>
@@ -238,59 +238,60 @@ export default function MobileSidebar() {
             <h2 className="text-xs uppercase tracking-wider text-zinc-500 font-semibold mb-3 px-1">Playlists</h2>
             <div className="space-y-2">
               <button 
-                className="w-full flex items-center gap-4 p-4 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
+                className="w-full flex items-center gap-4 p-4 rounded-xl text-purple-400 hover:text-white hover:bg-zinc-900 transition-colors"
                 onClick={() => setShowAddPlaylistPopup(true)}
               >
-                <div className="bg-zinc-400/20 p-2 rounded-lg">
-                  <Plus className="w-5 h-5" />
+                <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-2 rounded-lg shadow-sm shadow-purple-500/10">
+                  <Plus className="w-5 h-5 text-white" />
                 </div>
                 <span className="font-medium text-lg">Create Playlist</span>
               </button>
               
-              <div className="w-full flex items-center gap-4 p-4 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-md flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-white" />
+              <div className="w-full flex items-center gap-4 p-4 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors">
+                <div className="bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg w-9 h-9 flex items-center justify-center shadow-md shadow-purple-500/10">
+                  <Heart className="w-4 h-4 text-white" />
                 </div>
-                <div>
-                  <p className="font-medium text-lg">Liked Songs</p>
-                  <p className="text-xs text-zinc-500">120 songs</p>
-                </div>
+                <span className="font-medium text-lg">Liked Songs</span>
               </div>
-              
+
               {/* User Playlists */}
               {loading ? (
-                <div className="flex items-center justify-center p-4">
-                  <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
                 </div>
               ) : (
-                playlists.map((playlist, index) => (
-                  <Link 
-                    href={`/dashboard/playlist/${playlist.id}`}
-                    key={playlist.id}
-                    className="w-full flex items-center gap-4 p-4 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <div className={`w-10 h-10 bg-gradient-to-br ${getPlaylistColor(index)} rounded-md flex items-center justify-center`}>
-                      <Music className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-lg">{playlist.name}</p>
-                      <p className="text-xs text-zinc-500">{playlist.songCount || 0} songs</p>
-                    </div>
-                  </Link>
-                ))
+                <div className="space-y-1">
+                  {playlists.map((playlist, index) => (
+                    <Link 
+                      href={`/dashboard/playlist/${playlist.id}`} 
+                      key={playlist.id}
+                      className="w-full flex items-center gap-4 p-3 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <div className={`w-9 h-9 bg-gradient-to-br ${getPlaylistColor(index)} rounded-lg flex items-center justify-center shadow-md`}>
+                        <Music className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{playlist.name}</p>
+                        <p className="text-xs text-zinc-500 truncate">
+                          {playlist.songCount || 0} songs
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               )}
             </div>
           </div>
         </div>
-
-        {/* Add Playlist Popup */}
-        <MobileAddPlaylistPopup 
-          isOpen={showAddPlaylistPopup} 
-          onClose={() => setShowAddPlaylistPopup(false)} 
-          onSuccess={handlePlaylistCreated}
-        />
       </div>
+
+      {/* Add Playlist Popup */}
+      <MobileAddPlaylistPopup 
+        isOpen={showAddPlaylistPopup} 
+        onClose={() => setShowAddPlaylistPopup(false)}
+        onSuccess={handlePlaylistCreated}
+      />
     </>
   );
 }

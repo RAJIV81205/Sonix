@@ -61,7 +61,7 @@ export default function MobileAddPlaylistPopup({ isOpen, onClose, onSuccess }: M
 
   return (
     <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-      <div className="bg-zinc-900 rounded-xl w-full max-w-md border border-zinc-700 shadow-xl">
+      <div className="bg-black border border-zinc-800 rounded-xl w-full max-w-md shadow-xl shadow-purple-500/5">
         <div className="flex justify-between items-center p-4 border-b border-zinc-800">
           <h2 className="text-xl font-bold text-white">Create New Playlist</h2>
           <button 
@@ -83,7 +83,7 @@ export default function MobileAddPlaylistPopup({ isOpen, onClose, onSuccess }: M
               value={playlistName}
               onChange={(e) => setPlaylistName(e.target.value)}
               placeholder="My Awesome Playlist"
-              className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               disabled={isLoading}
               autoComplete="off"
             />
@@ -93,14 +93,14 @@ export default function MobileAddPlaylistPopup({ isOpen, onClose, onSuccess }: M
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
+              className="px-4 py-2 rounded-lg bg-zinc-900 text-zinc-300 hover:bg-zinc-800 transition-colors"
               disabled={isLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:from-purple-700 hover:to-pink-700 transition-colors disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium hover:from-purple-700 hover:to-indigo-700 transition-colors disabled:opacity-50"
               disabled={isLoading}
             >
               {isLoading ? 'Creating...' : 'Create Playlist'}

@@ -125,10 +125,10 @@ const Player = () => {
   const progress = duration ? (currentTime / duration) * 100 : 0
 
   return (
-    <div className="w-full h-16 md:h-20 bg-zinc-900 border-t border-zinc-800 flex items-center px-2 md:px-4">
+    <div className="w-full h-16 md:h-20 bg-black border-t border-zinc-900 flex items-center px-2 md:px-4">
       {/* Current Song Info */}
       <div className="flex items-center gap-2 md:gap-4 w-1/3 md:w-1/4">
-        <div className="w-10 h-10 md:w-14 md:h-14 bg-zinc-800 rounded overflow-hidden">
+        <div className="w-10 h-10 md:w-14 md:h-14 bg-zinc-900 rounded overflow-hidden">
           {currentSong?.image && (
             <img
               src={currentSong.image}
@@ -157,7 +157,7 @@ const Player = () => {
             <SkipBack className="w-4 h-4 md:w-5 md:h-5" />
           </button>
           <button
-            className="bg-white text-black rounded-full p-1.5 md:p-2 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full p-1.5 md:p-2 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             onClick={() => setIsPlaying(!isPlaying)}
             disabled={!currentSong}
           >
@@ -178,13 +178,13 @@ const Player = () => {
           <span className="text-xs text-zinc-400">{formatTime(currentTime)}</span>
           <div 
             ref={progressBarRef}
-            className="flex-1 h-1 bg-zinc-700 rounded-full cursor-pointer"
+            className="flex-1 h-1 bg-zinc-800 rounded-full cursor-pointer"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
           >
             <div
-              className="h-full bg-white rounded-full"
+              className="h-full bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
@@ -201,7 +201,7 @@ const Player = () => {
           max={100}
           value={volume}
           onChange={(e) => setVolume(Number(e.target.value))}
-          className="w-28 h-1.5 accent-white rounded-full appearance-none cursor-pointer bg-zinc-700"
+          className="w-28 h-1.5 accent-indigo-500 rounded-full appearance-none cursor-pointer bg-zinc-800"
         />
       </div>
     </div>

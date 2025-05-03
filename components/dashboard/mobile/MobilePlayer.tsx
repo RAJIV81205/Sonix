@@ -246,218 +246,212 @@ const MobilePlayer = () => {
 
   return (
     <>
-      {/* Mini Player */}
-      <div 
-        className={`fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-800 z-50 transition-transform duration-300 ${
-          isExpanded ? 'translate-y-full' : 'translate-y-0'
-        }`}
-      >
-        <div className="flex items-center p-3 gap-3">
-          <div 
-            className="w-12 h-12 bg-zinc-800 rounded-lg overflow-hidden flex-shrink-0"
-            onClick={() => setIsExpanded(true)}
-          >
-            {currentSong.image && (
-              <img
-                src={currentSong.image}
-                alt={currentSong.name}
-                className="w-full h-full object-cover"
-              />
-            )}
+      {/* Mini Player (when not expanded) */}
+      {!isExpanded && (
+        <div 
+          className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-900 h-16 flex items-center px-3 z-40"
+          onClick={() => setIsExpanded(true)}
+        >
+          <div className="flex items-center w-full">
+            <div className="w-10 h-10 bg-zinc-900 rounded overflow-hidden mr-3">
+              {currentSong?.image && (
+                <img
+                  src={currentSong.image}
+                  alt={currentSong.name}
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+            <div className="flex-1 min-w-0 mr-3">
+              <p className="text-sm font-medium text-white truncate">{currentSong.name}</p>
+              <p className="text-xs text-zinc-400 truncate">{currentSong.artist}</p>
+            </div>
+            <div className="flex items-center">
+              <button 
+                className="p-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsPlaying(!isPlaying);
+                }}
+              >
+                {isPlaying ? (
+                  <Pause className="w-5 h-5 text-white" />
+                ) : (
+                  <Play className="w-5 h-5 text-white" />
+                )}
+              </button>
+            </div>
           </div>
-          <div className="flex-1 min-w-0" onClick={() => setIsExpanded(true)}>
-            <h3 className="text-sm font-medium text-white truncate">{currentSong.name}</h3>
-            <p className="text-xs text-zinc-400 truncate">{currentSong.artist}</p>
-          </div>
-          <button
-            className="bg-white text-black rounded-full p-2 hover:scale-105 transition-transform"
-            onClick={() => setIsPlaying(!isPlaying)}
-          >
-            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          </button>
-        </div>
-      </div>
-
-      {/* Expanded Player */}
-      <div 
-        className={`fixed inset-0 bg-gradient-to-b from-zinc-900 to-black z-50 transition-transform duration-300 overflow-scroll ${
-          isExpanded ? 'translate-y-0' : 'translate-y-full'
-        }`}
-      >
-        {/* Header */}
-        <div className="p-4 flex items-center justify-between">
-          <button 
-            onClick={() => setIsExpanded(false)}
-            className="p-2 rounded-full hover:bg-zinc-800"
-          >
-            <ChevronUp className="w-5 h-5 text-white" />
-          </button>
-          <h2 className="text-lg font-bold text-white">Now Playing</h2>
-          <div className="w-10" /> {/* Spacer for alignment */}
-        </div>
-
-        {/* Album Art */}
-        <div className="px-8 py-6">
-          <div className="aspect-square bg-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
-            {currentSong.image && (
-              <img
-                src={currentSong.image}
-                alt={currentSong.name}
-                className="w-full h-full object-cover"
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Song Info */}
-        <div className="px-8 py-4">
-          <h3 className="text-xl font-bold text-white">{currentSong.name}</h3>
-          <p className="text-zinc-400">{currentSong.artist}</p>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="px-8 py-4">
-          <div 
-            ref={progressBarRef}
-            className="w-full h-1 bg-zinc-800 rounded-full cursor-pointer"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-          >
-            <div
-              className="h-full bg-white rounded-full"
+          <div className="absolute top-0 left-0 right-0 h-1 bg-zinc-800">
+            <div 
+              className="h-full bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-xs text-zinc-400">{formatTime(currentTime)}</span>
-            <span className="text-xs text-zinc-400">{formatTime(duration)}</span>
-          </div>
         </div>
+      )}
 
-        {/* Controls */}
-        <div className="px-8 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <button className="text-zinc-400 hover:text-white transition-colors">
-              <Shuffle className="w-5 h-5" />
-            </button>
+      {/* Full Player (when expanded) */}
+      {isExpanded && (
+        <div className="fixed inset-0 bg-black z-50 flex flex-col">
+          {/* Header */}
+          <div className="px-4 py-3 flex items-center border-b border-zinc-900">
             <button 
-              className="text-zinc-400 hover:text-white transition-colors"
-              onClick={playPrevious}
-              disabled={!currentSong || playlist.length === 0}
+              className="p-2 -ml-2"
+              onClick={() => setIsExpanded(false)}
             >
-              <SkipBack className="w-5 h-5" />
+              <ChevronUp className="w-5 h-5 text-white" />
             </button>
-            <button
-              className="bg-white text-black rounded-full p-4 hover:scale-105 transition-transform"
-              onClick={() => setIsPlaying(!isPlaying)}
-            >
-              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-            </button>
+            <div className="flex-1 text-center text-sm font-medium text-zinc-400">
+              Now Playing
+            </div>
             <button 
-              className="text-zinc-400 hover:text-white transition-colors"
-              onClick={playNext}
-              disabled={!currentSong || playlist.length === 0}
-            >
-              <SkipForward className="w-5 h-5" />
-            </button>
-            <button className="text-zinc-400 hover:text-white transition-colors">
-              <Repeat className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* More Options */}
-          <div className="flex items-center justify-center gap-8 mb-6">
-            <button className="flex flex-col items-center gap-1 text-zinc-400 hover:text-white">
-              <div className="bg-zinc-800 p-3 rounded-full">
-                <Heart className="w-5 h-5" />
-              </div>
-              <span className="text-xs">Like</span>
-            </button>
-            
-            <button 
-              className="flex flex-col items-center gap-1 text-zinc-400 hover:text-white"
+              className="p-2 -mr-2 text-purple-400"
               onClick={() => setShowPlaylistModal(true)}
             >
-              <div className="bg-zinc-800 p-3 rounded-full">
-                <Plus className="w-5 h-5" />
-              </div>
-              <span className="text-xs">Add to Playlist</span>
+              <Plus className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Volume Control */}
-          <div className="flex items-center gap-3">
-            <Volume2 className="w-5 h-5 text-zinc-400" />
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={volume}
-              onChange={(e) => setVolume(Number(e.target.value))}
-              className="flex-1 h-1 accent-white rounded-full appearance-none cursor-pointer bg-zinc-800"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Add to Playlist Modal */}
-      {showPlaylistModal && (
-        <div className="fixed inset-0 bg-black/80 z-[60] flex items-end">
-          <div className="w-full bg-zinc-900 rounded-t-xl max-h-[70vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-4 border-b border-zinc-800 sticky top-0 bg-zinc-900">
-              <h2 className="text-lg font-bold">Add to Playlist</h2>
-              <button onClick={() => setShowPlaylistModal(false)} className="p-2">
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="p-2 pb-safe">
-              {isLoadingPlaylists ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-                </div>
-              ) : playlists.length > 0 ? (
-                <div className="space-y-1">
-                  {playlists.map((playlist, index) => (
-                    <button
-                      key={playlist.id}
-                      className="w-full flex items-center gap-3 p-4 rounded-lg text-zinc-300 hover:bg-zinc-800 transition-colors"
-                      onClick={() => addSongToPlaylist(playlist.id)}
-                      disabled={addingToPlaylist === playlist.id}
-                    >
-                      <div className={`w-10 h-10 bg-gradient-to-br ${getPlaylistColor(index)} rounded-md flex items-center justify-center`}>
-                        {addingToPlaylist === playlist.id ? (
-                          <Loader2 className="w-5 h-5 text-white animate-spin" />
-                        ) : (
-                          <Music className="w-5 h-5 text-white" />
-                        )}
-                      </div>
-                      <div className="text-left">
-                        <p className="font-medium">{playlist.name}</p>
-                        <p className="text-xs text-zinc-500">{playlist.songCount || 0} songs</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+          {/* Album Art and Info */}
+          <div className="flex-1 flex flex-col items-center justify-center p-8">
+            <div className="w-full max-w-xs aspect-square rounded-lg overflow-hidden shadow-2xl mb-8 bg-zinc-900">
+              {currentSong.image ? (
+                <img
+                  src={currentSong.image}
+                  alt={currentSong.name}
+                  className="w-full h-full object-cover rounded"
+                />
               ) : (
-                <div className="py-8 text-center">
-                  <p className="text-zinc-400">You don't have any playlists yet.</p>
-                  <button 
-                    className="mt-4 px-4 py-2 bg-purple-600 rounded-full text-white font-medium"
-                    onClick={() => {
-                      setShowPlaylistModal(false);
-                      setIsExpanded(false);
-                    }}
-                  >
-                    Create a Playlist
-                  </button>
+                <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
+                  <Music className="w-16 h-16 text-white" />
                 </div>
               )}
             </div>
+            <div className="w-full max-w-xs">
+              <h2 className="text-xl font-bold text-white mb-1 truncate">{currentSong.name}</h2>
+              <p className="text-zinc-400 truncate">{currentSong.artist}</p>
+            </div>
+          </div>
+
+          {/* Controls */}
+          <div className="p-8 pb-12">
+            {/* Progress Bar */}
+            <div className="flex items-center gap-2 mb-6">
+              <span className="text-xs text-zinc-400 w-8 text-right">{formatTime(currentTime)}</span>
+              <div 
+                ref={progressBarRef}
+                className="flex-1 h-1.5 bg-zinc-800 rounded-full cursor-pointer"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+              >
+                <div
+                  className="h-full bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <span className="text-xs text-zinc-400 w-8">{formatTime(duration)}</span>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex items-center justify-center gap-8 mb-6">
+              <button className="text-zinc-400 hover:text-white transition-colors">
+                <Shuffle className="w-5 h-5" />
+              </button>
+              <button 
+                className="text-zinc-400 hover:text-white transition-colors"
+                onClick={playPrevious}
+                disabled={!playlist || playlist.length === 0}
+              >
+                <SkipBack className="w-7 h-7" />
+              </button>
+              <button
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full w-14 h-14 flex items-center justify-center hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/20"
+                onClick={() => setIsPlaying(!isPlaying)}
+              >
+                {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+              </button>
+              <button 
+                className="text-zinc-400 hover:text-white transition-colors"
+                onClick={playNext}
+                disabled={!playlist || playlist.length === 0}
+              >
+                <SkipForward className="w-7 h-7" />
+              </button>
+              <button className="text-zinc-400 hover:text-white transition-colors">
+                <Repeat className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Volume Slider (only on larger devices) */}
+            <div className="hidden md:flex items-center gap-2 justify-center">
+              <Volume2 className="w-5 h-5 text-zinc-400" />
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={volume}
+                onChange={(e) => setVolume(Number(e.target.value))}
+                className="w-32 h-1.5 accent-purple-500 rounded-full appearance-none cursor-pointer bg-zinc-800"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add to Playlist Modal */}
+      {showPlaylistModal && (
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 p-4 flex flex-col">
+          <div className="flex items-center justify-between mb-4 border-b border-zinc-900 pb-3">
+            <h2 className="text-xl font-bold">Add to Playlist</h2>
+            <button 
+              onClick={() => setShowPlaylistModal(false)}
+              className="p-1.5 rounded-full hover:bg-zinc-900 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="overflow-y-auto flex-1">
+            {isLoadingPlaylists ? (
+              <div className="h-32 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+              </div>
+            ) : playlists.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-zinc-400 mb-4">You don't have any playlists yet</p>
+                <p className="text-sm text-zinc-500">Create a playlist to add songs to it</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {playlists.map((playlist, index) => (
+                  <button
+                    key={playlist.id}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-900 transition-colors ${
+                      addingToPlaylist === playlist.id ? 'bg-zinc-900' : ''
+                    }`}
+                    onClick={() => addSongToPlaylist(playlist.id)}
+                    disabled={addingToPlaylist !== null}
+                  >
+                    <div className={`w-12 h-12 bg-gradient-to-br ${getPlaylistColor(index)} rounded-lg flex items-center justify-center shadow-md`}>
+                      {addingToPlaylist === playlist.id ? (
+                        <Loader2 className="w-6 h-6 text-white animate-spin" />
+                      ) : (
+                        <Music className="w-6 h-6 text-white" />
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <p className="font-medium text-white">{playlist.name}</p>
+                      <p className="text-xs text-zinc-400">{playlist.songCount || 0} songs</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

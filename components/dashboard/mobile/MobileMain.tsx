@@ -442,7 +442,7 @@ const MobileMain = () => {
           />
 
           {showSuggestions && (
-            <div className="absolute w-full mt-2 bg-zinc-800 rounded-md shadow-lg max-h-[40vh] overflow-y-auto z-50">
+            <div className="absolute w-full mt-2 bg-zinc-800 rounded-md shadow-lg max-h-[50vh] overflow-y-auto z-50">
               <div className="p-3">
                 <h3 className="text-sm font-semibold mb-2 flex items-center justify-between">
                   <span>Search Results</span>

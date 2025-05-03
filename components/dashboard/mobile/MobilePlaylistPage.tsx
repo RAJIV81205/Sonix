@@ -121,20 +121,20 @@ const MobilePlaylistPage = () => {
 
       {/* Playlist Header */}
       <div className="px-4 pb-4 flex flex-col items-center">
-        <div className="w-40 h-40 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
-          <Music className="w-20 h-20 text-white opacity-75" />
-        </div>
-        <div className="w-full text-center mt-4">
-          <h1 className="text-2xl font-bold mb-1">{playlist.name}</h1>
-          <p className="text-zinc-400 text-sm">
+        <div className="flex flex-col items-center mb-6">
+          <div className="w-40 h-40 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg">
+            <Music className="w-20 h-20 text-white opacity-75" />
+          </div>
+          <h1 className="text-2xl font-bold mt-4 text-center">{playlist.name}</h1>
+          <p className="text-zinc-400 text-sm mt-1 text-center">
             {playlist.songs.length} songs • Created on {new Date(playlist.createdAt).toLocaleDateString()}
           </p>
           {playlist.songs.length > 0 && (
             <button 
               onClick={handlePlayAll}
-              className="mt-4 flex items-center gap-2 bg-white text-black py-2 px-6 rounded-full hover:bg-opacity-90 transition-colors mx-auto"
+              className="mt-4 flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-6 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-colors mx-auto"
             >
-              <Play size={18} className="fill-black" />
+              <Play size={18} />
               <span className="font-medium">Play All</span>
             </button>
           )}
@@ -151,7 +151,7 @@ const MobilePlaylistPage = () => {
           playlist.songs.map((song, index) => (
             <div 
               key={song.id}
-              className="flex items-center gap-3 py-3 border-b border-zinc-800 active:bg-zinc-800/30 cursor-pointer"
+              className="flex items-center gap-3 py-3 border-b border-zinc-900 hover:bg-zinc-900/30 active:bg-zinc-900/50 transition-colors cursor-pointer rounded-md px-2"
               onClick={() => handlePlaySong(song, index)}
             >
               <img 
@@ -163,7 +163,7 @@ const MobilePlaylistPage = () => {
                 <p className="font-medium text-white truncate">{song.name}</p>
                 <p className="text-sm text-zinc-400 truncate">{song.artist}</p>
               </div>
-              <PlayCircle size={24} className="text-zinc-400" />
+              <PlayCircle size={24} className="text-purple-400" />
             </div>
           ))
         )}

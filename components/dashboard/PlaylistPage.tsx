@@ -112,7 +112,7 @@ const PlaylistPage = () => {
     <div className="h-full overflow-y-auto px-6 py-6">
       {/* Playlist Header */}
       <div className="flex items-start gap-6 mb-8">
-        <div className="w-48 h-48 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
+        <div className="w-48 h-48 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg">
           <Music className="w-24 h-24 text-white opacity-75" />
         </div>
         <div className="flex-1 pt-4">
@@ -124,9 +124,9 @@ const PlaylistPage = () => {
           {playlist.songs.length > 0 && (
             <button 
               onClick={handlePlayAll}
-              className="mt-4 flex items-center gap-2 bg-white text-black py-2 px-6 rounded-full hover:bg-opacity-90 transition-colors"
+              className="mt-4 flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-6 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-colors"
             >
-              <Play size={20} className="fill-black" />
+              <Play size={20} />
               <span className="font-medium">Play All</span>
             </button>
           )}
@@ -149,12 +149,12 @@ const PlaylistPage = () => {
           playlist.songs.map((song, index) => (
             <div 
               key={song.id}
-              className="grid grid-cols-[auto_1fr_auto] gap-4 items-center py-2 px-2 hover:bg-zinc-800/50 rounded-md cursor-pointer group"
+              className="grid grid-cols-[auto_1fr_auto] gap-4 items-center py-2 px-2 hover:bg-zinc-900 rounded-md cursor-pointer group"
               onClick={() => handlePlaySong(song, index)}
             >
               <div className="w-8 text-center text-zinc-400 group-hover:hidden">{index + 1}</div>
               <div className="hidden group-hover:block pl-1">
-                <PlayCircle size={20} className="text-white" />
+                <PlayCircle size={20} className="text-indigo-400" />
               </div>
               <div className="flex items-center gap-3">
                 <img 
