@@ -35,7 +35,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       console.error(error);
       toast.error("Session expired, please login again.");
       localStorage.clear();
-      router.push("/login");
+      router.push("/auth/login");
     } finally {
       setLoading(false);
     }

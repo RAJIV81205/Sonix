@@ -64,6 +64,19 @@ const Main = () => {
   const recentPlaylistDropdownRef = useRef<HTMLDivElement | null>(null);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
   const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState<boolean>(false);
+  const [userName, setUserName] = useState<string>("");
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        setUserName(user.username || "User");
+      } catch (error) {
+        console.error("Failed to parse user from localStorage", error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -653,7 +666,7 @@ const Main = () => {
           </div>
         </div>
         
-        <h1 className="text-3xl font-bold">Welcome Back</h1>
+        <h1 className="text-3xl font-bold">Welcome Back , {userName}</h1>
         <p className="text-zinc-400 mt-1">Pick up where you left off</p>
       </div>
       
