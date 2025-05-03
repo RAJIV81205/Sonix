@@ -10,14 +10,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
-    const body = await request.json();
-    const query = body.query;
+
     
-    if (!query) {
-      return NextResponse.json({ error: "Query missing" }, { status: 400 });
-    }
-    
-    const searchUrl = `https://www.jiosaavn.com/api.php?p=1&q=${encodeURIComponent(query)}&_format=json&_marker=0&api_version=4&ctx=wap6dot0&n=20&__call=search.getResults`;
+    const searchUrl = `https://www.jiosaavn.com/api.php?__call=content.getAlbums&api_version=4&_format=json&_marker=0&n=50&p=1&ctx=wap6dot0`;
     
     const customHeaders = {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -52,10 +47,10 @@ export async function POST(request: Request) {
       );
     }
     
-    const jsonData = await searchResponse.json();
-    const songs = jsonData.results || [];
+    const data = await searchResponse.json();
     
-    return NextResponse.json({ songs }, { status: 200 });
+    
+    return NextResponse.json({ data }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
       { error: "Server error", details: error.message },
