@@ -468,7 +468,7 @@ const MobileSearch = () => {
         }
       `}</style>
 
-      <div className="relative mb-4 opacity-100 transform translate-y-0 transition-all duration-300">
+      <div className="relative mb-4 opacity-100 transform translate-y-0 transition-all duration-300 mt-20">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-4 w-4 text-gray-400" />
         </div>
