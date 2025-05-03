@@ -200,7 +200,7 @@ const SearchP: React.FC = () => {
               title: item.title || item.song || 'Unknown Title',
               artist:  item.more_info?.music || item.more_info?.artistMap?.primary_artists?.[0]?.name || item.primaryArtists || 'Unknown Artist',
               album: item.subtitle || '',
-              coverUrl: item.image.replace(/^http:/, 'https:')  || item.albumartwork_large || '/api/placeholder/64/64',
+              coverUrl: item.image.replace("http:", 'https:')  || item.albumartwork_large || '/api/placeholder/64/64',
               type: 'song'
             });
           }
@@ -211,7 +211,7 @@ const SearchP: React.FC = () => {
               title: item.title || item.album || 'Unknown Album',
               artist: item.more_info?.music || item.more_info?.artistMap?.primary_artists?.[0]?.name || item.primaryArtists || 'Unknown Artist',
               album: item.subtitle || item.year || '',
-              coverUrl: item.image.replace(/^http:/, 'https:')  || item.albumartwork_large || '/api/placeholder/64/64',
+              coverUrl:item.image.replace("http:", 'https:')  || item.albumartwork_large || '/api/placeholder/64/64',
               type: 'album'
             });
           }
@@ -224,7 +224,7 @@ const SearchP: React.FC = () => {
                 title: item.title || 'Unknown Title',
                 artist: item.artist || item.more_info?.singers || 'Unknown Artist',
                 album: item.album || '',
-                coverUrl: item.image.replace(/^http:/, 'https:')  || '/api/placeholder/64/64',
+                coverUrl: item.image.replace("http:", 'https:')  || '/api/placeholder/64/64',
                 type: 'song'
               });
             } else if (item.title && item.year) {
@@ -234,7 +234,7 @@ const SearchP: React.FC = () => {
                 title: item.title || 'Unknown Album',
                 artist: item.more_info?.music || item.artist || 'Unknown Artist',
                 album: item.subtitle || item.year || '',
-                coverUrl: item.image.replace(/^http:/, 'https:')  ,
+                coverUrl: item.image.replace("http:", 'https:') ,
                 type: 'album'
               });
             }
@@ -252,7 +252,7 @@ const SearchP: React.FC = () => {
             title: item.title || item.album || 'Unknown Album',
             artist: item.more_info?.music || item.more_info?.primary_artists || item.artist || 'Unknown Artist',
             album: item.subtitle || item.year || '',
-            coverUrl: item.image.replace(/^http:/, 'https:'),
+            coverUrl: item.image.replace("http:", 'https:'),
             type: 'album'
           });
         });
