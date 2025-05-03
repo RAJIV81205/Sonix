@@ -234,7 +234,7 @@ const SearchP: React.FC = () => {
                 title: item.title || 'Unknown Album',
                 artist: item.more_info?.music || item.artist || 'Unknown Artist',
                 album: item.subtitle || item.year || '',
-                coverUrl: item.image || '/api/placeholder/64/64',
+                coverUrl: item.image.replace(/^http:/, 'https:')  ,
                 type: 'album'
               });
             }
@@ -252,7 +252,7 @@ const SearchP: React.FC = () => {
             title: item.title || item.album || 'Unknown Album',
             artist: item.more_info?.music || item.more_info?.primary_artists || item.artist || 'Unknown Artist',
             album: item.subtitle || item.year || '',
-            coverUrl: item.image || '/api/placeholder/64/64',
+            coverUrl: item.image.replace(/^http:/, 'https:'),
             type: 'album'
           });
         });
