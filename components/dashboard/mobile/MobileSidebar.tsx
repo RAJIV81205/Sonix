@@ -142,7 +142,7 @@ export default function MobileSidebar() {
         </div>
 
         {/* Menu Content */}
-        <div className="p-4 overflow-y-auto h-full pb-32">
+        <div className="p-4 overflow-y-auto h-full pb-40">
           {/* Main Navigation */}
           <div className="mb-8">
             <h2 className="text-xs uppercase tracking-wider text-zinc-500 font-semibold mb-3 px-1">Main</h2>

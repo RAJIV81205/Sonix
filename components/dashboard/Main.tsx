@@ -165,7 +165,8 @@ const Main = () => {
     }
   };
 
-  const fetchSongUrl = async (encryptedUrl: string): Promise<string | null> => {
+  // Function to get song details from JioSaavn API by ID
+  const getSongDetails = async (id: string): Promise<Song | null> => {
     try {
       const response = await fetch('/api/dashboard/getSongUrl', {
         method: 'POST',
@@ -173,21 +174,35 @@ const Main = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ encryptedUrl }),
+        body: JSON.stringify({ id }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Error fetching song URL:', errorData);
-        toast.error('Failed to get song URL. Please try again.');
+        console.error('Error fetching song details:', errorData);
+        toast.error('Failed to get song details. Please try again.');
         return null;
       }
 
       const data = await response.json();
-      return data.downloadUrl || null;
+      
+      if (!data.data || !data.data[0]) {
+        toast.error('Song data not found');
+        return null;
+      }
+      
+      const songData = data.data[0];
+      
+      return {
+        id: songData.id,
+        name: songData.name,
+        artist: songData.artists?.primary[0]?.name || 'Unknown Artist',
+        image: songData.image[2]?.url || '',
+        url: songData.downloadUrl[4]?.url || '',
+      };
     } catch (error) {
-      console.error('Error fetching song URL:', error);
-      toast.error('Failed to get song URL. Please try again.');
+      console.error('Error fetching song details:', error);
+      toast.error('Failed to get song details. Please try again.');
       return null;
     }
   };
@@ -195,28 +210,13 @@ const Main = () => {
   const handleSongSelect = async (item: SearchResultItem) => {
     try {
       setLoadingSong(item.id);
-      const encryptedUrl = item.more_info.encrypted_media_url;
-      if (!encryptedUrl) {
-        toast.error('Song URL not available');
+      
+      const song = await getSongDetails(item.id);
+      
+      if (!song) {
+        setLoadingSong(null);
         return;
       }
-
-      const downloadUrl = await fetchSongUrl(encryptedUrl);
-      if (!downloadUrl) {
-        toast.error('Could not get song URL');
-        return;
-      }
-
-      const primaryArtist = item.more_info.artistMap.primary_artists[0];
-      const song: Song = {
-        id: item.id,
-        name: item.title,
-        artist: primaryArtist?.name || 'Unknown Artist',
-        image: item.image,
-        url: downloadUrl,
-      };
-
-
 
       // Update recentlyPlayed list in localStorage
       const stored = localStorage.getItem('recentlyPlayed');
@@ -231,16 +231,25 @@ const Main = () => {
       setIsPlaying(true);
       setShowSuggestions(false);
       toast.success(`Now playing: ${item.title}`);
-      setLoadingSong(null);
-   
     } catch (error) {
-      console.error('Error selecting song:', error);
+      console.error('Error playing song:', error);
+      toast.error('Failed to play song. Please try again.');
+    } finally {
+      setLoadingSong(null);
     }
   };
 
-  const addSongToPlaylist = async (playlistId: string, song: Song) => {
+  const addSongToPlaylist = async (playlistId: string, songId: string, songName: string) => {
     try {
       setAddingToPlaylist(playlistId);
+      
+      // First get the full song details including URL
+      const song = await getSongDetails(songId);
+      
+      if (!song) {
+        setAddingToPlaylist(null);
+        return;
+      }
 
       const response = await fetch('/api/dashboard/addToPlaylist', {
         method: 'POST',
@@ -263,9 +272,9 @@ const Main = () => {
       
       // Check if song already exists in playlist
       if (data.alreadyExists) {
-        toast.error(`"${song.name}" is already in this playlist`);
+        toast.error(`"${songName}" is already in this playlist`);
       } else {
-        toast.success(`Added "${song.name}" to playlist`);
+        toast.success(`Added "${songName}" to playlist`);
       }
       
       // Close dropdown
@@ -327,20 +336,7 @@ const Main = () => {
                       playlists.map(playlist => (
                         <button
                           key={playlist.id}
-                          onClick={async () => {
-                            // Convert SearchResultItem to Song and get URL
-                            const primaryArtist = item.more_info.artistMap.primary_artists[0];
-                            // Fetch URL before adding
-                            const downloadUrl = await fetchSongUrl(item.more_info.encrypted_media_url);
-                            const song: Song = {
-                              id: item.id,
-                              name: item.title,
-                              artist: primaryArtist?.name || 'Unknown Artist',
-                              image: item.image,
-                              url: downloadUrl || '',
-                            };
-                            addSongToPlaylist(playlist.id, song);
-                          }}
+                          onClick={() => addSongToPlaylist(playlist.id, item.id, item.title)}
                           disabled={addingToPlaylist === playlist.id}
                           className="w-full text-left px-3 py-1.5 text-sm hover:bg-zinc-800 text-zinc-300 hover:text-white truncate flex items-center"
                         >
@@ -412,7 +408,7 @@ const Main = () => {
                     playlists.map(playlist => (
                       <button
                         key={playlist.id}
-                        onClick={() => addSongToPlaylist(playlist.id, song)}
+                        onClick={() => addSongToPlaylist(playlist.id, song.id, song.name)}
                         disabled={addingToPlaylist === playlist.id}
                         className="w-full text-left px-3 py-1.5 text-sm hover:bg-zinc-800 text-zinc-300 hover:text-white truncate flex items-center"
                       >
