@@ -26,7 +26,7 @@ interface Playlist {
 }
 
 const MobilePlayer = () => {
-  const { currentSong, isPlaying, setIsPlaying, audioRef } = usePlayer()
+  const { currentSong, isPlaying, setIsPlaying, audioRef, playNext, playPrevious, playlist } = usePlayer()
   const [volume, setVolume] = useState(80)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -344,7 +344,11 @@ const MobilePlayer = () => {
             <button className="text-zinc-400 hover:text-white transition-colors">
               <Shuffle className="w-5 h-5" />
             </button>
-            <button className="text-zinc-400 hover:text-white transition-colors">
+            <button 
+              className="text-zinc-400 hover:text-white transition-colors"
+              onClick={playPrevious}
+              disabled={!currentSong || playlist.length === 0}
+            >
               <SkipBack className="w-5 h-5" />
             </button>
             <button
@@ -353,7 +357,11 @@ const MobilePlayer = () => {
             >
               {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
             </button>
-            <button className="text-zinc-400 hover:text-white transition-colors">
+            <button 
+              className="text-zinc-400 hover:text-white transition-colors"
+              onClick={playNext}
+              disabled={!currentSong || playlist.length === 0}
+            >
               <SkipForward className="w-5 h-5" />
             </button>
             <button className="text-zinc-400 hover:text-white transition-colors">
