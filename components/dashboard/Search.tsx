@@ -379,7 +379,7 @@ const SearchP: React.FC = () => {
         return;
       }
 
-      const response = await fetch('/api/dashboard/getSongUrl', {
+      const response = await fetch('/api/dashboard/getAlbumUrl', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
