@@ -60,6 +60,7 @@ const MobileMain = () => {
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
   const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState(false);
   const suggestionBoxRef = useRef<HTMLDivElement | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
 
   useEffect(() => {
@@ -91,6 +92,27 @@ const MobileMain = () => {
       setRecentlyPlayed(JSON.parse(stored));
     }
   }, []);
+  
+  // Add event listener to close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionBoxRef.current && 
+        !suggestionBoxRef.current.contains(event.target as Node) &&
+        showSuggestions
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      
+    };
+  }, [showSuggestions]);
   
   // Fetch playlists when needed
   const fetchPlaylists = async () => {
@@ -410,6 +432,7 @@ const MobileMain = () => {
         <div className="relative w-full" ref={suggestionBoxRef}>
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 w-5 h-5" />
           <input
+            ref={searchInputRef}
             type="text"
             placeholder="What do you want to listen to?"
             value={searchQuery}
@@ -419,7 +442,7 @@ const MobileMain = () => {
           />
 
           {showSuggestions && (
-            <div className="absolute w-full mt-2 bg-zinc-800 rounded-md shadow-lg max-h-[60vh] overflow-y-auto z-50">
+            <div className="absolute w-full mt-2 bg-zinc-800 rounded-md shadow-lg max-h-[40vh] overflow-y-auto z-50">
               <div className="p-3">
                 <h3 className="text-sm font-semibold mb-2 flex items-center justify-between">
                   <span>Search Results</span>
@@ -491,6 +514,7 @@ const MobileMain = () => {
                 ) : (
                   <p className="text-zinc-400 text-sm p-2">No results found</p>
                 )}
+
               </div>
             </div>
           )}
