@@ -501,7 +501,7 @@ const Main = () => {
         >
           {song.image ? (
             <img 
-              src={song.image}
+              src={song.image.replace('150x150' ,'500x500').replace('http:' , 'https:')}
               alt={song.name.replaceAll("&quot;", `"`)}
               className="w-full h-full object-cover"
             />
