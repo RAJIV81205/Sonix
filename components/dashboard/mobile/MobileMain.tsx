@@ -166,34 +166,7 @@ const MobileMain = () => {
       setSearching(false);
     }
   };
-
-  // Add this function to fetch song URL from encrypted media URL
-  const fetchSongUrl = async (encryptedMediaUrl: string): Promise<string | null> => {
-    try {
-      const response = await fetch('/api/dashboard/getMediaUrl', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ encryptedMediaUrl }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error fetching song URL:', errorData);
-        toast.error('Failed to get song URL. Please try again.');
-        return null;
-      }
-
-      const data = await response.json();
-      return data.url || null;
-    } catch (error) {
-      console.error('Error fetching song URL:', error);
-      toast.error('Failed to get song URL. Please try again.');
-      return null;
-    }
-  };
+      
 
   const getSongDetails = async (id: string): Promise<Song | null> => {
     try {
@@ -345,7 +318,7 @@ const MobileMain = () => {
           setIsPlaying(true);
         }}
       >
-        <img src={song.image} alt={song.name.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
+        <img src={song.image.replace('150x150' ,'500x500').replace('http:' , 'https:')} alt={song.name.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
         
         {/* Add to playlist button */}
         <button 
