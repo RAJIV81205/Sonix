@@ -259,7 +259,7 @@ const MobileMain = () => {
       setCurrentSong(song);
       setIsPlaying(true);
       setShowSuggestions(false);
-      toast.success(`Now playing: ${item.title}`);
+      toast.success(`Now playing: ${item.title.replaceAll("&quot;", `"`)}`);
     } catch (error) {
       console.error('Error playing song:', error);
       toast.error('Failed to play song. Please try again.');
@@ -477,10 +477,10 @@ const MobileMain = () => {
                         onClick={() => handleSongSelect(item)}
                       >
                         <div className="w-10 h-10 bg-zinc-700 rounded overflow-hidden flex-shrink-0">
-                          <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                          <img src={item.image} alt={item.title.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1">
-                          <p className="font-medium text-sm truncate">{item.title}</p>
+                          <p className="font-medium text-sm truncate">{item.title.replaceAll("&quot;", `"`)}</p>
                           <p className="text-xs text-zinc-400 truncate">
                             {item.more_info?.artistMap?.primary_artists?.[0]?.name || 'Unknown Artist'}
                           </p>

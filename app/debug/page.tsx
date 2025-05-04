@@ -92,7 +92,7 @@ export default function JioSaavnDebugger() {
                 {item.image && (
                   <img 
                     src={item.image} 
-                    alt={item.title} 
+                    alt={item.title.replaceAll("&quot;", `"`)} 
                     className="w-16 h-16 object-cover rounded"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/api/placeholder/64/64';
@@ -100,7 +100,7 @@ export default function JioSaavnDebugger() {
                   />
                 )}
                 <div>
-                  <p className="font-medium">{item.title}</p>
+                  <p className="font-medium">{item.title.replaceAll("&quot;", `"`)}</p>
                   <p className="text-gray-600">{item.more_info?.singers || item.subtitle || 'Unknown Artist'}</p>
                   <p className="text-xs text-gray-500">Type: {item.type}</p>
                 </div>

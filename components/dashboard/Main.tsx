@@ -251,7 +251,7 @@ const Main = () => {
       setCurrentSong(song);
       setIsPlaying(true);
       setShowSuggestions(false);
-      toast.success(`Now playing: ${item.title}`);
+      toast.success(`Now playing: ${item.title.replaceAll("&quot;", `"`)}`);
     } catch (error) {
       console.error('Error playing song:', error);
       toast.error('Failed to play song. Please try again.');
@@ -383,7 +383,7 @@ const Main = () => {
           {item.image ? (
             <img 
               src={item.image}
-              alt={item.title}
+              alt={item.title.replaceAll("&quot;", `"`)}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -398,7 +398,7 @@ const Main = () => {
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white truncate">{item.title}</p>
+          <p className="text-sm font-medium text-white truncate">{item.title.replaceAll("&quot;", `"`)}</p>
           <p className="text-xs text-zinc-400 truncate">{item.more_info?.artistMap?.primary_artists?.[0]?.name || item.subtitle || "Unknown artist"}</p>
         </div>
         <button 
@@ -453,7 +453,7 @@ const Main = () => {
                     key={playlist.id}
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleAddToPlaylist(playlist.id, item.id, item.title);
+                      handleAddToPlaylist(playlist.id, item.id, item.title.replaceAll("&quot;", `"`));
                     }}
                     disabled={addingToPlaylist === playlist.id}
                     className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2"

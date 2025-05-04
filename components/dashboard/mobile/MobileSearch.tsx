@@ -36,6 +36,7 @@ interface Song {
 const MobileSearch = () => {
   const { setCurrentSong, setIsPlaying, setPlaylist } = usePlayer();
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
+  const [isTrendingLoading, setIsTrendingLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [songs, setSongs] = useState<Track[]>([]);
   const [albums, setAlbums] = useState<Track[]>([]);
@@ -108,6 +109,62 @@ const MobileSearch = () => {
     }
     return null;
   };
+
+  const getTrendingTracks = async () => {
+    setIsTrendingLoading(true);
+    function formatNumber(num: number) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+      } else if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+      } else {
+        return num.toString();
+      }
+    }
+
+
+    try {
+      const response = await fetch('/api/dashboard/getNewReleases', {
+        method: 'POST',
+        headers: {
+          "Content-type": "application/json",
+          "Authorization": `Bearer ${getAuthToken()}`
+        }
+      })
+
+      const data = await response.json()
+
+      const newArray = [];
+
+      for (let i = 0; i < data.data.count; i++) {
+        if (data.data.data[i].type === "song") {
+          const realData: Track = {
+            id: data.data.data[i].id,
+            title: data.data.data[i].title.replaceAll("&quot;", `"`),
+            artist: data.data.data[i].subtitle || '',
+            album: data.data.data[i].more_info.album || '',
+            coverUrl: data.data.data[i].image.replace("http:", 'https:'),
+            plays: formatNumber(data.data.data[i].play_count),
+          }
+          newArray.push(realData);
+        }
+
+      }
+
+      setTrendingTracks(newArray);
+
+    } catch (error) {
+      console.error('Error fetching trending tracks:', error);
+      setError('Failed to fetch trending tracks. Please try again later.');
+    } finally {
+      setIsTrendingLoading(false);
+    }
+  }
+
+  
+  useEffect(() => {
+    getTrendingTracks()
+  }, []);
 
   // Debounce function
   const debounce = <F extends (...args: any[]) => any>(
@@ -193,7 +250,7 @@ const MobileSearch = () => {
           if (item.type?.toLowerCase() === 'song' || (!item.type && item.more_info?.song_pids)) {
             processedSongs.push({
               id: item.id || `song-${Date.now()}-${Math.random()}`,
-              title: item.title || item.song || 'Unknown Title',
+              title: item.title.replaceAll("&quot;", `"`) || item.song || 'Unknown Title',
               artist: item.more_info?.music || item.more_info?.artistMap?.primary_artists?.[0]?.name || item.primaryArtists || 'Unknown Artist',
               album: item.subtitle || '',
               coverUrl: item.image || item.albumartwork_large || '/api/placeholder/64/64',
@@ -204,7 +261,7 @@ const MobileSearch = () => {
           else if (item.type?.toLowerCase() === 'album' || (!item.type && item.more_info?.album_id)) {
             processedAlbums.push({
               id: item.id || item.albumid || `album-${Date.now()}-${Math.random()}`,
-              title: item.title || item.album || 'Unknown Album',
+              title: item.title.replaceAll("&quot;", `"`) || item.album || 'Unknown Album',
               artist: item.more_info?.music || item.more_info?.artistMap?.primary_artists?.[0]?.name || item.primaryArtists || 'Unknown Artist',
               album: item.subtitle || item.year || '',
               coverUrl: item.image || item.albumartwork_large || '/api/placeholder/64/64',
@@ -213,21 +270,21 @@ const MobileSearch = () => {
           }
           // If no type specified, try to determine from available fields
           else if (!item.type) {
-            if (item.title && (item.artist || item.more_info?.singers)) {
+            if (item.title.replaceAll("&quot;", `"`) && (item.artist || item.more_info?.singers)) {
               // Likely a song
               processedSongs.push({
                 id: item.id || `song-${Date.now()}-${Math.random()}`,
-                title: item.title || 'Unknown Title',
+                title: item.title.replaceAll("&quot;", `"`) || 'Unknown Title',
                 artist: item.artist || item.more_info?.singers || 'Unknown Artist',
                 album: item.album || '',
                 coverUrl: item.image || '/api/placeholder/64/64',
                 type: 'song'
               });
-            } else if (item.title && item.year) {
+            } else if (item.title.replaceAll("&quot;", `"`) && item.year) {
               // Likely an album
               processedAlbums.push({
                 id: item.id || `album-${Date.now()}-${Math.random()}`,
-                title: item.title || 'Unknown Album',
+                title: item.title.replaceAll("&quot;", `"`) || 'Unknown Album',
                 artist: item.more_info?.music || item.artist || 'Unknown Artist',
                 album: item.subtitle || item.year || '',
                 coverUrl: item.image || '/api/placeholder/64/64',
@@ -245,7 +302,7 @@ const MobileSearch = () => {
 
           processedAlbums.push({
             id: item.id || item.albumid || `album-${Date.now()}-${Math.random()}`,
-            title: item.title || item.album || 'Unknown Album',
+            title: item.title.replaceAll("&quot;", `"`) || item.album || 'Unknown Album',
             artist: item.more_info?.music || item.more_info?.primary_artists || item.artist || 'Unknown Artist',
             album: item.subtitle || item.year || '',
             coverUrl: item.image || '/api/placeholder/64/64',
@@ -319,29 +376,29 @@ const MobileSearch = () => {
       }
 
       const data = await response.json();
-      
+
       if (!data.data || !data.data[0]) {
         toast.error('Song data not found');
         return;
       }
-      
+
       const songData = data.data[0];
-      
+
       let artistName = 'Unknown Artist';
       if (songData.artists && songData.artists.primary && songData.artists.primary.length > 0) {
         artistName = songData.artists.primary[0].name;
       }
-      
+
       const song: Song = {
         id: songData.id,
         name: songData.name,
         artist: artistName,
-        image: songData.image && songData.image.length > 0 ? 
-               (songData.image[2].url || '').replace(/^http:/, 'https:') : '',
-        url: songData.downloadUrl && songData.downloadUrl.length > 0 ? 
-             (songData.downloadUrl[4].url || '').replace(/^http:/, 'https:') : '',
+        image: songData.image && songData.image.length > 0 ?
+          (songData.image[2].url || '').replace(/^http:/, 'https:') : '',
+        url: songData.downloadUrl && songData.downloadUrl.length > 0 ?
+          (songData.downloadUrl[4].url || '').replace(/^http:/, 'https:') : '',
       };
-      
+
       const stored = localStorage.getItem('recentlyPlayed');
       const recentSongs: Song[] = stored ? JSON.parse(stored) : [];
       const filtered = recentSongs.filter((s) => s.id !== song.id);
@@ -349,7 +406,7 @@ const MobileSearch = () => {
       const limited = filtered.slice(0, 20);
       localStorage.setItem('recentlyPlayed', JSON.stringify(limited));
       setRecentlyPlayed(limited);
-  
+
       setCurrentSong(song);
       setIsPlaying(true);
       toast.success(`Now playing: ${song.name}`);
@@ -358,7 +415,7 @@ const MobileSearch = () => {
       toast.error('Failed to fetch song URL');
     }
   };
-  
+
   const getAlbumUrl = async (id: string) => {
     try {
       const token = getAuthToken();
@@ -384,15 +441,15 @@ const MobileSearch = () => {
       }
 
       const data = await response.json();
-      
+
       if (!data.data) {
         toast.error('Album data not found');
         return;
       }
-      
+
       // Get the album data and songs
       const albumData = data.data;
-      
+
       if (albumData.songs && albumData.songs.length > 0) {
         // Create an array of Song objects from all tracks in the album
         const albumSongs: Song[] = albumData.songs.map((song: any) => {
@@ -401,36 +458,36 @@ const MobileSearch = () => {
           if (song.artists && song.artists.primary && song.artists.primary.length > 0) {
             artistName = song.artists.primary[0].name;
           }
-          
+
           // Create the song object
           return {
             id: song.id,
             name: song.name,
             artist: artistName,
-            image: song.image && song.image.length > 0 ? 
-                  (song.image[2].url || '').replace(/^http:/, 'https:') : 
-                  (albumData.image && albumData.image.length > 0 ? 
-                   (albumData.image[2].url || '').replace(/^http:/, 'https:') : ''),
-            url: song.downloadUrl && song.downloadUrl.length > 0 ? 
-                 (song.downloadUrl[4].url || '').replace(/^http:/, 'https:') : '',
+            image: song.image && song.image.length > 0 ?
+              (song.image[2].url || '').replace(/^http:/, 'https:') :
+              (albumData.image && albumData.image.length > 0 ?
+                (albumData.image[2].url || '').replace(/^http:/, 'https:') : ''),
+            url: song.downloadUrl && song.downloadUrl.length > 0 ?
+              (song.downloadUrl[4].url || '').replace(/^http:/, 'https:') : '',
           };
         });
-        
+
         // Filter out any songs that don't have a valid URL
         const validSongs = albumSongs.filter(song => song.url);
-        
+
         if (validSongs.length === 0) {
           toast.error('No playable songs found in this album');
           return;
         }
-        
+
         // Update playlist with all songs from the album
         setPlaylist(validSongs);
-        
+
         // Play the first song
         setCurrentSong(validSongs[0]);
         setIsPlaying(true);
-        
+
         // Update recently played with the first song
         const stored = localStorage.getItem('recentlyPlayed');
         const recentSongs: Song[] = stored ? JSON.parse(stored) : [];
@@ -439,7 +496,7 @@ const MobileSearch = () => {
         const limited = filtered.slice(0, 20);
         localStorage.setItem('recentlyPlayed', JSON.stringify(limited));
         setRecentlyPlayed(limited);
-        
+
         toast.success(`Now playing: ${validSongs[0].name} from ${albumData.name}`);
       } else {
         toast.error('No songs found in this album');
@@ -453,7 +510,7 @@ const MobileSearch = () => {
   // Track item component - optimized for mobile
   const TrackItem: React.FC<TrackItemProps> = ({ track, trending }) => {
     return (
-      <div className="flex items-center p-3 rounded-lg hover:bg-gray-800 active:bg-gray-700 cursor-pointer transition-colors duration-200 ease-in-out" 
+      <div className="flex items-center p-3 rounded-lg hover:bg-gray-800 active:bg-gray-700 cursor-pointer transition-colors duration-200 ease-in-out"
         onClick={() => {
           track.type === 'album' ? (
             getAlbumUrl(track.id)
@@ -572,13 +629,13 @@ const MobileSearch = () => {
               <div className="space-y-4">
                 {/* Tab Navigation */}
                 <div className="flex border-b border-gray-800">
-                  <button 
+                  <button
                     className={`flex-1 py-2 text-sm font-medium ${activeTab === 'songs' ? 'text-purple-500 border-b-2 border-purple-500' : 'text-gray-400'}`}
                     onClick={() => setActiveTab('songs')}
                   >
                     Songs ({songs.length})
                   </button>
-                  <button 
+                  <button
                     className={`flex-1 py-2 text-sm font-medium ${activeTab === 'albums' ? 'text-purple-500 border-b-2 border-purple-500' : 'text-gray-400'}`}
                     onClick={() => setActiveTab('albums')}
                   >

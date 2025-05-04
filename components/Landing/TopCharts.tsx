@@ -70,7 +70,7 @@ const TopCharts = () => {
               <div className="relative w-full aspect-square overflow-hidden">
                 <img
                   src={item.image}
-                  alt={item.title}
+                  alt={item.title.replaceAll("&quot;", `"`)}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -81,7 +81,7 @@ const TopCharts = () => {
               </div>
               
               <div className="p-5">
-                <h3 className="font-semibold text-lg text-white group-hover:text-purple-300 transition-colors duration-300">{item.title}</h3>
+                <h3 className="font-semibold text-lg text-white group-hover:text-purple-300 transition-colors duration-300">{item.title.replaceAll("&quot;", `"`)}</h3>
                 <p className="text-gray-400 text-sm mt-1">{item.artist}</p>
                 
                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-700/50">
