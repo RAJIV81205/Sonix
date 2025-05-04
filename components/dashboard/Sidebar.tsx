@@ -1,9 +1,10 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { Home, Search, Library, Plus, Heart, Music, Mic, Clock, Compass, Headphones } from 'lucide-react';
+import { Home, Search, Library, Plus, Heart, Music, Mic, Clock, Compass, Headphones, Download } from 'lucide-react';
 import Link from 'next/link';
 import AddPlaylistPopup from './AddPlaylistPopup';
+import SpotifyPopup from './SpotifyPopup';
 import { toast } from 'react-hot-toast';
 
 interface Playlist {
@@ -14,6 +15,7 @@ interface Playlist {
 
 export default function Sidebar() {
   const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState(false);
+  const [showSpotifyPopup, setShowSpotifyPopup] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,6 +53,10 @@ export default function Sidebar() {
       { id: playlistId, name: playlistName, songCount: 0 },
       ...prev
     ]);
+  };
+
+  const handleImportFromSpotify = () => {
+    setShowSpotifyPopup(true);
   };
 
   // Function to get playlist color based on index
@@ -126,13 +132,25 @@ export default function Sidebar() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs uppercase tracking-wider text-zinc-500 font-semibold px-1">Playlists</h2>
-          <button 
-            className="p-1.5 rounded-md hover:bg-zinc-900 transition-colors"
-            onClick={() => setShowAddPlaylistPopup(true)}
-          >
-            <Plus className="w-4 h-4 text-indigo-400" />
-          </button>
+          <div className="flex space-x-1">
+            <button 
+              className="p-1.5 rounded-md hover:bg-zinc-900 transition-colors"
+              onClick={() => setShowAddPlaylistPopup(true)}
+              title="Create playlist"
+            >
+              <Plus className="w-4 h-4 text-indigo-400" />
+            </button>
+          </div>
         </div>
+        
+        {/* Spotify Import Button */}
+        <button
+          onClick={handleImportFromSpotify}
+          className="w-full flex items-center justify-center gap-2 py-2 px-3 mb-3 rounded-lg bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-medium text-sm transition-all duration-200"
+        >
+          <Download className="w-4 h-4" />
+          Import from Spotify
+        </button>
         
         <div className="space-y-2">
           <div className="flex items-center gap-3 hover:bg-zinc-900 py-2 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
@@ -193,6 +211,12 @@ export default function Sidebar() {
         isOpen={showAddPlaylistPopup} 
         onClose={() => setShowAddPlaylistPopup(false)} 
         onSuccess={handlePlaylistCreated}
+      />
+
+      {/* Spotify Popup */}
+      <SpotifyPopup 
+        isOpen={showSpotifyPopup}
+        onClose={() => setShowSpotifyPopup(false)}
       />
     </div>
   );
