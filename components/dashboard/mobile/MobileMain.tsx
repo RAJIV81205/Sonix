@@ -345,7 +345,7 @@ const MobileMain = () => {
           setIsPlaying(true);
         }}
       >
-        <img src={song.image} alt={song.name} className="w-full h-full object-cover" />
+        <img src={song.image} alt={song.name.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
         
         {/* Add to playlist button */}
         <button 
@@ -358,7 +358,7 @@ const MobileMain = () => {
           <Plus size={18} />
         </button>
       </div>
-      <h3 className="font-medium text-sm truncate">{song.name}</h3>
+      <h3 className="font-medium text-sm truncate">{song.name.replaceAll("&quot;", `"`)}</h3>
       <p className="text-xs text-zinc-400 truncate">{song.artist}</p>
     </div>
   );

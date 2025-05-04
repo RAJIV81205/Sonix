@@ -132,13 +132,13 @@ const Player = () => {
           {currentSong?.image && (
             <img
               src={currentSong.image}
-              alt={currentSong.name}
+              alt={currentSong.name.replaceAll("&quot;", `"`)}
               className="w-full h-full object-cover"
             />
           )}
         </div>
         <div className="hidden sm:block">
-          <h3 className="font-medium text-sm md:text-base">{currentSong?.name || "No song playing"}</h3>
+          <h3 className="font-medium text-sm md:text-base">{currentSong?.name.replaceAll("&quot;", `"`) || "No song playing"}</h3>
           <p className="text-xs md:text-sm text-zinc-400">{currentSong?.artist || "Select a song"}</p>
         </div>
       </div>

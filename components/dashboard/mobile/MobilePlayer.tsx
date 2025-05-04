@@ -212,9 +212,9 @@ const MobilePlayer = () => {
       
       // Check if song already exists in playlist
       if (data.alreadyExists) {
-        toast.error(`"${currentSong.name}" is already in this playlist`);
+        toast.error(`"${currentSong.name.replaceAll("&quot;", `"`)}" is already in this playlist`);
       } else {
-        toast.success(`Added "${currentSong.name}" to playlist`);
+        toast.success(`Added "${currentSong.name.replaceAll("&quot;", `"`)}" to playlist`);
       }
       
       // Close modal
@@ -257,13 +257,13 @@ const MobilePlayer = () => {
               {currentSong?.image && (
                 <img
                   src={currentSong.image}
-                  alt={currentSong.name}
+                  alt={currentSong.name.replaceAll("&quot;", `"`)}
                   className="w-full h-full object-cover"
                 />
               )}
             </div>
             <div className="flex-1 min-w-0 mr-3">
-              <p className="text-sm font-medium text-white truncate">{currentSong.name}</p>
+              <p className="text-sm font-medium text-white truncate">{currentSong.name.replaceAll("&quot;", `"`)}</p>
               <p className="text-xs text-zinc-400 truncate">{currentSong.artist}</p>
             </div>
             <div className="flex items-center">
@@ -319,7 +319,7 @@ const MobilePlayer = () => {
               {currentSong.image ? (
                 <img
                   src={currentSong.image}
-                  alt={currentSong.name}
+                  alt={currentSong.name.replaceAll("&quot;", `"`)}
                   className="w-full h-full object-cover rounded"
                 />
               ) : (
@@ -329,7 +329,7 @@ const MobilePlayer = () => {
               )}
             </div>
             <div className="w-full max-w-xs">
-              <h2 className="text-xl font-bold text-white mb-1 truncate">{currentSong.name}</h2>
+              <h2 className="text-xl font-bold text-white mb-1 truncate">{currentSong.name.replaceAll("&quot;", `"`)}</h2>
               <p className="text-zinc-400 truncate">{currentSong.artist}</p>
             </div>
           </div>

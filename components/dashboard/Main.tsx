@@ -502,7 +502,7 @@ const Main = () => {
           {song.image ? (
             <img 
               src={song.image}
-              alt={song.name}
+              alt={song.name.replaceAll("&quot;", `"`)}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -521,7 +521,7 @@ const Main = () => {
             setIsPlaying(true);
           }}
         >
-          <p className="text-sm font-medium text-white truncate">{song.name}</p>
+          <p className="text-sm font-medium text-white truncate">{song.name.replaceAll("&quot;", `"`)}</p>
           <p className="text-xs text-zinc-400 truncate">{song.artist}</p>
         </div>
         <button

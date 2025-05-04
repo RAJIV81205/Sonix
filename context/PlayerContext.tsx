@@ -109,7 +109,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     // Save position every 5 seconds and when component unmounts
     const interval = setInterval(savePosition, 5000);
 
-    document.title = `${currentSong.name} - ${currentSong.artist}`; 
+    document.title = `${currentSong.name.replaceAll("&quot;", `"`)} - ${currentSong.artist}`; 
 
     return () => {
       clearInterval(interval);
