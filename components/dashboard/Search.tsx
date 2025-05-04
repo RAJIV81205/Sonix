@@ -76,6 +76,17 @@ const SearchP: React.FC = () => {
 
   const getTrendingTracks = async () => {
     setIsTrendingLoading(true);
+    function formatNumber(num: number) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+      } else if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+      } else {
+        return num.toString();
+      }
+    }
+    
+    
     try {
       const response = await fetch('/api/dashboard/getNewReleases', {
         method: 'POST',
@@ -93,11 +104,11 @@ const SearchP: React.FC = () => {
         if (data.data.data[i].type === "song") {
           const realData: Track = {
             id: data.data.data[i].id,
-            title: data.data.data[i].title,
+            title: data.data.data[i].title.replaceAll("&quot;" , `"`),
             artist: data.data.data[i].subtitle || '',
             album: data.data.data[i].more_info.album || '',
             coverUrl: data.data.data[i].image.replace("http:", 'https:'),
-            plays: data.data.data[i].play_count || '',
+            plays: formatNumber(data.data.data[i].play_count),
           }
           newArray.push(realData);
         }
@@ -347,7 +358,7 @@ const SearchP: React.FC = () => {
 
       const song: Song = {
         id: songData.id,
-        name: songData.name,
+        name: songData.name.replaceAll("&quot;" , `"`),
         artist: artistName,
         image: songData.image && songData.image.length > 0 ?
           (songData.image[2].url || '').replace(/^http:/, 'https:') : '',
@@ -511,7 +522,7 @@ const SearchP: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="flex-grow overflow-hidden">
+          <div className="flex-grow overflow-hidden w-2/3">
             <h3 className="font-medium text-sm truncate">{track.title}</h3>
             <p className="text-xs text-zinc-400 truncate">{track.artist}</p>
           </div>
