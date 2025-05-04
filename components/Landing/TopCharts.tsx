@@ -69,7 +69,7 @@ const TopCharts = () => {
             >
               <div className="relative w-full aspect-square overflow-hidden">
                 <img
-                  src={item.image}
+                  src={item.image.replace("150x150" , "500x500")}
                   alt={item.title.replaceAll("&quot;", `"`)}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />

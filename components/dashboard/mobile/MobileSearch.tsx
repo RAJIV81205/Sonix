@@ -143,7 +143,9 @@ const MobileSearch = () => {
             title: data.data.data[i].title.replaceAll("&quot;", `"`),
             artist: data.data.data[i].subtitle || '',
             album: data.data.data[i].more_info.album || '',
-            coverUrl: data.data.data[i].image.replace("http:", 'https:'),
+            coverUrl: data.data.data[i].image
+              .replace('http:', 'https:')
+              .replace('150x150', '500x500'),
             plays: formatNumber(data.data.data[i].play_count),
           }
           newArray.push(realData);
@@ -161,7 +163,7 @@ const MobileSearch = () => {
     }
   }
 
-  
+
   useEffect(() => {
     getTrendingTracks()
   }, []);
@@ -253,7 +255,7 @@ const MobileSearch = () => {
               title: item.title.replaceAll("&quot;", `"`) || item.song || 'Unknown Title',
               artist: item.more_info?.music || item.more_info?.artistMap?.primary_artists?.[0]?.name || item.primaryArtists || 'Unknown Artist',
               album: item.subtitle || '',
-              coverUrl: item.image || item.albumartwork_large || '/api/placeholder/64/64',
+              coverUrl: item.image.replace("150x150", "500x500") || item.albumartwork_large || '/api/placeholder/64/64',
               type: 'song'
             });
           }
@@ -264,7 +266,7 @@ const MobileSearch = () => {
               title: item.title.replaceAll("&quot;", `"`) || item.album || 'Unknown Album',
               artist: item.more_info?.music || item.more_info?.artistMap?.primary_artists?.[0]?.name || item.primaryArtists || 'Unknown Artist',
               album: item.subtitle || item.year || '',
-              coverUrl: item.image || item.albumartwork_large || '/api/placeholder/64/64',
+              coverUrl: item.image.replace("150x150", "500x500") || item.albumartwork_large || '/api/placeholder/64/64',
               type: 'album'
             });
           }
@@ -277,7 +279,7 @@ const MobileSearch = () => {
                 title: item.title.replaceAll("&quot;", `"`) || 'Unknown Title',
                 artist: item.artist || item.more_info?.singers || 'Unknown Artist',
                 album: item.album || '',
-                coverUrl: item.image || '/api/placeholder/64/64',
+                coverUrl: item.image.replace("150x150", "500x500") || '/api/placeholder/64/64',
                 type: 'song'
               });
             } else if (item.title.replaceAll("&quot;", `"`) && item.year) {
@@ -287,7 +289,7 @@ const MobileSearch = () => {
                 title: item.title.replaceAll("&quot;", `"`) || 'Unknown Album',
                 artist: item.more_info?.music || item.artist || 'Unknown Artist',
                 album: item.subtitle || item.year || '',
-                coverUrl: item.image || '/api/placeholder/64/64',
+                coverUrl: item.image.replace("150x150", "500x500") || '/api/placeholder/64/64',
                 type: 'album'
               });
             }
@@ -305,7 +307,7 @@ const MobileSearch = () => {
             title: item.title.replaceAll("&quot;", `"`) || item.album || 'Unknown Album',
             artist: item.more_info?.music || item.more_info?.primary_artists || item.artist || 'Unknown Artist',
             album: item.subtitle || item.year || '',
-            coverUrl: item.image || '/api/placeholder/64/64',
+            coverUrl: item.image.replace("150x150", "500x500") || '/api/placeholder/64/64',
             type: 'album'
           });
         });

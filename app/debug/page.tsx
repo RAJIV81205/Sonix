@@ -89,9 +89,9 @@ export default function JioSaavnDebugger() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {results.map((item, index) => (
               <div key={index} className="border rounded p-3 flex gap-3">
-                {item.image && (
+                {item.image.replace("150x150" , "500x500") && (
                   <img 
-                    src={item.image} 
+                    src={item.image.replace("150x150" , "500x500")} 
                     alt={item.title.replaceAll("&quot;", `"`)} 
                     className="w-16 h-16 object-cover rounded"
                     onError={(e) => {

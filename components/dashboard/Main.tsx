@@ -380,9 +380,9 @@ const Main = () => {
         onClick={() => handleSongSelect(item)}
       >
         <div className="relative w-10 h-10 flex-shrink-0 bg-zinc-900 rounded overflow-hidden">
-          {item.image ? (
+          {item.image.replace("150x150" , "500x500") ? (
             <img 
-              src={item.image}
+              src={item.image.replace("150x150" , "500x500")}
               alt={item.title.replaceAll("&quot;", `"`)}
               className="w-full h-full object-cover"
             />

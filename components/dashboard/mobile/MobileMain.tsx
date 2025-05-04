@@ -477,7 +477,7 @@ const MobileMain = () => {
                         onClick={() => handleSongSelect(item)}
                       >
                         <div className="w-10 h-10 bg-zinc-700 rounded overflow-hidden flex-shrink-0">
-                          <img src={item.image} alt={item.title.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
+                          <img src={item.image.replace("150x150" , "500x500")} alt={item.title.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1">
                           <p className="font-medium text-sm truncate">{item.title.replaceAll("&quot;", `"`)}</p>
