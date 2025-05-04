@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     }
 
     const data = await searchResponse.json();
-    console.log(data)
+  
 
     return NextResponse.json({ data }, { status: 200 });
   } catch (error: any) {

@@ -35,6 +35,23 @@ interface Song {
   url: string;
 }
 
+// Skeleton loading component for trending tracks
+const TrendingSkeleton: React.FC = () => {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {[1, 2, 3, 4, 5, 6].map((item) => (
+        <div key={item} className="bg-zinc-900 rounded-xl overflow-hidden animate-pulse">
+          <div className="aspect-square bg-zinc-800"></div>
+          <div className="p-3">
+            <div className="h-5 bg-zinc-800 rounded w-3/4 mb-2"></div>
+            <div className="h-3 bg-zinc-800 rounded w-1/2"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const SearchP: React.FC = () => {
   const { setCurrentSong, setIsPlaying, setPlaylist } = usePlayer();
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
@@ -43,68 +60,12 @@ const SearchP: React.FC = () => {
   const [albums, setAlbums] = useState<Track[]>([]);
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isTrendingLoading, setIsTrendingLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [lastSearchTime, setLastSearchTime] = useState<number>(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [showAllSongs, setShowAllSongs] = useState<boolean>(false);
   const [showAllAlbums, setShowAllAlbums] = useState<boolean>(false);
-
-
-  // Mock data for trending tracks
-  useEffect(() => {
-    const mockTrendingTracks: Track[] = [
-      {
-        id: '1',
-        title: "The Nights",
-        artist: "Avicii",
-        album: "The Days / Nights",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "1.2B"
-      },
-      {
-        id: '2',
-        title: "Blinding Lights",
-        artist: "The Weeknd",
-        album: "After Hours",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "3.6B"
-      },
-      {
-        id: '3',
-        title: "As It Was",
-        artist: "Harry Styles",
-        album: "Harry's House",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "2.8B"
-      },
-      {
-        id: '4',
-        title: "Heat Waves",
-        artist: "Glass Animals",
-        album: "Dreamland",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "2.4B"
-      },
-      {
-        id: '5',
-        title: "Starboy",
-        artist: "The Weeknd ft. Daft Punk",
-        album: "Starboy",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "2.3B"
-      },
-      {
-        id: '6',
-        title: "Dance Monkey",
-        artist: "Tones and I",
-        album: "The Kids Are Coming",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "2.1B"
-      }
-    ];
-
-    setTrendingTracks(mockTrendingTracks);
-  }, []);
 
   const getAuthToken = (): string | null => {
     if (typeof window !== 'undefined') {
@@ -114,6 +75,7 @@ const SearchP: React.FC = () => {
   };
 
   const getTrendingTracks = async () => {
+    setIsTrendingLoading(true);
     try {
       const response = await fetch('/api/dashboard/getNewReleases', {
         method: 'POST',
@@ -125,12 +87,11 @@ const SearchP: React.FC = () => {
 
       const data = await response.json()
 
-
       const newArray = [];
 
       for (let i = 0; i < data.data.count; i++) {
-        if (data.data.data[i].type === "song"){
-          const realData :Track = {
+        if (data.data.data[i].type === "song") {
+          const realData: Track = {
             id: data.data.data[i].id,
             title: data.data.data[i].title,
             artist: data.data.data[i].subtitle || '',
@@ -140,7 +101,7 @@ const SearchP: React.FC = () => {
           }
           newArray.push(realData);
         }
-        
+
       }
 
       setTrendingTracks(newArray);
@@ -148,16 +109,14 @@ const SearchP: React.FC = () => {
     } catch (error) {
       console.error('Error fetching trending tracks:', error);
       setError('Failed to fetch trending tracks. Please try again later.');
-
+    } finally {
+      setIsTrendingLoading(false);
     }
   }
 
   useEffect(() => {
     getTrendingTracks()
   }, []);
-
-  // Get auth token from localStorage
-
 
   // Debounce function
   const debounce = <F extends (...args: any[]) => any>(
@@ -570,6 +529,60 @@ const SearchP: React.FC = () => {
       );
     }
 
+    // Improved trending track display with smaller images
+    if (trending) {
+      return (
+        <div
+          className="bg-zinc-900 rounded-lg overflow-hidden hover:bg-zinc-800 transition-colors cursor-pointer group"
+          onClick={handlePlayTrack}
+        >
+          <div className="flex items-center p-2">
+            <div className="relative w-10 h-10 flex-shrink-0 mr-3">
+              <div className="w-10 h-10 bg-zinc-800 rounded overflow-hidden">
+                {track.coverUrl ? (
+                  <img
+                    src={track.coverUrl}
+                    alt={track.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
+                    <Music className="w-5 h-5 text-white opacity-75" />
+                  </div>
+                )}
+              </div>
+              {isLoading && (
+                <div className="absolute inset-0 bg-black/50 rounded flex items-center justify-center">
+                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                </div>
+              )}
+            </div>
+            <div className="flex-grow min-w-0">
+              <h3 className="font-medium text-sm truncate">{track.title}</h3>
+              <p className="text-xs text-zinc-400 truncate">{track.artist}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {track.plays && (
+                <div className="text-xs text-purple-400 bg-purple-400/10 px-2 py-1 rounded-full flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  {track.plays}
+                </div>
+              )}
+              {isLoading ? (
+                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center hover:bg-purple-600 transition-colors group-hover:bg-purple-600">
+                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center hover:bg-purple-600 transition-colors group-hover:bg-purple-600">
+                  <Play className="w-4 h-4 text-white fill-white " />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div
         className="bg-zinc-900 rounded-xl overflow-hidden hover:bg-zinc-800 transition-colors cursor-pointer group"
@@ -656,11 +669,16 @@ const SearchP: React.FC = () => {
                 <TrendingUp className="w-5 h-5 text-purple-400 mr-2" />
                 Trending Tracks
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                {trendingTracks.map(track => (
-                  <TrackItem key={track.id} track={track} trending={true} onPlay={handlePlayItem} />
-                ))}
-              </div>
+
+              {isTrendingLoading ? (
+                <TrendingSkeleton />
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {trendingTracks.map(track => (
+                    <TrackItem key={track.id} track={track} trending={true} onPlay={handlePlayItem} />
+                  ))}
+                </div>
+              )}
             </div>
           </>
         ) : (
