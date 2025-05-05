@@ -67,7 +67,9 @@ export async function POST(request: Request) {
                 id: playlist.id,
                 name: playlist.name,
                 createdAt: playlist.createdAt,
+                cover: playlist.cover,
                 songs
+
             }
         });
     } catch (error) {

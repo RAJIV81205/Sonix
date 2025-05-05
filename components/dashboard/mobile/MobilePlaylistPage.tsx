@@ -20,6 +20,7 @@ interface Playlist {
   name: string;
   createdAt: string;
   songs: Song[];
+  cover?: string;
 }
 
 const MobilePlaylistPage = () => {
@@ -122,8 +123,16 @@ const MobilePlaylistPage = () => {
       {/* Playlist Header */}
       <div className="px-4 pb-4 flex flex-col items-center">
         <div className="flex flex-col items-center mb-6">
-          <div className="w-40 h-40 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg">
-            <Music className="w-20 h-20 text-white opacity-75" />
+          <div className="w-40 h-40 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
+            {playlist.cover ? (
+              <img 
+                src={playlist.cover} 
+                alt={playlist.name} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Music className="w-20 h-20 text-white opacity-75" />
+            )}
           </div>
           <h1 className="text-2xl font-bold mt-4 text-center">{playlist.name}</h1>
           <p className="text-zinc-400 text-sm mt-1 text-center">

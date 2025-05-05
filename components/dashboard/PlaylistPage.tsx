@@ -19,6 +19,7 @@ interface Playlist {
   name: string;
   createdAt: string;
   songs: Song[];
+  cover?: string;
 }
 
 const PlaylistPage = () => {
@@ -112,8 +113,16 @@ const PlaylistPage = () => {
     <div className="h-full overflow-y-auto px-6 py-6">
       {/* Playlist Header */}
       <div className="flex items-start gap-6 mb-8">
-        <div className="w-48 h-48 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg">
-          <Music className="w-24 h-24 text-white opacity-75" />
+        <div className="w-48 h-48 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
+          {playlist.cover ? (
+            <img 
+              src={playlist.cover} 
+              alt={playlist.name} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <Music className="w-24 h-24 text-white opacity-75" />
+          )}
         </div>
         <div className="flex-1 pt-4">
           <p className="text-sm text-zinc-400 uppercase font-medium">Playlist</p>
