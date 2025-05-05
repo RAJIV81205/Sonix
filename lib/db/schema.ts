@@ -26,6 +26,7 @@ export const playlistsTable = pgTable("playlists", {
   userId: integer().notNull(), // FK to usersTable.id
   name: varchar({ length: 255 }).notNull(),
   createdAt: varchar().notNull(),
+  cover:varchar()
 });
 
 // JOIN TABLE: PLAYLIST <-> SONGS

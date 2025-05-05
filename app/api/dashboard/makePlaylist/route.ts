@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
+    
     const decoded = await verifyToken(token);
     if (!decoded || !decoded.userId) {
       return NextResponse.json(
@@ -20,23 +20,26 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-
+    
     const userId = decoded.userId;
-
+    
     // Parse request body
     const body = await request.json();
-    const { name } = body;
-
+    const { name, cover } = body;
+    
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json(
         { message: "Bad request: Playlist name is required" },
         { status: 400 }
       );
     }
-
+    
     // Create playlist in the database
-    const playlist = await createPlaylist(name.trim(), userId);
-
+    // If cover is provided, pass it to the createPlaylist function
+    const playlist = cover 
+      ? await createPlaylist(name.trim(), userId, cover)
+      : await createPlaylist(name.trim(), userId);
+    
     // Return success response
     return NextResponse.json(
       {
@@ -45,6 +48,7 @@ export async function POST(request: NextRequest) {
           id: playlist.id,
           name: playlist.name,
           userId: playlist.userId,
+          cover: playlist.cover || null,
           createdAt: playlist.createdAt
         }
       },

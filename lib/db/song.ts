@@ -35,18 +35,20 @@ export async function addSong(
 }
 
 // ✅ Create a playlist for a user
-export async function createPlaylist(name: string, userId: number) {
+export async function createPlaylist(name: string, userId: number, cover?: string) {
   const [playlist] = await db
     .insert(playlistsTable)
     .values({
       name,
       userId,
       createdAt: new Date().toISOString(),
+      cover: cover || null 
     })
     .returning();
 
   return playlist;
 }
+
 
 // ✅ Add a song to a playlist
 export async function addSongToPlaylist(playlistId: string, songId: string) {

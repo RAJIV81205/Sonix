@@ -122,7 +122,7 @@ const MobileSpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: MobileSpotify
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ name: playlist.name }),
+        body: JSON.stringify({ name: playlist.name , cover : playlist.images[0]?.url}),
       });
 
       if (!response.ok) {

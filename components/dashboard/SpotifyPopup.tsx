@@ -135,7 +135,7 @@ const SpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: SpotifyPopupProps) 
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ name: playlist.name }),
+        body: JSON.stringify({ name: playlist.name , cover : playlist.images[0]?.url }),
       });
 
       if (!response.ok) {
