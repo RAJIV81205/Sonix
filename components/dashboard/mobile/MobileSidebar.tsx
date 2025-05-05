@@ -4,6 +4,7 @@ import { Home, Search, Library, Plus, Heart, X, Menu, Compass, Music, Mic, Clock
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import MobileAddPlaylistPopup from './MobileAddPlaylistPopup';
+import MobileSpotifyPopup from './MobileSpotifyPopup';
 import { toast } from 'react-hot-toast';
 
 interface Playlist {
@@ -16,6 +17,7 @@ export default function MobileSidebar() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeItem, setActiveItem] = useState('home');
   const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState(false);
+  const [showSpotifyPopup, setShowSpotifyPopup] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,6 +73,32 @@ export default function MobileSidebar() {
       { id: playlistId, name: playlistName, songCount: 0 },
       ...prev
     ]);
+  };
+
+  const handleSpotifyPlaylistImported = (playlist: any) => {
+    // Refresh playlists after importing from Spotify
+    const fetchPlaylists = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('/api/dashboard/getUserPlaylists', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setPlaylists(data.playlists);
+          toast.success(`Playlist "${playlist.name}" imported successfully!`);
+        }
+      } catch (error) {
+        console.error("Error fetching playlists:", error);
+      }
+    };
+
+    fetchPlaylists();
   };
 
   // Function to get playlist color based on index
@@ -247,6 +275,21 @@ export default function MobileSidebar() {
                 <span className="font-medium text-lg">Create Playlist</span>
               </button>
               
+              <button 
+                className="w-full flex items-center gap-4 p-4 rounded-xl text-green-400 hover:text-white hover:bg-zinc-900 transition-colors"
+                onClick={() => setShowSpotifyPopup(true)}
+              >
+                <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-2 rounded-lg shadow-sm shadow-green-500/10">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M8 12.5a1 1 0 1 0 0-2" />
+                    <path d="M12 12.5a1 1 0 1 0 0-2" />
+                    <path d="M16 12.5a1 1 0 1 0 0-2" />
+                  </svg>
+                </div>
+                <span className="font-medium text-lg">Import from Spotify</span>
+              </button>
+              
               <div className="w-full flex items-center gap-4 p-4 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors">
                 <div className="bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg w-9 h-9 flex items-center justify-center shadow-md shadow-purple-500/10">
                   <Heart className="w-4 h-4 text-white" />
@@ -291,6 +334,13 @@ export default function MobileSidebar() {
         isOpen={showAddPlaylistPopup} 
         onClose={() => setShowAddPlaylistPopup(false)}
         onSuccess={handlePlaylistCreated}
+      />
+
+      {/* Spotify Import Popup */}
+      <MobileSpotifyPopup
+        isOpen={showSpotifyPopup}
+        onClose={() => setShowSpotifyPopup(false)}
+        onCreatePlaylist={handleSpotifyPlaylistImported}
       />
     </>
   );
