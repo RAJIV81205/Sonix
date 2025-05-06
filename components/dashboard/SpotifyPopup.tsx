@@ -191,45 +191,79 @@ const SpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: SpotifyPopupProps) 
       toast.error('No playlist data available');
       return;
     }
-
+  
     try {
       const loadingToast = toast.loading('Creating playlist...');
       setIsLoading(true);
-
+  
       // Reset progress and set total songs
       setProgress(0);
       setCurrentSong(0);
       setTotalSongs(importedPlaylist.tracks.items.length);
-
+  
       // Create the playlist and get its ID
       const playlistId = await createPlaylist(importedPlaylist);
       
       if (!playlistId) {
         throw new Error('Failed to create playlist');
       }
-
+  
       // Update loading toast to show we're now adding songs
       toast.dismiss(loadingToast);
       const addingSongsToast = toast.loading('Adding songs to playlist: 0%');
-
-      // Process songs one by one and update progress
+  
+      // Process songs in batches to prevent overwhelming the API
+      const batchSize = 10; // Process 10 songs at a time
+      const delay = 1000; // 1 second delay between individual song additions
       let successCount = 0;
-      for (let i = 0; i < importedPlaylist.tracks.items.length; i++) {
-        const item = importedPlaylist.tracks.items[i];
-
-        // Update current song and progress
-        setCurrentSong(i + 1);
-        const newProgress = Math.round(((i + 1) / importedPlaylist.tracks.items.length) * 100);
-        setProgress(newProgress);
-
-        // Update toast message with current progress
-        toast.loading(`Adding songs: ${i + 1}/${importedPlaylist.tracks.items.length} (${newProgress}%)`,
-          { id: addingSongsToast });
-
-        const success = await addSong(item, playlistId);
-        if (success) successCount++;
+      
+      // Process songs in batches
+      for (let i = 0; i < importedPlaylist.tracks.items.length; i += batchSize) {
+        // Calculate the end index for current batch
+        const endIndex = Math.min(i + batchSize, importedPlaylist.tracks.items.length);
+        
+        // Process each song in the current batch sequentially
+        for (let j = i; j < endIndex; j++) {
+          const item = importedPlaylist.tracks.items[j];
+          
+          // Update current song and progress
+          setCurrentSong(j + 1);
+          const newProgress = Math.round(((j + 1) / importedPlaylist.tracks.items.length) * 100);
+          setProgress(newProgress);
+          
+          // Update toast message with current progress
+          toast.loading(
+            `Adding songs: ${j + 1}/${importedPlaylist.tracks.items.length} (${newProgress}%)`,
+            { id: addingSongsToast }
+          );
+          
+          // Add song with retry logic
+          let retries = 3;
+          let success = false;
+          
+          while (retries > 0 && !success) {
+            try {
+              success = await addSong(item, playlistId);
+              if (success) {
+                successCount++;
+                break;
+              }
+            } catch (error) {
+              retries--;
+              console.error(`Error adding song (${retries} retries left):`, error);
+              // Wait a bit longer if we hit an error
+              await new Promise(resolve => setTimeout(resolve, delay * 2));
+            }
+          }
+          
+          // Add delay between song additions to prevent rate limiting
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        
+        // Add a slightly longer pause between batches
+        await new Promise(resolve => setTimeout(resolve, delay * 2));
       }
-
+  
       // Final toast message
       toast.dismiss(addingSongsToast);
       toast.success(`Playlist created with ${successCount} of ${importedPlaylist.tracks.items.length} songs added!`);
@@ -238,7 +272,7 @@ const SpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: SpotifyPopupProps) 
       if (onCreatePlaylist) {
         onCreatePlaylist(importedPlaylist);
       }
-
+  
       // Close popup on success after a short delay to show completion
       setTimeout(() => {
         onClose();

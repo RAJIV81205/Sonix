@@ -5,7 +5,7 @@ import { playlistSongsTable } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 
 const getSongDetails = async (song: any) => {
-    const query = `${song.track.name} - ${song.track.artists[0].name}`;
+    const query = `${song.track.name.split('(')[0]} - ${song.track.artists[0].name}`;
 
 
 

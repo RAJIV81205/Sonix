@@ -121,12 +121,53 @@ export async function POST(request: Request) {
             }, { status: response.status });
         }
         
-        // Return the successful response
+        // Get initial playlist data
         const data = await response.json();
-        console.log("Playlist fetched successfully:", data.name);
+        const allTracks = [...data.tracks.items];
+        
+        // Fetch additional tracks if there are more than 100
+        if (data.tracks.total > 100) {
+            console.log(`Playlist has ${data.tracks.total} tracks. Fetching additional batches...`);
+            
+            let nextUrl = data.tracks.next;
+            while (nextUrl) {
+                console.log(`Fetching next batch from: ${nextUrl}`);
+                const moreTracksResponse = await fetch(nextUrl, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    }
+                });
+                
+                if (!moreTracksResponse.ok) {
+                    console.error("Error fetching additional tracks:", moreTracksResponse.statusText);
+                    break; // Continue with what we have so far
+                }
+                
+                const moreTracksData = await moreTracksResponse.json();
+                allTracks.push(...moreTracksData.items);
+                nextUrl = moreTracksData.next;
+                
+                console.log(`Fetched batch of ${moreTracksData.items.length} tracks. Total so far: ${allTracks.length}`);
+            }
+        }
+        
+        // Update the data object with all tracks
+        const completePlaylistData = {
+            ...data,
+            tracks: {
+                ...data.tracks,
+                items: allTracks,
+                total: allTracks.length
+            }
+        };
+        
+        // Return the successful response with complete playlist data
+        console.log(`Playlist "${data.name}" fetched successfully with all ${allTracks.length} tracks`);
         return NextResponse.json({
             success: true,
-            playlist: data
+            playlist: completePlaylistData
         });
     } catch (error: any) {
         console.error("Error fetching playlist:", error);
