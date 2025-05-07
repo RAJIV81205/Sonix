@@ -171,17 +171,22 @@ const SpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: SpotifyPopupProps) 
         body: JSON.stringify({ song: item, playlistId: playlistId })
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to add song');
+      const data = await response.json();
+      
+      if (data.skipped) {
+        console.log(`Skipped song: ${item.track.name} - ${data.error}`);
+        return true; // Return true to continue with next song
       }
 
-      const data = await response.json();
-      console.log('Song added successfully:', data);
+      if (!data.success) {
+        console.error(`Failed to add song: ${item.track.name} - ${data.error}`);
+        return false;
+      }
+
+      console.log('Song added successfully:', item.track.name);
       return true;
     } catch (error: any) {
       console.error('Error adding song:', error);
-      toast.error(error.message || 'Failed to add song');
       return false;
     }
   }
@@ -212,9 +217,10 @@ const SpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: SpotifyPopupProps) 
       toast.dismiss(loadingToast);
       const addingSongsToast = toast.loading('Adding songs to playlist: 0%');
   
-      // Process songs in batches to prevent overwhelming the API
-      const batchSize = 10; // Process 10 songs at a time
-      const delay = 1000; // 1 second delay between individual song additions
+      // Process songs in smaller batches with increased delays to prevent API blocking
+      const batchSize = 5; // Reduced batch size
+      const delay = 2000; // Increased delay to 2 seconds between songs
+      const batchDelay = 5000; // 5 seconds delay between batches
       let successCount = 0;
       
       // Process songs in batches
@@ -237,7 +243,7 @@ const SpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: SpotifyPopupProps) 
             { id: addingSongsToast }
           );
           
-          // Add song with retry logic
+          // Add song with retry logic and increased delays
           let retries = 3;
           let success = false;
           
@@ -251,17 +257,17 @@ const SpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: SpotifyPopupProps) 
             } catch (error) {
               retries--;
               console.error(`Error adding song (${retries} retries left):`, error);
-              // Wait a bit longer if we hit an error
-              await new Promise(resolve => setTimeout(resolve, delay * 2));
+              // Increased delay on error
+              await new Promise(resolve => setTimeout(resolve, delay * 3));
             }
           }
           
-          // Add delay between song additions to prevent rate limiting
+          // Add increased delay between song additions
           await new Promise(resolve => setTimeout(resolve, delay));
         }
         
-        // Add a slightly longer pause between batches
-        await new Promise(resolve => setTimeout(resolve, delay * 2));
+        // Add longer pause between batches
+        await new Promise(resolve => setTimeout(resolve, batchDelay));
       }
   
       // Final toast message

@@ -7,8 +7,6 @@ import { and, eq } from "drizzle-orm";
 const getSongDetails = async (song: any) => {
     const query = `${song.track.name.split('(')[0]} - ${song.track.artists[0].name}`;
 
-
-
     try {
         const searchUrl = `https://www.jiosaavn.com/api.php?p=1&q=${encodeURIComponent(query)}&_format=json&_marker=0&api_version=4&ctx=wap6dot0&n=20&__call=search.getResults`;
 
@@ -39,20 +37,23 @@ const getSongDetails = async (song: any) => {
         });
 
         if (!searchResponse.ok) {
-            return NextResponse.json(
-                { error: "Failed to fetch search results" },
-                { status: searchResponse.status }
-            );
+            console.error(`Failed to fetch search results for song: ${query}`);
+            return { error: "Failed to fetch search results", songId: null };
         }
 
         const jsonData = await searchResponse.json();
         const songs = jsonData.results || [];
-        return songs[0].id
+        
+        if (!songs.length) {
+            console.error(`No results found for song: ${query}`);
+            return { error: "Song not found", songId: null };
+        }
+
+        return { error: null, songId: songs[0].id };
 
     } catch (error) {
         console.error("Error fetching song details:", error);
-        return null;
-
+        return { error: "Error fetching song details", songId: null };
     }
 }
 
@@ -62,19 +63,16 @@ const getSongUrl = async (songId: string) => {
 
         if (!response.ok) {
             console.log("Error fetching song URL:", response.statusText);
-            return null;
+            return { error: "Failed to fetch song URL", data: null };
         }
 
         const data = await response.json();
-        return data.data[0]
-
+        return { error: null, data: data.data[0] };
 
     } catch (error) {
         console.error("Error fetching song URL:", error);
-        return null;
-
+        return { error: "Error fetching song URL", data: null };
     }
-
 }
 
 const appendSong = async (songData: any, playlistId: string) => {
@@ -88,7 +86,7 @@ const appendSong = async (songData: any, playlistId: string) => {
             !songData.image?.[2]?.url ||
             !songData.downloadUrl?.[4]?.url
         ) {
-            throw new Error("Incomplete song data structure");
+            return { error: "Incomplete song data structure", success: false };
         }
 
         const savedSong = await addSong(
@@ -110,18 +108,16 @@ const appendSong = async (songData: any, playlistId: string) => {
             );
 
         if (existingEntry.length > 0) {
-            return "Song already exists in this playlist";
+            return { error: "Song already exists in this playlist", success: false };
         }
 
         await addSongToPlaylist(playlistId, savedSong.id);
-        return "Song added to playlist successfully";
+        return { error: null, success: true };
     } catch (error) {
         console.error("Error adding song to playlist:", error);
-        return "Failed to add song";
+        return { error: "Failed to add song", success: false };
     }
 };
-
-
 
 export async function POST(request: Request) {
     try {
@@ -129,24 +125,37 @@ export async function POST(request: Request) {
         const song = body.song;
         const playlistId = body.playlistId;
 
-        const songId = await getSongDetails(song);
-        if (!songId) {
-            return NextResponse.json({ error: "Song not found" }, { status: 404 });
+        const { error: searchError, songId } = await getSongDetails(song);
+        if (searchError || !songId) {
+            return NextResponse.json({ 
+                error: searchError || "Song not found",
+                success: false,
+                skipped: true
+            });
         }
         
-        const songData = await getSongUrl(songId);
-        if (!songData) {
-            return NextResponse.json({ error: "Failed to get song URL" }, { status: 404 });
+        const { error: urlError, data: songData } = await getSongUrl(songId);
+        if (urlError || !songData) {
+            return NextResponse.json({ 
+                error: urlError || "Failed to get song URL",
+                success: false,
+                skipped: true
+            });
         }
         
-        const saveResponse = await appendSong(songData, playlistId);
+        const { error: appendError, success } = await appendSong(songData, playlistId);
         
         return NextResponse.json({ 
-            message: saveResponse,
-            success: saveResponse === "Song added to playlist successfully" 
+            error: appendError,
+            success: success,
+            skipped: !success
         });
     } catch (error) {
         console.error("Error in POST handler:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return NextResponse.json({ 
+            error: "Internal server error",
+            success: false,
+            skipped: true
+        });
     }
 }

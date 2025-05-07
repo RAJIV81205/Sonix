@@ -177,46 +177,90 @@ const MobileSpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: MobileSpotify
       toast.error('No playlist data available');
       return;
     }
-
+  
     try {
       const loadingToast = toast.loading('Creating playlist...');
       setIsLoading(true);
-
+  
+      // Reset progress and set total songs
       setProgress(0);
       setCurrentSong(0);
       setTotalSongs(importedPlaylist.tracks.items.length);
-
+  
+      // Create the playlist and get its ID
       const playlistId = await createPlaylist(importedPlaylist);
       
       if (!playlistId) {
         throw new Error('Failed to create playlist');
       }
-
+  
+      // Update loading toast to show we're now adding songs
       toast.dismiss(loadingToast);
       const addingSongsToast = toast.loading('Adding songs to playlist: 0%');
-
+  
+      // Process songs in smaller batches with increased delays to prevent API blocking
+      const batchSize = 5; // Reduced batch size
+      const delay = 2000; // Increased delay to 2 seconds between songs
+      const batchDelay = 5000; // 5 seconds delay between batches
       let successCount = 0;
-      for (let i = 0; i < importedPlaylist.tracks.items.length; i++) {
-        const item = importedPlaylist.tracks.items[i];
-
-        setCurrentSong(i + 1);
-        const newProgress = Math.round(((i + 1) / importedPlaylist.tracks.items.length) * 100);
-        setProgress(newProgress);
-
-        toast.loading(`Adding songs: ${i + 1}/${importedPlaylist.tracks.items.length} (${newProgress}%)`,
-          { id: addingSongsToast });
-
-        const success = await addSong(item, playlistId);
-        if (success) successCount++;
+      
+      // Process songs in batches
+      for (let i = 0; i < importedPlaylist.tracks.items.length; i += batchSize) {
+        // Calculate the end index for current batch
+        const endIndex = Math.min(i + batchSize, importedPlaylist.tracks.items.length);
+        
+        // Process each song in the current batch sequentially
+        for (let j = i; j < endIndex; j++) {
+          const item = importedPlaylist.tracks.items[j];
+          
+          // Update current song and progress
+          setCurrentSong(j + 1);
+          const newProgress = Math.round(((j + 1) / importedPlaylist.tracks.items.length) * 100);
+          setProgress(newProgress);
+          
+          // Update toast message with current progress
+          toast.loading(
+            `Adding songs: ${j + 1}/${importedPlaylist.tracks.items.length} (${newProgress}%)`,
+            { id: addingSongsToast }
+          );
+          
+          // Add song with retry logic and increased delays
+          let retries = 3;
+          let success = false;
+          
+          while (retries > 0 && !success) {
+            try {
+              success = await addSong(item, playlistId);
+              if (success) {
+                successCount++;
+                break;
+              }
+            } catch (error) {
+              retries--;
+              console.error(`Error adding song (${retries} retries left):`, error);
+              // Increased delay on error
+              await new Promise(resolve => setTimeout(resolve, delay * 3));
+            }
+          }
+          
+          // Add increased delay between song additions
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+        
+        // Add longer pause between batches
+        await new Promise(resolve => setTimeout(resolve, batchDelay));
       }
-
+  
+      // Final toast message
       toast.dismiss(addingSongsToast);
       toast.success(`Playlist created with ${successCount} of ${importedPlaylist.tracks.items.length} songs added!`);
       
+      // Call the onCreatePlaylist callback if provided
       if (onCreatePlaylist) {
         onCreatePlaylist(importedPlaylist);
       }
-
+  
+      // Close popup on success after a short delay to show completion
       setTimeout(() => {
         onClose();
       }, 1500);
@@ -225,7 +269,7 @@ const MobileSpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: MobileSpotify
       toast.error(error.message || 'Failed to create playlist');
     } finally {
       setIsLoading(false);
-      toast.dismiss();
+      toast.dismiss(); // Dismiss any remaining loading toasts
     }
   };
 
