@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
         name: playlistsTable.name,
         createdAt: playlistsTable.createdAt,
         songCount: count(playlistSongsTable.songId).as("songCount"),
+        cover : playlistsTable.cover,
       })
       .from(playlistsTable)
       .leftJoin(

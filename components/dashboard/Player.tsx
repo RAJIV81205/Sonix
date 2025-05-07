@@ -131,7 +131,7 @@ const Player = () => {
         <div className="w-10 h-10 md:w-14 md:h-14 bg-zinc-900 rounded overflow-hidden">
           {currentSong?.image && (
             <img
-              src={currentSong.image}
+              src={currentSong.image.replace("150x150", "500x500").replace("http:","https:")}
               alt={currentSong.name.replaceAll("&quot;", `"`)}
               className="w-full h-full object-cover"
             />

@@ -81,6 +81,22 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  useEffect(() => {
+    const changeFavicon = (url: string) => {
+      let link = document.querySelector<HTMLLinkElement>("link[rel*='icon']") || document.createElement('link');
+      link.type = 'image/png';
+      link.rel = 'icon';
+      link.href = url;
+      document.getElementsByTagName('head')[0].appendChild(link);
+    };
+
+    try {
+      changeFavicon('/my-icon.png'); // Path to your custom icon
+    } catch (error) {
+      console.error('Failed to change favicon:', error);
+    }
+  }, []);
+
   // Auto-play next song when current one ends
   useEffect(() => {
     const audio = audioRef.current;
@@ -116,6 +132,64 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       savePosition(); // Save on unmount too
     };
   }, [currentSong, isPlaying]);
+
+  // Setup Media Session API for notification controls
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
+    
+    // Set up media session handlers
+    navigator.mediaSession.setActionHandler('play', () => setIsPlaying(true));
+    navigator.mediaSession.setActionHandler('pause', () => setIsPlaying(false));
+    navigator.mediaSession.setActionHandler('previoustrack', () => playPrevious());
+    navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
+    
+    // Clean up
+    return () => {
+      navigator.mediaSession.setActionHandler('play', null);
+      navigator.mediaSession.setActionHandler('pause', null);
+      navigator.mediaSession.setActionHandler('previoustrack', null);
+      navigator.mediaSession.setActionHandler('nexttrack', null);
+    };
+  }, []);  // Empty dependency array ensures this runs once
+
+  // Update media session metadata when current song changes
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator) || !currentSong) return;
+    
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentSong.name.replaceAll("&quot;", `"`),
+        artist: currentSong.artist,
+        album: '',  // Could be added to Song interface if needed
+        artwork: [
+          { src: currentSong.image, sizes: '96x96', type: 'image/png' },
+          { src: currentSong.image, sizes: '128x128', type: 'image/png' },
+          { src: currentSong.image, sizes: '192x192', type: 'image/png' },
+          { src: currentSong.image, sizes: '256x256', type: 'image/png' },
+          { src: currentSong.image, sizes: '384x384', type: 'image/png' },
+          { src: currentSong.image, sizes: '512x512', type: 'image/png' }
+        ]
+      });
+      
+      // Update playback state
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    } catch (error) {
+      console.error('Error setting media session metadata:', error);
+    }
+    
+  }, [currentSong, isPlaying]);
+
+  // Update media session playback state when playing state changes
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
+    
+    try {
+      // TypeScript may not recognize this property on some definitions
+      (navigator.mediaSession as any).playbackState = isPlaying ? 'playing' : 'paused';
+    } catch (error) {
+      console.warn('Error updating media session playback state:', error);
+    }
+  }, [isPlaying]);
 
   // Play next song from playlist
   const playNext = () => {
@@ -241,6 +315,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setIsPlayingState(playing);
     if (typeof window !== 'undefined') {
       localStorage.setItem('isPlaying', playing.toString());
+      
+      // Update media session playback state
+      if ('mediaSession' in navigator) {
+        try {
+          // TypeScript may not recognize this property on some definitions
+          (navigator.mediaSession as any).playbackState = playing ? 'playing' : 'paused';
+        } catch (error) {
+          console.warn('Error updating media session playback state:', error);
+        }
+      }
     }
   };
 
@@ -346,6 +430,41 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       audioRef.current?.removeEventListener('canplay', handleCanPlay);
     };
   }, [currentSong, isPlaying]);
+
+  // Add position state handling for more accurate media controls
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator) || !audioRef.current) return;
+    
+    // Update position state periodically
+    const updatePositionState = () => {
+      if (audioRef.current && navigator.mediaSession && 'setPositionState' in navigator.mediaSession) {
+        try {
+          // Use type assertion to handle the TypeScript definition issue
+          (navigator.mediaSession as any).setPositionState({
+            duration: audioRef.current.duration || 0,
+            playbackRate: audioRef.current.playbackRate,
+            position: audioRef.current.currentTime
+          });
+        } catch (e) {
+          console.warn('Error updating media session position state:', e);
+        }
+      }
+    };
+    
+    const timeUpdateHandler = () => {
+      if (isPlaying) {
+        updatePositionState();
+      }
+    };
+    
+    audioRef.current.addEventListener('timeupdate', timeUpdateHandler);
+    audioRef.current.addEventListener('durationchange', updatePositionState);
+    
+    return () => {
+      audioRef.current?.removeEventListener('timeupdate', timeUpdateHandler);
+      audioRef.current?.removeEventListener('durationchange', updatePositionState);
+    };
+  }, [isPlaying]);
 
   return (
     <PlayerContext.Provider value={{ 

@@ -122,7 +122,7 @@ const MobilePlaylistPage = () => {
 
       {/* Playlist Header */}
       <div className="px-4 pb-4 flex flex-col items-center">
-        <div className="flex flex-col items-center mb-6">
+        <div className="flex flex-col items-center mb-6 py-10">
           <div className="w-40 h-40 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
             {playlist.cover ? (
               <img 

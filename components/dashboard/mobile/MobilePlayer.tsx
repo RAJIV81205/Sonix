@@ -45,6 +45,41 @@ const MobilePlayer = () => {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`
   }
 
+  // Handle back button with browser history API
+  useEffect(() => {
+    const handleExpandChange = () => {
+      if (isExpanded) {
+        // Push a new state to the history when player is expanded
+        window.history.pushState({ player: "expanded" }, "")
+      }
+    }
+
+    // Watch for history state changes (back button)
+    const handlePopState = (event: PopStateEvent) => {
+      if (isExpanded) {
+        // Prevent the default back behavior by closing the player instead
+        setIsExpanded(false)
+        // Push state back so we don't navigate away
+        window.history.pushState(null, "")
+        event.preventDefault()
+      }
+      
+      // Also close playlist modal if open
+      if (showPlaylistModal) {
+        setShowPlaylistModal(false)
+      }
+    }
+
+    // Add event listeners
+    handleExpandChange()
+    window.addEventListener("popstate", handlePopState)
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("popstate", handlePopState)
+    }
+  }, [isExpanded, showPlaylistModal])
+
   // Handle time updates
   useEffect(() => {
     const audio = audioRef.current
@@ -159,6 +194,9 @@ const MobilePlayer = () => {
   useEffect(() => {
     if (showPlaylistModal) {
       fetchPlaylists();
+      
+      // Push a new history state for playlist modal
+      window.history.pushState({ playerModal: "playlist" }, "")
     }
   }, [showPlaylistModal]);
 
@@ -256,7 +294,7 @@ const MobilePlayer = () => {
             <div className="w-10 h-10 bg-zinc-900 rounded overflow-hidden mr-3">
               {currentSong?.image && (
                 <img
-                  src={currentSong.image}
+                  src={currentSong.image.replace("150x150", "500x500").replace("http:","https:")}
                   alt={currentSong.name.replaceAll("&quot;", `"`)}
                   className="w-full h-full object-cover"
                 />
@@ -318,7 +356,7 @@ const MobilePlayer = () => {
             <div className="w-full max-w-xs aspect-square rounded-lg overflow-hidden shadow-2xl mb-8 bg-zinc-900">
               {currentSong.image ? (
                 <img
-                  src={currentSong.image}
+                  src={currentSong.image.replace("150x150", "500x500").replace("http:","https:")}
                   alt={currentSong.name.replaceAll("&quot;", `"`)}
                   className="w-full h-full object-cover rounded"
                 />

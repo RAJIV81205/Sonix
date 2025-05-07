@@ -11,6 +11,7 @@ interface Playlist {
   id: string;
   name: string;
   songCount?: number;
+  cover?: string;
 }
 
 export default function Sidebar() {
@@ -133,7 +134,7 @@ export default function Sidebar() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xs uppercase tracking-wider text-zinc-500 font-semibold px-1">Playlists</h2>
           <div className="flex space-x-1">
-            <button 
+            <button
               className="p-1.5 rounded-md hover:bg-zinc-900 transition-colors"
               onClick={() => setShowAddPlaylistPopup(true)}
               title="Create playlist"
@@ -142,7 +143,7 @@ export default function Sidebar() {
             </button>
           </div>
         </div>
-        
+
         {/* Spotify Import Button */}
         <button
           onClick={handleImportFromSpotify}
@@ -151,7 +152,16 @@ export default function Sidebar() {
           <Download className="w-4 h-4" />
           Import from Spotify
         </button>
-        
+
+        {/* Create Playlist Button - Styled like Spotify button */}
+        <button
+          onClick={() => setShowAddPlaylistPopup(true)}
+          className="w-full flex items-center justify-center gap-2 py-2 px-3 mb-3 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium text-sm transition-all duration-200"
+        >
+          <Plus className="w-4 h-4" />
+          Create Playlist
+        </button>
+
         <div className="space-y-2">
           <div className="flex items-center gap-3 hover:bg-zinc-900 py-2 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-md flex items-center justify-center shadow-md shadow-indigo-500/10">
@@ -162,7 +172,7 @@ export default function Sidebar() {
               <p className="text-xs text-zinc-500">120 songs</p>
             </div>
           </div>
-          
+
           {/* User Playlists */}
           {loading ? (
             <div className="py-3 text-center">
@@ -170,14 +180,25 @@ export default function Sidebar() {
             </div>
           ) : playlists.length > 0 ? (
             playlists.map((playlist, index) => (
-              <Link 
-                href={`/dashboard/playlist/${playlist.id}`} 
+              <Link
+                href={`/dashboard/playlist/${playlist.id}`}
                 key={playlist.id}
                 className="flex items-center gap-3 hover:bg-zinc-900 py-2 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group"
               >
-                <div className={`w-10 h-10 bg-gradient-to-br ${getPlaylistColor(index)} rounded-md flex items-center justify-center shadow-md`}>
-                  <Music className="w-5 h-5 text-white" />
-                </div>
+                {playlist.cover ? (
+                  <div className="w-10 h-10 rounded-md flex items-center justify-center shadow-md overflow-hidden">
+                    <img 
+                      src={playlist.cover} 
+                      alt={playlist.name} 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                ) : (
+                  <div className={`w-10 h-10 bg-gradient-to-br ${getPlaylistColor(index)} rounded-md flex items-center justify-center shadow-md`}>
+                    <Music className="w-5 h-5 text-white" />
+                  </div>
+                )}
+
                 <div>
                   <p className="text-sm font-medium">{playlist.name}</p>
                   <p className="text-xs text-zinc-500">
@@ -187,37 +208,25 @@ export default function Sidebar() {
               </Link>
             ))
           ) : (
-            // Big "Create Playlist" button when no playlists exist
-            <button 
-              onClick={() => setShowAddPlaylistPopup(true)}
-              className="w-full bg-gradient-to-br from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-lg p-5 transition-all duration-300 shadow-lg hover:shadow-indigo-500/20 text-center group"
-            >
-              <div className="flex flex-col items-center justify-center gap-3">
-                <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                  <Plus className="w-7 h-7 text-white group-hover:scale-110 transition-transform" />
-                </div>
-                <div>
-                  <p className="font-semibold text-white">Create Playlist</p>
-                  <p className="text-xs text-white/70 mt-1">Start your music collection</p>
-                </div>
-              </div>
-            </button>
+            <div className="py-3 text-center text-zinc-500 text-sm">
+              No playlists yet
+            </div>
           )}
         </div>
       </div>
 
       {/* Add Playlist Popup */}
-      <AddPlaylistPopup 
-        isOpen={showAddPlaylistPopup} 
-        onClose={() => setShowAddPlaylistPopup(false)} 
+      <AddPlaylistPopup
+        isOpen={showAddPlaylistPopup}
+        onClose={() => setShowAddPlaylistPopup(false)}
         onSuccess={handlePlaylistCreated}
       />
 
       {/* Spotify Popup */}
-      <SpotifyPopup 
+      <SpotifyPopup
         isOpen={showSpotifyPopup}
         onClose={() => setShowSpotifyPopup(false)}
       />
-    </div>
+    </div >
   );
 }
