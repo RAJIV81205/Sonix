@@ -154,13 +154,7 @@ export default function Sidebar() {
         </button>
 
         {/* Create Playlist Button - Styled like Spotify button */}
-        <button
-          onClick={() => setShowAddPlaylistPopup(true)}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 mb-3 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium text-sm transition-all duration-200"
-        >
-          <Plus className="w-4 h-4" />
-          Create Playlist
-        </button>
+
 
         <div className="space-y-2">
           <div className="flex items-center gap-3 hover:bg-zinc-900 py-2 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
@@ -186,11 +180,11 @@ export default function Sidebar() {
                 className="flex items-center gap-3 hover:bg-zinc-900 py-2 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group"
               >
                 {playlist.cover ? (
-                  <div className="w-10 h-10 rounded-md flex items-center justify-center shadow-md overflow-hidden">
-                    <img 
-                      src={playlist.cover} 
-                      alt={playlist.name} 
-                      className="w-full h-full object-cover" 
+                  <div className="h-full w-1/3 rounded-md flex items-center justify-center shadow-md overflow-hidden">
+                    <img
+                      src={playlist.cover}
+                      alt={playlist.name}
+                      className="w-full h-full object-cover"
                     />
                   </div>
                 ) : (
@@ -208,9 +202,13 @@ export default function Sidebar() {
               </Link>
             ))
           ) : (
-            <div className="py-3 text-center text-zinc-500 text-sm">
-              No playlists yet
-            </div>
+            <button
+              onClick={() => setShowAddPlaylistPopup(true)}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 mb-3 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium text-sm transition-all duration-200"
+            >
+              <Plus className="w-4 h-4" />
+              Create Playlist
+            </button>
           )}
         </div>
       </div>
