@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
-import { Music, PlayCircle, ArrowLeft, Play } from 'lucide-react'
+import { Music, MoreVertical, ArrowLeft, Play } from 'lucide-react'
 import LoadingSpinner from '../../LoadingSpinner'
 import { usePlayer } from '@/context/PlayerContext'
 import Link from 'next/link'
@@ -28,14 +28,19 @@ const MobilePlaylistPage = () => {
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const { setCurrentSong, setPlaylist: setPlayerPlaylist, isPlaying, setIsPlaying } = usePlayer()
+  const { setCurrentSong, setPlaylist: setPlayerPlaylist, setIsPlaying, addToQueue, playNextInQueue } = usePlayer()
+
+  const [contextMenuVisible, setContextMenuVisible] = useState(false)
+  const [selectedSong, setSelectedSong] = useState<Song | null>(null)
+  const [contextMenuPosition, setContextMenuPosition] = useState({ songIndex: -1 })
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchPlaylist = async () => {
       try {
         setLoading(true)
         const token = localStorage.getItem('token')
-        
+
         if (!token) {
           setError('Authentication token not found')
           setLoading(false)
@@ -70,14 +75,6 @@ const MobilePlaylistPage = () => {
     }
   }, [id])
 
-  const handlePlaySong = (song: Song, index: number) => {
-    if (playlist) {
-      setCurrentSong(song)
-      setPlayerPlaylist(playlist.songs, index)
-      setIsPlaying(true)
-    }
-  }
-
   const handlePlayAll = () => {
     if (playlist && playlist.songs.length > 0) {
       setPlayerPlaylist(playlist.songs, 0)
@@ -85,6 +82,65 @@ const MobilePlaylistPage = () => {
       setIsPlaying(true)
     }
   }
+
+  const openMenu = (e: React.MouseEvent, song: Song, index: number) => {
+    e.stopPropagation()
+    e.preventDefault()
+    
+    setSelectedSong(song)
+    setContextMenuPosition({ songIndex: index })
+    setContextMenuVisible(true)
+  }
+
+  const handleMenuAction = (action: string) => {
+    if (!selectedSong) return
+
+    switch (action) {
+      case 'play':
+        setCurrentSong(selectedSong)
+        setPlayerPlaylist(playlist?.songs || [], playlist?.songs.findIndex(s => s.id === selectedSong.id) || 0)
+        setIsPlaying(true)
+    
+        break
+      case 'play-next':
+        playNextInQueue(selectedSong)
+
+        break
+      case 'add-to-queue':
+        addToQueue(selectedSong)
+        break
+      case 'remove':
+        if (playlist) {
+          const updatedSongs = playlist.songs.filter(s => s.id !== selectedSong.id)
+          setPlaylist({ ...playlist, songs: updatedSongs })
+        }
+        break
+    }
+
+    setContextMenuVisible(false)
+  }
+
+  useEffect(() => {
+    const closeMenu = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setContextMenuVisible(false)
+      }
+    }
+    
+    const handleScroll = () => {
+      setContextMenuVisible(false)
+    }
+    
+    if (contextMenuVisible) {
+      document.addEventListener('click', closeMenu)
+      document.addEventListener('scroll', handleScroll, true)
+    }
+    
+    return () => {
+      document.removeEventListener('click', closeMenu)
+      document.removeEventListener('scroll', handleScroll, true)
+    }
+  }, [contextMenuVisible])
 
   if (loading) {
     return (
@@ -111,7 +167,7 @@ const MobilePlaylistPage = () => {
   }
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="h-full overflow-y-auto relative">
       {/* Back Button */}
       <div className="p-4 sticky top-0 bg-black/90 backdrop-blur-sm z-10">
         <Link href="/dashboard" className="inline-flex items-center text-sm font-medium text-zinc-400 hover:text-white">
@@ -160,8 +216,12 @@ const MobilePlaylistPage = () => {
           playlist.songs.map((song, index) => (
             <div 
               key={song.id}
-              className="flex items-center gap-3 py-3 border-b border-zinc-900 hover:bg-zinc-900/30 active:bg-zinc-900/50 transition-colors cursor-pointer rounded-md px-2"
-              onClick={() => handlePlaySong(song, index)}
+              className="flex items-center gap-3 py-3 border-b border-zinc-900 hover:bg-zinc-900/30 transition-colors cursor-pointer rounded-md px-2 relative"
+              onClick={() => {
+                setCurrentSong(song)
+                setPlayerPlaylist(playlist.songs, index)
+                setIsPlaying(true)
+              }}
             >
               <img 
                 src={song.image} 
@@ -172,7 +232,46 @@ const MobilePlaylistPage = () => {
                 <p className="font-medium text-white truncate">{song.name}</p>
                 <p className="text-sm text-zinc-400 truncate">{song.artist}</p>
               </div>
-              <PlayCircle size={24} className="text-purple-400" />
+              <button 
+                onClick={(e) => openMenu(e, song, index)}
+                className="relative"
+              >
+                <MoreVertical size={20} className="text-zinc-400 hover:text-white" />
+                
+                {/* Inline Context Menu */}
+                {contextMenuVisible && contextMenuPosition.songIndex === index && (
+                  <div
+                    ref={menuRef}
+                    className="absolute z-50 bg-zinc-800 text-white rounded-md shadow-lg p-2 space-y-2 w-40 right-0 top-0"
+                    style={{ transform: 'translateX(-10%) translateY(10%)' }}
+                  >
+                    <button 
+                      onClick={() => handleMenuAction('play')}
+                      className="block w-full text-left hover:bg-zinc-700 px-3 py-1 rounded"
+                    >
+                      Play
+                    </button>
+                    <button 
+                      onClick={() => handleMenuAction('play-next')}
+                      className="block w-full text-left hover:bg-zinc-700 px-3 py-1 rounded"
+                    >
+                      Play Next
+                    </button>
+                    <button 
+                      onClick={() => handleMenuAction('add-to-queue')}
+                      className="block w-full text-left hover:bg-zinc-700 px-3 py-1 rounded"
+                    >
+                      Add to Queue
+                    </button>
+                    <button 
+                      onClick={() => handleMenuAction('remove')}
+                      className="block w-full text-left text-red-400 hover:bg-zinc-700 px-3 py-1 rounded"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </button>
             </div>
           ))
         )}

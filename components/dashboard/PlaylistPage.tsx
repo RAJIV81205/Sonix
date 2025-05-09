@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { Music, PlayCircle, Play, EllipsisVertical, X, Plus, ListPlus, Trash2 } from 'lucide-react'
 import LoadingSpinner from '../LoadingSpinner'
 import { usePlayer } from '@/context/PlayerContext'
+import toast from 'react-hot-toast'
 
 interface Song {
   id: string;
@@ -129,7 +130,7 @@ const PlaylistPage = () => {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to remove song')
+        toast.error('Failed to remove song')
       }
 
       // Update local state
