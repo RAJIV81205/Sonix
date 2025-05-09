@@ -228,14 +228,14 @@ const Player = () => {
       </div>
 
       {/* Volume and Queue Controls */}
-      <div className="hidden md:flex items-center justify-end gap-2 w-1/4">
+      <div className="hidden md:flex items-center justify-end gap-3 w-1/4">
         <button
           onClick={() => setShowQueue(!showQueue)}
           className="text-zinc-400 hover:text-white transition-colors"
         >
           <List className="w-5 h-5" />
         </button>
-        <Volume2 className="w-5 h-5 text-zinc-400" />
+        <Volume2 className="w-5 h-5 text-zinc-400"/>
         <input
           type="range"
           min={0}
