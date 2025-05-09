@@ -14,13 +14,19 @@ interface PlayerContextType {
   currentSong: Song | null;
   isPlaying: boolean;
   playlist: Song[];
+  queue: Song[];
   currentSongIndex: number;
+  currentQueueIndex: number;
   setCurrentSong: (song: Song) => void;
   setIsPlaying: (playing: boolean) => void;
   setPlaylist: (songs: Song[], startIndex?: number) => void;
   playNext: () => void;
   playPrevious: () => void;
   audioRef: React.RefObject<HTMLAudioElement | null>;
+  addToQueue: (song: Song) => void;
+  removeFromQueue: (songId: string) => void;
+  clearQueue: () => void;
+  playNextInQueue: (song: Song) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -31,7 +37,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [isPlaying, setIsPlayingState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [playlist, setPlaylistState] = useState<Song[]>([]);
+  const [queue, setQueue] = useState<Song[]>([]);
   const [currentSongIndex, setCurrentSongIndex] = useState<number>(-1);
+  const [currentQueueIndex, setCurrentQueueIndex] = useState<number>(-1);
   const audioRef = useRef<HTMLAudioElement>(null);
   const playPromiseRef = useRef<Promise<void> | null>(null);
   const hasInitializedRef = useRef(false);
@@ -70,6 +78,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           if (savedIndex) {
             setCurrentSongIndex(parseInt(savedIndex, 10));
           }
+        }
+
+        const savedQueue = localStorage.getItem('queue');
+        if (savedQueue) {
+          setQueue(JSON.parse(savedQueue));
         }
 
         setIsPlaying(false)
@@ -191,47 +204,37 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   }, [isPlaying]);
 
-  // Play next song from playlist
+  // Play next song from playlist or queue
   const playNext = () => {
-    if (playlist.length === 0) return;
+    if (playlist.length === 0 && queue.length === 0) return;
     
-    if (currentSongIndex < playlist.length - 1) {
-      // Play next song in playlist
-      const nextIndex = currentSongIndex + 1;
-      const nextSong = playlist[nextIndex];
-      
-      setCurrentSongIndex(nextIndex);
-      setCurrentSongState(nextSong);
-      
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('currentSong', JSON.stringify(nextSong));
-        localStorage.setItem('currentSongIndex', nextIndex.toString());
-        localStorage.removeItem('currentPosition');
+    // If there are songs in queue, play the next one
+    if (queue.length > 0) {
+      const nextQueueIndex = currentQueueIndex + 1;
+      if (nextQueueIndex < queue.length) {
+        const nextSong = queue[nextQueueIndex];
+        setCurrentQueueIndex(nextQueueIndex);
+        setCurrentSongState(nextSong);
+        setCurrentSongIndex(-1); // Reset playlist index since we're playing from queue
+        
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('currentSong', JSON.stringify(nextSong));
+          localStorage.setItem('currentQueueIndex', nextQueueIndex.toString());
+          localStorage.removeItem('currentPosition');
+        }
+        
+        setIsPlaying(true);
+        return;
       }
-      
-      // Ensure we're playing
-      setIsPlaying(true);
-    } else if (playlist.length > 0) {
-      // Loop back to first song
-      const nextSong = playlist[0];
-      
-      setCurrentSongIndex(0);
-      setCurrentSongState(nextSong);
-      
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('currentSong', JSON.stringify(nextSong));
-        localStorage.setItem('currentSongIndex', '0');
-        localStorage.removeItem('currentPosition');
-      }
-      
-      // Ensure we're playing
-      setIsPlaying(true);
     }
+    
+    // If no queue or at end of queue, stop playing
+    setIsPlaying(false);
   };
 
-  // Play previous song from playlist
+  // Play previous song from playlist or queue
   const playPrevious = () => {
-    if (playlist.length === 0) return;
+    if (playlist.length === 0 && queue.length === 0) return;
     
     // If we're more than 3 seconds into a song, restart it instead of going to previous
     if (audioRef.current && audioRef.current.currentTime > 3) {
@@ -239,39 +242,27 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       return;
     }
     
-    if (currentSongIndex > 0) {
-      // Play previous song in playlist
-      const prevIndex = currentSongIndex - 1;
-      const prevSong = playlist[prevIndex];
+    // If there are songs in queue, play the previous one
+    if (queue.length > 0 && currentQueueIndex > 0) {
+      const prevQueueIndex = currentQueueIndex - 1;
+      const previousSong = queue[prevQueueIndex];
       
-      setCurrentSongIndex(prevIndex);
-      setCurrentSongState(prevSong);
+      setCurrentQueueIndex(prevQueueIndex);
+      setCurrentSongState(previousSong);
+      setCurrentSongIndex(-1); // Reset playlist index since we're playing from queue
       
       if (typeof window !== 'undefined') {
-        localStorage.setItem('currentSong', JSON.stringify(prevSong));
-        localStorage.setItem('currentSongIndex', prevIndex.toString());
+        localStorage.setItem('currentSong', JSON.stringify(previousSong));
+        localStorage.setItem('currentQueueIndex', prevQueueIndex.toString());
         localStorage.removeItem('currentPosition');
       }
       
-      // Ensure we're playing
       setIsPlaying(true);
-    } else if (playlist.length > 0) {
-      // Loop back to last song
-      const lastIndex = playlist.length - 1;
-      const lastSong = playlist[lastIndex];
-      
-      setCurrentSongIndex(lastIndex);
-      setCurrentSongState(lastSong);
-      
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('currentSong', JSON.stringify(lastSong));
-        localStorage.setItem('currentSongIndex', lastIndex.toString());
-        localStorage.removeItem('currentPosition');
-      }
-      
-      // Ensure we're playing
-      setIsPlaying(true);
+      return;
     }
+    
+    // If no queue or at start of queue, stop playing
+    setIsPlaying(false);
   };
 
   // Wrapper functions to update both state and localStorage
@@ -304,8 +295,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
     // Handle new song selection
     setCurrentSongState(song);
+    setCurrentQueueIndex(-1); // Reset queue index when manually selecting a song
     if (typeof window !== 'undefined') {
       localStorage.setItem('currentSong', JSON.stringify(song));
+      localStorage.setItem('currentQueueIndex', '-1');
       // Reset the saved position when changing songs
       localStorage.removeItem('currentPosition');
     }
@@ -466,18 +459,64 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [isPlaying]);
 
+  // Save queue to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('queue', JSON.stringify(queue));
+    }
+  }, [queue]);
+
+  // Add to queue function
+  const addToQueue = (song: Song) => {
+    setQueue(prevQueue => [...prevQueue, song]);
+  };
+
+  // Insert a song to play next (at the front of the queue)
+  const playNextInQueue = (song: Song) => {
+    setQueue(prevQueue => {
+      // Remove if already in queue
+      const filteredQueue = prevQueue.filter(s => s.id !== song.id);
+      return [song, ...filteredQueue];
+    });
+  };
+
+  // Remove from queue function
+  const removeFromQueue = (songId: string) => {
+    setQueue(prevQueue => {
+      const newQueue = prevQueue.filter(song => song.id !== songId);
+      // If we removed the current song, adjust the queue index
+      if (currentQueueIndex >= newQueue.length) {
+        setCurrentQueueIndex(Math.max(0, newQueue.length - 1));
+      }
+      return newQueue;
+    });
+  };
+
+  // Clear queue function
+  const clearQueue = () => {
+    setQueue([]);
+    setCurrentQueueIndex(-1);
+    setIsPlaying(false); // Stop playback when queue is cleared
+  };
+
   return (
     <PlayerContext.Provider value={{ 
       currentSong, 
       isPlaying, 
       playlist, 
+      queue,
       currentSongIndex,
+      currentQueueIndex,
       setCurrentSong, 
       setIsPlaying, 
       setPlaylist, 
       playNext, 
       playPrevious, 
-      audioRef 
+      audioRef,
+      addToQueue,
+      removeFromQueue,
+      clearQueue,
+      playNextInQueue
     }}>
       {children}
       <audio ref={audioRef} />

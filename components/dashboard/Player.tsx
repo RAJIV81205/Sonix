@@ -8,18 +8,36 @@ import {
   Volume2,
   Shuffle,
   Repeat,
+  List,
+  X,
+  Trash2
 } from "lucide-react"
 import React, { useState, useEffect, useRef } from "react"
 import { usePlayer } from "@/context/PlayerContext"
 
 const Player = () => {
-  const { currentSong, isPlaying, setIsPlaying, audioRef, playNext, playPrevious, playlist } = usePlayer()
+  const { 
+    currentSong, 
+    isPlaying, 
+    setIsPlaying, 
+    audioRef, 
+    playNext, 
+    playPrevious, 
+    playlist,
+    queue,
+    addToQueue,
+    removeFromQueue,
+    clearQueue,
+    setCurrentSong
+  } = usePlayer()
   const [volume, setVolume] = useState(80)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [hasInitialized, setHasInitialized] = useState(false)
+  const [showQueue, setShowQueue] = useState(false)
   const progressBarRef = useRef<HTMLDivElement>(null)
+  const queueRef = useRef<HTMLDivElement>(null)
 
   // Format time in MM:SS
   const formatTime = (time: number) => {
@@ -124,8 +142,25 @@ const Player = () => {
   // Calculate progress bar %
   const progress = duration ? (currentTime / duration) * 100 : 0
 
+  // Handle click outside queue panel
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (queueRef.current && !queueRef.current.contains(event.target as Node)) {
+        setShowQueue(false)
+      }
+    }
+
+    if (showQueue) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showQueue])
+
   return (
-    <div className="w-full h-16 md:h-20 bg-black border-t border-zinc-900 flex items-center px-2 md:px-4">
+    <div className="w-full h-16 md:h-20 bg-black border-t border-zinc-900 flex items-center px-2 md:px-4 relative">
       {/* Current Song Info */}
       <div className="flex items-center gap-2 md:gap-4 w-1/3 md:w-1/4">
         <div className="w-10 h-10 md:w-14 md:h-14 bg-zinc-900 rounded overflow-hidden">
@@ -192,8 +227,14 @@ const Player = () => {
         </div>
       </div>
 
-      {/* Volume Control */}
+      {/* Volume and Queue Controls */}
       <div className="hidden md:flex items-center justify-end gap-2 w-1/4">
+        <button
+          onClick={() => setShowQueue(!showQueue)}
+          className="text-zinc-400 hover:text-white transition-colors"
+        >
+          <List className="w-5 h-5" />
+        </button>
         <Volume2 className="w-5 h-5 text-zinc-400" />
         <input
           type="range"
@@ -204,6 +245,73 @@ const Player = () => {
           className="w-28 h-1.5 accent-indigo-500 rounded-full appearance-none cursor-pointer bg-zinc-800"
         />
       </div>
+
+      {/* Queue Panel */}
+      {showQueue && (
+        <div 
+          ref={queueRef}
+          className="absolute bottom-full right-0 mb-2 w-80 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden"
+        >
+          <div className="p-3 border-b border-zinc-800 flex items-center justify-between">
+            <h3 className="font-medium">Queue</h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={clearQueue}
+                className="text-zinc-400 hover:text-white transition-colors"
+                title="Clear Queue"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setShowQueue(false)}
+                className="text-zinc-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          <div className="max-h-96 overflow-y-auto">
+            {queue.length === 0 ? (
+              <div className="p-4 text-center text-zinc-400 text-sm">
+                Queue is empty
+              </div>
+            ) : (
+              queue.map((song, index) => (
+                <div
+                  key={song.id}
+                  className="flex items-center gap-3 p-2 hover:bg-zinc-800/50 transition-colors group"
+                >
+                  <div className="w-10 h-10 bg-zinc-800 rounded overflow-hidden flex-shrink-0">
+                    <img
+                      src={song.image.replace("150x150", "500x500").replace("http:","https:")}
+                      alt={song.name.replaceAll("&quot;", `"`)}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{song.name.replaceAll("&quot;", `"`)}</p>
+                    <p className="text-xs text-zinc-400 truncate">{song.artist}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentSong(song)}
+                      className="text-zinc-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <Play className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => removeFromQueue(song.id)}
+                      className="text-zinc-400 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

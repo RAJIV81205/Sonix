@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
-import { Music, PlayCircle, Play } from 'lucide-react'
+import { Music, PlayCircle, Play, EllipsisVertical, X, Plus, ListPlus, Trash2 } from 'lucide-react'
 import LoadingSpinner from '../LoadingSpinner'
 import { usePlayer } from '@/context/PlayerContext'
 
@@ -27,14 +27,16 @@ const PlaylistPage = () => {
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const { setCurrentSong, setPlaylist: setPlayerPlaylist, isPlaying, setIsPlaying } = usePlayer()
+  const { setCurrentSong, setPlaylist: setPlayerPlaylist, isPlaying, setIsPlaying, addToQueue, playNextInQueue } = usePlayer()
+  const [activeMenu, setActiveMenu] = useState<string | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchPlaylist = async () => {
       try {
         setLoading(true)
         const token = localStorage.getItem('token')
-        
+
         if (!token) {
           setError('Authentication token not found')
           setLoading(false)
@@ -69,6 +71,20 @@ const PlaylistPage = () => {
     }
   }, [id])
 
+  useEffect(() => {
+    // Close menu when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActiveMenu(null)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
   const handlePlaySong = (song: Song, index: number) => {
     if (playlist) {
       setCurrentSong(song)
@@ -79,10 +95,69 @@ const PlaylistPage = () => {
 
   const handlePlayAll = () => {
     if (playlist && playlist.songs.length > 0) {
-      setPlayerPlaylist(playlist.songs, 0)
-      setCurrentSong(playlist.songs[0])
-      setIsPlaying(true)
+      // Add all songs to queue
+      playlist.songs.forEach(song => {
+        addToQueue(song);
+      });
+      // Play the first song
+      setCurrentSong(playlist.songs[0]);
+      setIsPlaying(true);
     }
+  }
+
+  const showMenu = (song: Song, e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent triggering the parent onClick
+    setActiveMenu(activeMenu === song.id ? null : song.id)
+  }
+
+  const handleRemoveSong = async (songId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!playlist) return
+    
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch('/api/dashboard/removeSongFromPlaylist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          playlistId: playlist.id,
+          songId: songId 
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to remove song')
+      }
+
+      // Update local state
+      setPlaylist({
+        ...playlist,
+        songs: playlist.songs.filter(song => song.id !== songId)
+      })
+      
+      setActiveMenu(null)
+    } catch (error) {
+      console.error('Error removing song:', error)
+    }
+  }
+
+  const handlePlayNext = (song: Song, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (playNextInQueue) {
+      playNextInQueue(song)
+    }
+    setActiveMenu(null)
+  }
+
+  const handleAddToQueue = (song: Song, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (addToQueue) {
+      addToQueue(song)
+    }
+    setActiveMenu(null)
   }
 
   if (loading) {
@@ -115,9 +190,9 @@ const PlaylistPage = () => {
       <div className="flex items-start gap-6 mb-8">
         <div className="w-48 h-48 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg overflow-hidden">
           {playlist.cover ? (
-            <img 
-              src={playlist.cover} 
-              alt={playlist.name} 
+            <img
+              src={playlist.cover}
+              alt={playlist.name}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -131,7 +206,7 @@ const PlaylistPage = () => {
             {playlist.songs.length} songs • Created on {new Date(playlist.createdAt).toLocaleDateString()}
           </p>
           {playlist.songs.length > 0 && (
-            <button 
+            <button
               onClick={handlePlayAll}
               className="mt-4 flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-6 rounded-full hover:from-purple-700 hover:to-indigo-700 transition-colors"
             >
@@ -156,9 +231,9 @@ const PlaylistPage = () => {
           </div>
         ) : (
           playlist.songs.map((song, index) => (
-            <div 
+            <div
               key={song.id}
-              className="grid grid-cols-[auto_1fr_auto] gap-4 items-center py-2 px-2 hover:bg-zinc-900 rounded-md cursor-pointer group"
+              className="grid grid-cols-[auto_1fr_auto_auto] gap-4 items-center py-2 px-2 hover:bg-zinc-900 rounded-md cursor-pointer group relative"
               onClick={() => handlePlaySong(song, index)}
             >
               <div className="w-8 text-center text-zinc-400 group-hover:hidden">{index + 1}</div>
@@ -166,10 +241,10 @@ const PlaylistPage = () => {
                 <PlayCircle size={20} className="text-indigo-400" />
               </div>
               <div className="flex items-center gap-3">
-                <img 
-                  src={song.image} 
-                  alt={song.name} 
-                  className="w-10 h-10 rounded object-cover" 
+                <img
+                  src={song.image}
+                  alt={song.name}
+                  className="w-10 h-10 rounded object-cover"
                 />
                 <div>
                   <p className="font-medium text-white">{song.name}</p>
@@ -177,6 +252,44 @@ const PlaylistPage = () => {
                 </div>
               </div>
               <div className="text-zinc-400 px-4">3:45</div>
+              <div 
+                className="flex items-center justify-center hover:bg-gray-600/20 rounded-full h-6 w-6"
+                onClick={(e) => showMenu(song, e)}
+              >
+                <EllipsisVertical size={16} />
+              </div>
+              
+              {/* Song Options Menu */}
+              {activeMenu === song.id && (
+                <div 
+                  ref={menuRef}
+                  className="absolute right-0 top-0 -mt-2 mr-10 bg-zinc-800/90 backdrop-blur-sm rounded-lg shadow-lg z-50 py-1 border border-zinc-700/50"
+                >
+                  <div className="flex space-x-1 px-2">
+                    <button
+                      onClick={(e) => handlePlayNext(song, e)}
+                      className="px-2 py-1.5 hover:bg-zinc-700/70 rounded-md flex items-center gap-1.5 transition-colors text-xs"
+                    >
+                      <Plus size={14} className="text-zinc-400" />
+                      <span>Play Next</span>
+                    </button>
+                    <button
+                      onClick={(e) => handleAddToQueue(song, e)}
+                      className="px-2 py-1.5 hover:bg-zinc-700/70 rounded-md flex items-center gap-1.5 transition-colors text-xs"
+                    >
+                      <ListPlus size={14} className="text-zinc-400" />
+                      <span>Add to Queue</span>
+                    </button>
+                    <button
+                      onClick={(e) => handleRemoveSong(song.id, e)}
+                      className="px-2 py-1.5 hover:bg-zinc-700/70 rounded-md flex items-center gap-1.5 transition-colors text-xs text-red-400"
+                    >
+                      <Trash2 size={14} />
+                      <span>Remove</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}
