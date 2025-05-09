@@ -29,13 +29,13 @@ interface Playlist {
 }
 
 const MobilePlayer = () => {
-  const { 
-    currentSong, 
-    isPlaying, 
-    setIsPlaying, 
-    audioRef, 
-    playNext, 
-    playPrevious, 
+  const {
+    currentSong,
+    isPlaying,
+    setIsPlaying,
+    audioRef,
+    playNext,
+    playPrevious,
     playlist,
     queue,
     addToQueue,
@@ -74,14 +74,14 @@ const MobilePlayer = () => {
         setShowQueue(false);
       }
     };
-  
+
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [showPlaylistModal, isExpanded, showQueue]);
-  
- 
-  
-  
+
+
+
+
 
 
   // Handle time updates
@@ -119,7 +119,7 @@ const MobilePlayer = () => {
 
     const progressBar = progressBarRef.current;
     const rect = progressBar.getBoundingClientRect();
-    
+
     // Get the x position based on whether it's a touch or mouse event
     let clientX: number;
     if ('touches' in e) {
@@ -127,10 +127,10 @@ const MobilePlayer = () => {
     } else {
       clientX = e.clientX;
     }
-    
+
     const offsetX = clientX - rect.left;
     const newPosition = Math.max(0, Math.min((offsetX / rect.width) * duration, duration));
-    
+
     setCurrentTime(newPosition);
     audioRef.current.currentTime = newPosition;
   };
@@ -170,10 +170,10 @@ const MobilePlayer = () => {
   // Fetch playlists when modal opens
   const fetchPlaylists = async () => {
     if (!showPlaylistModal) return;
-    
+
     const token = localStorage.getItem('token');
     if (!token) return;
-    
+
     try {
       setIsLoadingPlaylists(true);
       const response = await fetch('/api/dashboard/getUserPlaylists', {
@@ -198,7 +198,7 @@ const MobilePlayer = () => {
   useEffect(() => {
     if (showPlaylistModal) {
       fetchPlaylists();
-      
+
       // Push a new history state for playlist modal
       window.history.pushState({ playerModal: "playlist" }, "")
     }
@@ -226,7 +226,7 @@ const MobilePlayer = () => {
   // Add current song to playlist
   const addSongToPlaylist = async (playlistId: string) => {
     if (!currentSong) return;
-    
+
     const token = localStorage.getItem('token');
     if (!token) return;
 
@@ -251,14 +251,14 @@ const MobilePlayer = () => {
       }
 
       const data = await response.json();
-      
+
       // Check if song already exists in playlist
       if (data.alreadyExists) {
         toast.error(`"${currentSong.name.replaceAll("&quot;", `"`)}" is already in this playlist`);
       } else {
         toast.success(`Added "${currentSong.name.replaceAll("&quot;", `"`)}" to playlist`);
       }
-      
+
       // Close modal
       setShowPlaylistModal(false);
     } catch (error) {
@@ -327,34 +327,50 @@ const MobilePlayer = () => {
             animate={{ y: 0 }}
             exit={{ y: 100 }}
             transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+
           >
-            <div 
+            <motion.div
+              className="h-1 w-full bg-zinc-800"
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <motion.div
+                className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
+                style={{ width: `${progress}%` }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              ></motion.div>
+            </motion.div>
+            <div
               className="flex items-center justify-between p-3 pr-4"
               onClick={() => setIsExpanded(true)}
             >
               {/* Album art with animated glow effect when playing */}
+
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <motion.div 
-                  className={`w-12 h-12 rounded-md overflow-hidden flex-shrink-0 ${
-                    isPlaying ? 'shadow-glow' : ''
-                  }`}
+
+                <motion.div
+                  className={`w-12 h-12 rounded-md overflow-hidden flex-shrink-0 ${isPlaying ? 'shadow-glow' : ''
+                    }`}
                   animate={isPlaying ? { scale: [1, 1.02, 1], opacity: [0.9, 1, 0.9] } : {}}
-                  transition={isPlaying ? { 
-                    repeat: Infinity, 
+                  transition={isPlaying ? {
+                    repeat: Infinity,
                     duration: 2,
                     ease: "easeInOut"
                   } : {}}
                 >
                   {currentSong?.image && (
                     <img
-                      src={currentSong.image.replace("150x150", "500x500").replace("http:","https:")}
+                      src={currentSong.image.replace("150x150", "500x500").replace("http:", "https:")}
                       alt={currentSong.name.replaceAll("&quot;", `"`)}
                       className="w-full h-full object-cover"
                     />
                   )}
                 </motion.div>
                 <div className="flex-1 min-w-0">
-                  <motion.h3 
+                  <motion.h3
                     className="font-medium text-sm truncate"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -362,7 +378,7 @@ const MobilePlayer = () => {
                   >
                     {currentSong?.name?.replaceAll("&quot;", `"`) || "No song playing"}
                   </motion.h3>
-                  <motion.p 
+                  <motion.p
                     className="text-xs text-zinc-400 truncate"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -374,13 +390,13 @@ const MobilePlayer = () => {
               </div>
               <div className="flex items-center gap-3">
                 {/* Progress bar in mini player */}
-                <motion.div 
+                <motion.div
                   className="w-12 h-1 bg-zinc-800 rounded-full overflow-hidden hidden sm:block"
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: 48 }}
                   transition={{ delay: 0.4 }}
                 >
-                  <div 
+                  <div
                     className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
                     style={{ width: `${progress}%` }}
                   ></div>
@@ -399,36 +415,23 @@ const MobilePlayer = () => {
                 </motion.button>
               </div>
             </div>
-            
+
             {/* Mini progress bar for mobile */}
-            <motion.div 
-              className="h-1 w-full bg-zinc-800"
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <motion.div
-                className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
-                style={{ width: `${progress}%` }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-              ></motion.div>
-            </motion.div>
+
           </motion.div>
         )}
 
         {/* Expanded Player */}
         {isExpanded && (
-          <motion.div 
-            className="h-[95vh] bg-gradient-to-b from-zinc-900 to-black flex flex-col overflow-auto"
+          <motion.div
+            className="min-h-[94vh] bg-gradient-to-b from-zinc-900 to-black flex flex-col overflow-auto"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 120 }}
           >
             {/* Header */}
-            <motion.div 
+            <motion.div
               className="flex items-center justify-between p-5 border-b border-zinc-800/50"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -453,19 +456,19 @@ const MobilePlayer = () => {
 
             {/* Album Art */}
             <div className="flex-1 flex items-center justify-center p-8">
-              <motion.div 
+              <motion.div
                 className="w-full aspect-square max-w-md bg-zinc-900 rounded-xl overflow-hidden shadow-2xl"
                 initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ 
-                  opacity: 1, 
+                animate={{
+                  opacity: 1,
                   scale: 1,
-                  boxShadow: isPlaying ? 
-                    "0 0 30px rgba(139, 92, 246, 0.3)" : 
+                  boxShadow: isPlaying ?
+                    "0 0 30px rgba(139, 92, 246, 0.3)" :
                     "0 0 20px rgba(0, 0, 0, 0.7)"
                 }}
-                transition={{ 
+                transition={{
                   delay: 0.3,
-                  boxShadow: { 
+                  boxShadow: {
                     repeat: isPlaying ? Infinity : 0,
                     repeatType: "reverse",
                     duration: 2
@@ -474,7 +477,7 @@ const MobilePlayer = () => {
               >
                 {currentSong?.image && (
                   <img
-                    src={currentSong.image.replace("150x150", "500x500").replace("http:","https:")}
+                    src={currentSong.image.replace("150x150", "500x500").replace("http:", "https:")}
                     alt={currentSong.name?.replaceAll("&quot;", `"`)}
                     className="w-full h-full object-cover"
                   />
@@ -483,13 +486,13 @@ const MobilePlayer = () => {
             </div>
 
             {/* Song Info */}
-            <motion.div 
+            <motion.div
               className="px-8 pb-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <motion.h3 
+              <motion.h3
                 className="text-xl font-medium text-center mb-1"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -497,7 +500,7 @@ const MobilePlayer = () => {
               >
                 {currentSong?.name?.replaceAll("&quot;", `"`) || "No song playing"}
               </motion.h3>
-              <motion.p 
+              <motion.p
                 className="text-zinc-400 text-center mb-8"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -507,13 +510,13 @@ const MobilePlayer = () => {
               </motion.p>
 
               {/* Progress Bar */}
-              <motion.div 
+              <motion.div
                 className="mb-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7 }}
               >
-                <div 
+                <div
                   ref={progressBarRef}
                   className="w-full h-1.5 bg-zinc-800 rounded-full cursor-pointer mb-2 overflow-hidden"
                   onTouchStart={handleTouchStart}
@@ -538,20 +541,20 @@ const MobilePlayer = () => {
               </motion.div>
 
               {/* Controls */}
-              <motion.div 
+              <motion.div
                 className="flex items-center justify-between mb-8"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
               >
-                <motion.button 
+                <motion.button
                   className="text-zinc-400 hover:text-white transition-colors"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <Shuffle className="w-5 h-5" />
                 </motion.button>
-                <motion.button 
+                <motion.button
                   className="text-zinc-400 hover:text-white transition-colors"
                   onClick={playPrevious}
                   disabled={!currentSong || playlist.length === 0}
@@ -572,7 +575,7 @@ const MobilePlayer = () => {
                 >
                   {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
                 </motion.button>
-                <motion.button 
+                <motion.button
                   className="text-zinc-400 hover:text-white transition-colors"
                   onClick={playNext}
                   disabled={!currentSong || playlist.length === 0}
@@ -581,7 +584,7 @@ const MobilePlayer = () => {
                 >
                   <SkipForward className="w-6 h-6" />
                 </motion.button>
-                <motion.button 
+                <motion.button
                   className="text-zinc-400 hover:text-white transition-colors"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
@@ -591,7 +594,7 @@ const MobilePlayer = () => {
               </motion.div>
 
               {/* Additional Controls */}
-              <motion.div 
+              <motion.div
                 className="flex items-center justify-center gap-12"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -622,7 +625,7 @@ const MobilePlayer = () => {
 
         {/* Queue Panel */}
         {showQueue && (
-          <motion.div 
+          <motion.div
             ref={queueRef}
             className="fixed inset-0 bg-gradient-to-b from-zinc-900 to-black z-50 flex flex-col"
             initial={{ x: "100%" }}
@@ -630,7 +633,7 @@ const MobilePlayer = () => {
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 150 }}
           >
-            <motion.div 
+            <motion.div
               className="p-4 border-b border-zinc-800 flex items-center justify-between"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -659,7 +662,7 @@ const MobilePlayer = () => {
                 </motion.button>
               </div>
             </motion.div>
-            <motion.div 
+            <motion.div
               className="flex-1 overflow-y-auto"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -682,7 +685,7 @@ const MobilePlayer = () => {
                   >
                     <div className="w-12 h-12 bg-zinc-800 rounded overflow-hidden flex-shrink-0">
                       <img
-                        src={song.image.replace("150x150", "500x500").replace("http:","https:")}
+                        src={song.image.replace("150x150", "500x500").replace("http:", "https:")}
                         alt={song.name.replaceAll("&quot;", `"`)}
                         className="w-full h-full object-cover"
                       />
@@ -718,13 +721,13 @@ const MobilePlayer = () => {
 
         {/* Playlist Modal */}
         {showPlaylistModal && (
-          <motion.div 
+          <motion.div
             className="fixed inset-0 bg-black/95 backdrop-blur-md z-50 p-4 flex flex-col"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div 
+            <motion.div
               className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-3"
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -733,7 +736,7 @@ const MobilePlayer = () => {
               <h2 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-fuchsia-400 text-transparent bg-clip-text">
                 Add to Playlist
               </h2>
-              <motion.button 
+              <motion.button
                 onClick={() => setShowPlaylistModal(false)}
                 className="p-1.5 rounded-full hover:bg-zinc-800 transition-colors"
                 whileHover={{ scale: 1.1 }}
@@ -742,69 +745,67 @@ const MobilePlayer = () => {
                 <X className="w-5 h-5" />
               </motion.button>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               className="overflow-y-auto flex-1 py-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              >
-                {isLoadingPlaylists ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <Loader2 className="w-8 h-8 animate-spin text-zinc-400 mb-4" />
-                    <p className="text-zinc-400">Loading playlists...</p>
-                  </div>
-                ) : playlists.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                    <Music className="w-16 h-16 text-zinc-700 mb-4" />
-                    <p className="text-zinc-400 text-lg mb-2">No playlists found</p>
-                    <p className="text-sm text-zinc-500">Create a playlist to add songs to it</p>
-                  </div>
-                ) : (
-                  playlists.map((playlist, index) => (
-                    <motion.div
-                      key={playlist.id}
-                      className="mb-3"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 * index }}
-                    >
-                      <motion.button
-                        onClick={() => addSongToPlaylist(playlist.id)}
-                        disabled={!!addingToPlaylist}
-                        className={`w-full p-4 rounded-lg flex items-center gap-4 overflow-hidden bg-gradient-to-r ${
-                          getPlaylistColor(index)
+            >
+              {isLoadingPlaylists ? (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <Loader2 className="w-8 h-8 animate-spin text-zinc-400 mb-4" />
+                  <p className="text-zinc-400">Loading playlists...</p>
+                </div>
+              ) : playlists.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                  <Music className="w-16 h-16 text-zinc-700 mb-4" />
+                  <p className="text-zinc-400 text-lg mb-2">No playlists found</p>
+                  <p className="text-sm text-zinc-500">Create a playlist to add songs to it</p>
+                </div>
+              ) : (
+                playlists.map((playlist, index) => (
+                  <motion.div
+                    key={playlist.id}
+                    className="mb-3"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * index }}
+                  >
+                    <motion.button
+                      onClick={() => addSongToPlaylist(playlist.id)}
+                      disabled={!!addingToPlaylist}
+                      className={`w-full p-4 rounded-lg flex items-center gap-4 overflow-hidden bg-gradient-to-r ${getPlaylistColor(index)
                         } disabled:opacity-70`}
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                      >
-                        <div className="w-12 h-12 bg-black/20 rounded flex items-center justify-center flex-shrink-0">
-                          <Music className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1 text-left">
-                          <p className="font-medium truncate">{playlist.name}</p>
-                          <p className="text-xs text-black/70">
-                            {playlist.songCount !== undefined
-                              ? `${playlist.songCount} songs`
-                              : "0 songs"}
-                          </p>
-                        </div>
-                        {addingToPlaylist === playlist.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-black/70" />
-                        ) : (
-                          <Plus className="w-5 h-5 text-black/70" />
-                        )}
-                      </motion.button>
-                    </motion.div>
-                  ))
-                )}
-              </motion.div>
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                    >
+                      <div className="w-12 h-12 bg-black/20 rounded flex items-center justify-center flex-shrink-0">
+                        <Music className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="font-medium truncate">{playlist.name}</p>
+                        <p className="text-xs text-black/70">
+                          {playlist.songCount !== undefined
+                            ? `${playlist.songCount} songs`
+                            : "0 songs"}
+                        </p>
+                      </div>
+                      {addingToPlaylist === playlist.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-black/70" />
+                      ) : (
+                        <Plus className="w-5 h-5 text-black/70" />
+                      )}
+                    </motion.button>
+                  </motion.div>
+                ))
+              )}
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    )
-  }
-  
-  export default MobilePlayer
-  
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+export default MobilePlayer
