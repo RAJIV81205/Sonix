@@ -8,7 +8,8 @@ export async function addSong(
   name: string,
   artist: string,
   image: string,
-  url: string
+  url: string,
+  duration: number
 ) {
   const existing = await db
     .select()
@@ -27,6 +28,7 @@ export async function addSong(
       artist,
       image,
       url,
+      duration,
       createdAt: new Date().toISOString(),
     })
     .returning();
@@ -73,6 +75,7 @@ export async function getSongsInPlaylist(playlistId: string) {
       artist: songsTable.artist,
       image: songsTable.image,
       url: songsTable.url,
+      duration: songsTable.duration
     })
     .from(playlistSongsTable)
     .innerJoin(songsTable, eq(playlistSongsTable.songId, songsTable.id))

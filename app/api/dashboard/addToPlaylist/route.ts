@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
       song.name,
       song.artist,
       song.image,
-      song.url
+      song.url,
+      song.duration
     );
 
     // Check if the song is already in the playlist

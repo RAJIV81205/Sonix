@@ -17,6 +17,7 @@ export const songsTable = pgTable("songs", {
   artist: varchar({ length: 255 }).notNull(),
   image: varchar({ length: 500 }).notNull(),
   url: varchar({ length: 500 }).notNull(),
+  duration: integer().notNull(),
   createdAt: varchar().notNull(),
 });
 

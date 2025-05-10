@@ -13,6 +13,7 @@ interface Song {
   artist: string;
   image: string;
   url: string;
+  duration: number;
 }
 
 interface Playlist {
@@ -28,6 +29,7 @@ const PlaylistPage = () => {
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [totalDuration, setTotalDuration] = useState(0)
   const { setCurrentSong, setPlaylist: setPlayerPlaylist, isPlaying, setIsPlaying, addToQueue, playNextInQueue } = usePlayer()
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -71,6 +73,17 @@ const PlaylistPage = () => {
       fetchPlaylist()
     }
   }, [id])
+
+  // Calculate total duration whenever playlist changes
+  useEffect(() => {
+    if (playlist && playlist.songs) {
+      let total = 0;
+      playlist.songs.forEach(song => {
+        total += song.duration;
+      });
+      setTotalDuration(total);
+    }
+  }, [playlist]);
 
   useEffect(() => {
     // Close menu when clicking outside
@@ -166,6 +179,13 @@ const PlaylistPage = () => {
     setActiveMenu(null)
   }
 
+  // Format duration from seconds to mm:ss format
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -209,7 +229,7 @@ const PlaylistPage = () => {
           <p className="text-sm text-zinc-400 uppercase font-medium">Playlist</p>
           <h1 className="text-4xl font-bold mt-2 mb-4">{playlist.name}</h1>
           <p className="text-zinc-400">
-            {playlist.songs.length} songs • Created on {new Date(playlist.createdAt).toLocaleDateString()}
+            {playlist.songs.length} songs • {Math.floor(totalDuration/3600)}:{Math.floor((totalDuration%3600)/60)}:{totalDuration%60} • Created on {new Date(playlist.createdAt).toLocaleDateString()}
           </p>
           {playlist.songs.length > 0 && (
             <button
@@ -227,8 +247,8 @@ const PlaylistPage = () => {
       <div className="mt-6">
         <div className="grid grid-cols-[auto_1fr_auto] gap-4 text-zinc-400 text-sm border-b border-zinc-800 pb-2 mb-2">
           <div className="px-4">#</div>
-          <div>Title</div>
-          <div className="px-4">Duration</div>
+          <div>TITLE</div>
+          <div className="px-4">DURATION</div>
         </div>
 
         {playlist.songs.length === 0 ? (
@@ -257,7 +277,7 @@ const PlaylistPage = () => {
                   <p className="text-sm text-zinc-400">{song.artist}</p>
                 </div>
               </div>
-              <div className="text-zinc-400 px-4">3:45</div>
+              <div className="text-zinc-400 px-4">{formatDuration(song.duration)}</div>
               <div 
                 className="flex items-center justify-center hover:bg-gray-600/20 rounded-full h-6 w-6"
                 onClick={(e) => showMenu(song, e)}

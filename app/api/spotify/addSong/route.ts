@@ -94,7 +94,8 @@ const appendSong = async (songData: any, playlistId: string) => {
             songData.name.replaceAll("&quot;", `"`),
             songData.artists.primary.map((artist: any) => artist.name).join(", ").replaceAll("&amp;", `-`),
             songData.image[2].url.replace("http:" , "https:"),
-            songData.downloadUrl[4].url.replace("http:" , "https:")
+            songData.downloadUrl[4].url.replace("http:" , "https:"),
+            songData.duration
         );
 
         const existingEntry = await db
