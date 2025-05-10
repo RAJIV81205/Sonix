@@ -117,8 +117,8 @@ const PlaylistPage = () => {
     
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/dashboard/removeSongFromPlaylist', {
-        method: 'POST',
+      const response = await fetch('/api/dashboard/deleteSong', {
+        method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -133,6 +133,10 @@ const PlaylistPage = () => {
         toast.error('Failed to remove song')
       }
 
+      const data = await response.json()
+      console.log('Song removed:', data)
+      toast.success(data.message)
+
       // Update local state
       setPlaylist({
         ...playlist,
@@ -142,6 +146,7 @@ const PlaylistPage = () => {
       setActiveMenu(null)
     } catch (error) {
       console.error('Error removing song:', error)
+      toast.error('Failed to remove song')
     }
   }
 

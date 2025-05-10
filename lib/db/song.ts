@@ -1,5 +1,5 @@
 import { db } from ".";
-import { eq } from "drizzle-orm";
+import { eq ,and } from "drizzle-orm";
 import { songsTable, playlistsTable, playlistSongsTable } from "./schema";
 
 // ✅ Add a song (if not already present)
@@ -79,4 +79,24 @@ export async function getSongsInPlaylist(playlistId: string) {
     .where(eq(playlistSongsTable.playlistId, playlistId));
 
   return result;
+}
+
+
+export async function matchUserwithPlaylist(playlistId: string, userId: number): Promise<boolean> {
+  const [playlist] = await db
+    .select()
+    .from(playlistsTable)
+    .where(and(eq(playlistsTable.id, playlistId), eq(playlistsTable.userId, userId)));
+
+  return !!playlist; // returns true if playlist is found, false otherwise
+}
+
+
+
+export async function deleteSongFromPlaylist(playlistId: string, songId: string) {
+  await db
+    .delete(playlistSongsTable)
+    .where(and(eq(playlistSongsTable.playlistId, playlistId), eq(playlistSongsTable.songId, songId)));
+
+    return { message: "Song deleted from playlist" };
 }
