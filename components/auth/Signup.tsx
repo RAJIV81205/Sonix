@@ -77,7 +77,7 @@ const Signup = () => {
 
   const handleGoogleSignup = async () => {
     setGoogleLoading(true)
-~    try {
+    try {
       const result = await signInWithPopup(auth, googleProvider)
       const user = result.user
       
