@@ -28,7 +28,8 @@ const Player = () => {
     addToQueue,
     removeFromQueue,
     clearQueue,
-    setCurrentSong
+    setCurrentSong,
+    currentQueueIndex
   } = usePlayer()
   const [volume, setVolume] = useState(80)
   const [currentTime, setCurrentTime] = useState(0)
@@ -187,7 +188,7 @@ const Player = () => {
           <button 
             className="text-zinc-400 hover:text-white transition-colors"
             onClick={playPrevious}
-            disabled={!currentSong || playlist.length === 0}
+            disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
           >
             <SkipBack className="w-4 h-4 md:w-5 md:h-5" />
           </button>
@@ -201,7 +202,7 @@ const Player = () => {
           <button 
             className="text-zinc-400 hover:text-white transition-colors"
             onClick={playNext}
-            disabled={!currentSong || playlist.length === 0}
+            disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
           >
             <SkipForward className="w-4 h-4 md:w-5 md:h-5" />
           </button>

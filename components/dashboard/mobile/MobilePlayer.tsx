@@ -41,7 +41,8 @@ const MobilePlayer = () => {
     addToQueue,
     removeFromQueue,
     clearQueue,
-    setCurrentSong
+    setCurrentSong,
+    currentQueueIndex
   } = usePlayer()
   const [volume, setVolume] = useState(80)
   const [currentTime, setCurrentTime] = useState(0)
@@ -557,7 +558,7 @@ const MobilePlayer = () => {
                 <motion.button
                   className="text-zinc-400 hover:text-white transition-colors"
                   onClick={playPrevious}
-                  disabled={!currentSong || playlist.length === 0}
+                  disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -578,7 +579,7 @@ const MobilePlayer = () => {
                 <motion.button
                   className="text-zinc-400 hover:text-white transition-colors"
                   onClick={playNext}
-                  disabled={!currentSong || playlist.length === 0}
+                  disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >

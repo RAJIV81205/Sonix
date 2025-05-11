@@ -165,17 +165,15 @@ const PlaylistPage = () => {
 
   const handlePlayNext = (song: Song, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (playNextInQueue) {
-      playNextInQueue(song)
-    }
+    playNextInQueue(song)
+    toast.success(`"${song.name}" will play next`)
     setActiveMenu(null)
   }
 
   const handleAddToQueue = (song: Song, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (addToQueue) {
-      addToQueue(song)
-    }
+    addToQueue(song)
+    toast.success(`"${song.name}" added to queue`)
     setActiveMenu(null)
   }
 
