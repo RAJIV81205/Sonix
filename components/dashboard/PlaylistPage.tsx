@@ -227,7 +227,7 @@ const PlaylistPage = () => {
           <p className="text-sm text-zinc-400 uppercase font-medium">Playlist</p>
           <h1 className="text-4xl font-bold mt-2 mb-4">{playlist.name}</h1>
           <p className="text-zinc-400">
-            {playlist.songs.length} songs • {Math.floor(totalDuration/3600)}:{Math.floor((totalDuration%3600)/60)}:{totalDuration%60} • Created on {new Date(playlist.createdAt).toLocaleDateString()}
+            {playlist.songs.length} songs • {Math.floor(totalDuration/3600)}h {Math.floor((totalDuration%3600)/60)}m • Created on {new Date(playlist.createdAt).toLocaleDateString()}
           </p>
           {playlist.songs.length > 0 && (
             <button
