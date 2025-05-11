@@ -469,9 +469,9 @@ const MobilePlayer = () => {
             </motion.div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto flex flex-col justify-between">
               {/* Album Art */}
-              <div className="flex items-center justify-center p-8">
+              <div className="flex items-center justify-center p-4 sm:p-8 my-auto">
                 <motion.div
                   className="w-full aspect-square max-w-md bg-zinc-900 rounded-xl overflow-hidden shadow-2xl"
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -503,7 +503,7 @@ const MobilePlayer = () => {
 
               {/* Song Info and Controls */}
               <motion.div
-                className="px-8 pb-6"
+                className="px-4 sm:px-8 pb-4 sm:pb-8"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
@@ -517,7 +517,7 @@ const MobilePlayer = () => {
                   {currentSong?.name?.replaceAll("&quot;", `"`) || "No song playing"}
                 </motion.h3>
                 <motion.p
-                  className="text-zinc-400 text-center mb-8"
+                  className="text-zinc-400 text-center mb-6 sm:mb-8"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
@@ -527,7 +527,7 @@ const MobilePlayer = () => {
 
                 {/* Progress Bar */}
                 <motion.div
-                  className="mb-6"
+                  className="mb-4 sm:mb-6"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.7 }}
@@ -558,7 +558,7 @@ const MobilePlayer = () => {
 
                 {/* Controls */}
                 <motion.div
-                  className="flex items-center justify-between mb-8"
+                  className="flex items-center justify-between mb-6 sm:mb-8"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.8 }}
@@ -580,7 +580,7 @@ const MobilePlayer = () => {
                     <SkipBack className="w-6 h-6" />
                   </motion.button>
                   <motion.button
-                    className="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-full p-5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-full p-4 sm:p-5 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => setIsPlaying(!isPlaying)}
                     disabled={!currentSong}
                     whileHover={{ scale: 1.05 }}
@@ -611,7 +611,7 @@ const MobilePlayer = () => {
 
                 {/* Additional Controls */}
                 <motion.div
-                  className="flex items-center justify-center gap-12 pb-8"
+                  className="flex items-center justify-center gap-8 sm:gap-12"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.9 }}
