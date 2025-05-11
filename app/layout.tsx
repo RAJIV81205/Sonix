@@ -10,7 +10,9 @@ export const metadata: Metadata = {
   title: "Sonix - Your Music, Elevated",
   description:
     "Experience music like never before with Sonix. High-quality streaming, personalized playlists, and a beautiful interface.",
-}
+  themeColor: "#1db954", // Spotify green as an example
+};
+
 
 export default function RootLayout({
   children,
