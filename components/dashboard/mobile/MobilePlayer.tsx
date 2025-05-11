@@ -69,21 +69,37 @@ const MobilePlayer = () => {
     const handlePopState = () => {
       if (showPlaylistModal) {
         setShowPlaylistModal(false);
-      } else if (isExpanded) {
-        setIsExpanded(false);
       } else if (showQueue) {
         setShowQueue(false);
+      } else if (isExpanded) {
+        setIsExpanded(false);
       }
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [showPlaylistModal, isExpanded, showQueue]);
+  }, [showPlaylistModal, showQueue, isExpanded]);
 
+  // Add history state when expanding player
+  useEffect(() => {
+    if (isExpanded) {
+      window.history.pushState({ playerModal: "expanded" }, "");
+    }
+  }, [isExpanded]);
 
+  // Add history state when showing queue
+  useEffect(() => {
+    if (showQueue) {
+      window.history.pushState({ playerModal: "queue" }, "");
+    }
+  }, [showQueue]);
 
-
-
+  // Add history state when showing playlist modal
+  useEffect(() => {
+    if (showPlaylistModal) {
+      window.history.pushState({ playerModal: "playlist" }, "");
+    }
+  }, [showPlaylistModal]);
 
   // Handle time updates
   useEffect(() => {
@@ -199,9 +215,6 @@ const MobilePlayer = () => {
   useEffect(() => {
     if (showPlaylistModal) {
       fetchPlaylists();
-
-      // Push a new history state for playlist modal
-      window.history.pushState({ playerModal: "playlist" }, "")
     }
   }, [showPlaylistModal]);
 
@@ -425,7 +438,7 @@ const MobilePlayer = () => {
         {/* Expanded Player */}
         {isExpanded && (
           <motion.div
-            className="min-h-screen bg-gradient-to-b from-zinc-900 to-black flex flex-col overflow-auto"
+            className="fixed inset-0 bg-gradient-to-b from-zinc-900 to-black flex flex-col overflow-hidden"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -433,7 +446,7 @@ const MobilePlayer = () => {
           >
             {/* Header */}
             <motion.div
-              className="flex items-center justify-between p-5 border-b border-zinc-800/50"
+              className="flex items-center justify-between p-5 border-b border-zinc-800/50 sticky top-0 bg-gradient-to-b from-zinc-900 to-zinc-900/95 backdrop-blur-sm z-10"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -455,172 +468,175 @@ const MobilePlayer = () => {
               </button>
             </motion.div>
 
-            {/* Album Art */}
-            <div className="flex-1 flex items-center justify-center p-8">
-              <motion.div
-                className="w-full aspect-square max-w-md bg-zinc-900 rounded-xl overflow-hidden shadow-2xl"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{
-                  opacity: 1,
-                  scale: 1,
-                  boxShadow: isPlaying ?
-                    "0 0 30px rgba(139, 92, 246, 0.3)" :
-                    "0 0 20px rgba(0, 0, 0, 0.7)"
-                }}
-                transition={{
-                  delay: 0.3,
-                  boxShadow: {
-                    repeat: isPlaying ? Infinity : 0,
-                    repeatType: "reverse",
-                    duration: 2
-                  }
-                }}
-              >
-                {currentSong?.image && (
-                  <img
-                    src={currentSong.image.replace("150x150", "500x500").replace("http:", "https:")}
-                    alt={currentSong.name?.replaceAll("&quot;", `"`)}
-                    className="w-full h-full object-cover"
-                  />
-                )}
-              </motion.div>
-            </div>
-
-            {/* Song Info */}
-            <motion.div
-              className="px-8 pb-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <motion.h3
-                className="text-xl font-medium text-center mb-1"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                {currentSong?.name?.replaceAll("&quot;", `"`) || "No song playing"}
-              </motion.h3>
-              <motion.p
-                className="text-zinc-400 text-center mb-8"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                {currentSong?.artist || "Select a song"}
-              </motion.p>
-
-              {/* Progress Bar */}
-              <motion.div
-                className="mb-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.7 }}
-              >
-                <div
-                  ref={progressBarRef}
-                  className="w-full h-1.5 bg-zinc-800 rounded-full cursor-pointer mb-2 overflow-hidden"
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Album Art */}
+              <div className="flex items-center justify-center p-8">
+                <motion.div
+                  className="w-full aspect-square max-w-md bg-zinc-900 rounded-xl overflow-hidden shadow-2xl"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{
+                    opacity: 1,
+                    scale: 1,
+                    boxShadow: isPlaying ?
+                      "0 0 30px rgba(139, 92, 246, 0.3)" :
+                      "0 0 20px rgba(0, 0, 0, 0.7)"
+                  }}
+                  transition={{
+                    delay: 0.3,
+                    boxShadow: {
+                      repeat: isPlaying ? Infinity : 0,
+                      repeatType: "reverse",
+                      duration: 2
+                    }
+                  }}
                 >
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
-                    style={{ width: `${progress}%` }}
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ delay: 0.8 }}
-                  ></motion.div>
-                </div>
-                <div className="flex justify-between text-xs text-zinc-400">
-                  <span>{formatTime(currentTime)}</span>
-                  <span>{formatTime(duration)}</span>
-                </div>
-              </motion.div>
+                  {currentSong?.image && (
+                    <img
+                      src={currentSong.image.replace("150x150", "500x500").replace("http:", "https:")}
+                      alt={currentSong.name?.replaceAll("&quot;", `"`)}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </motion.div>
+              </div>
 
-              {/* Controls */}
+              {/* Song Info and Controls */}
               <motion.div
-                className="flex items-center justify-between mb-8"
+                className="px-8 pb-6"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
+                transition={{ delay: 0.4 }}
               >
-                <motion.button
-                  className="text-zinc-400 hover:text-white transition-colors"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                <motion.h3
+                  className="text-xl font-medium text-center mb-1"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
                 >
-                  <Shuffle className="w-5 h-5" />
-                </motion.button>
-                <motion.button
-                  className="text-zinc-400 hover:text-white transition-colors"
-                  onClick={playPrevious}
-                  disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  {currentSong?.name?.replaceAll("&quot;", `"`) || "No song playing"}
+                </motion.h3>
+                <motion.p
+                  className="text-zinc-400 text-center mb-8"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
                 >
-                  <SkipBack className="w-6 h-6" />
-                </motion.button>
-                <motion.button
-                  className="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-full p-5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  disabled={!currentSong}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  initial={{ scale: 0.9 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200 }}
-                >
-                  {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-                </motion.button>
-                <motion.button
-                  className="text-zinc-400 hover:text-white transition-colors"
-                  onClick={playNext}
-                  disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <SkipForward className="w-6 h-6" />
-                </motion.button>
-                <motion.button
-                  className="text-zinc-400 hover:text-white transition-colors"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Repeat className="w-5 h-5" />
-                </motion.button>
-              </motion.div>
+                  {currentSong?.artist || "Select a song"}
+                </motion.p>
 
-              {/* Additional Controls */}
-              <motion.div
-                className="flex items-center justify-center gap-12"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.9 }}
-              >
-                <motion.button
-                  onClick={() => setShowPlaylistModal(true)}
-                  className="text-zinc-400 hover:text-white transition-colors flex flex-col items-center"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                {/* Progress Bar */}
+                <motion.div
+                  className="mb-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7 }}
                 >
-                  <Plus className="w-5 h-5 mb-1" />
-                  <span className="text-xs">Playlist</span>
-                </motion.button>
-                <motion.button
-                  onClick={toggleLike}
-                  className={`${isLiked ? 'text-pink-500' : 'text-zinc-400 hover:text-white'} transition-colors flex flex-col items-center`}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  <div
+                    ref={progressBarRef}
+                    className="w-full h-1.5 bg-zinc-800 rounded-full cursor-pointer mb-2 overflow-hidden"
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                  >
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
+                      style={{ width: `${progress}%` }}
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ delay: 0.8 }}
+                    ></motion.div>
+                  </div>
+                  <div className="flex justify-between text-xs text-zinc-400">
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatTime(duration)}</span>
+                  </div>
+                </motion.div>
+
+                {/* Controls */}
+                <motion.div
+                  className="flex items-center justify-between mb-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
                 >
-                  <Heart className={`w-5 h-5 mb-1 ${isLiked ? 'fill-pink-500' : ''}`} />
-                  <span className="text-xs">Favorite</span>
-                </motion.button>
+                  <motion.button
+                    className="text-zinc-400 hover:text-white transition-colors"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Shuffle className="w-5 h-5" />
+                  </motion.button>
+                  <motion.button
+                    className="text-zinc-400 hover:text-white transition-colors"
+                    onClick={playPrevious}
+                    disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <SkipBack className="w-6 h-6" />
+                  </motion.button>
+                  <motion.button
+                    className="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-full p-5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    disabled={!currentSong}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ scale: 0.9 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200 }}
+                  >
+                    {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                  </motion.button>
+                  <motion.button
+                    className="text-zinc-400 hover:text-white transition-colors"
+                    onClick={playNext}
+                    disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <SkipForward className="w-6 h-6" />
+                  </motion.button>
+                  <motion.button
+                    className="text-zinc-400 hover:text-white transition-colors"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Repeat className="w-5 h-5" />
+                  </motion.button>
+                </motion.div>
+
+                {/* Additional Controls */}
+                <motion.div
+                  className="flex items-center justify-center gap-12 pb-8"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9 }}
+                >
+                  <motion.button
+                    onClick={() => setShowPlaylistModal(true)}
+                    className="text-zinc-400 hover:text-white transition-colors flex flex-col items-center"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Plus className="w-5 h-5 mb-1" />
+                    <span className="text-xs">Playlist</span>
+                  </motion.button>
+                  <motion.button
+                    onClick={toggleLike}
+                    className={`${isLiked ? 'text-pink-500' : 'text-zinc-400 hover:text-white'} transition-colors flex flex-col items-center`}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Heart className={`w-5 h-5 mb-1 ${isLiked ? 'fill-pink-500' : ''}`} />
+                    <span className="text-xs">Favorite</span>
+                  </motion.button>
+                </motion.div>
               </motion.div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
 
