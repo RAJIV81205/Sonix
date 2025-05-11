@@ -44,6 +44,17 @@ interface Playlist {
   id: string;
   name: string;
   songCount: number;
+  cover: string;
+}
+
+interface Track {
+  id: string;
+  title: string;
+  artist: string;
+  album: string;
+  coverUrl: string;
+  plays?: string;
+  type?: string;
 }
 
 const Main = () => {
@@ -65,6 +76,8 @@ const Main = () => {
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
   const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState<boolean>(false);
   const [userName, setUserName] = useState<string>("");
+  const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
+  const [isTrendingLoading, setIsTrendingLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -185,7 +198,7 @@ const Main = () => {
     }
   };
 
-  
+
   const getSongDetails = async (id: string): Promise<Song | null> => {
     try {
       const response = await fetch('/api/dashboard/getSongUrl', {
@@ -205,15 +218,15 @@ const Main = () => {
       }
 
       const data = await response.json();
-      
+
       if (!data.data || !data.data[0]) {
         toast.error('Song data not found');
         return null;
       }
-      
+
       const songData = data.data[0];
 
-    
+
       return {
         id: songData.id,
         name: songData.name,
@@ -231,9 +244,9 @@ const Main = () => {
   const handleSongSelect = async (item: SearchResultItem) => {
     try {
       setLoadingSong(item.id);
-      
+
       const song = await getSongDetails(item.id);
-      
+
       if (!song) {
         setLoadingSong(null);
         return;
@@ -264,10 +277,10 @@ const Main = () => {
   const handleAddToPlaylist = async (playlistId: string, songId: string, songName: string) => {
     try {
       setAddingToPlaylist(playlistId);
-      
+
       // First get the full song details including URL
       const song = await getSongDetails(songId);
-      
+
       if (!song) {
         setAddingToPlaylist(null);
         return;
@@ -291,14 +304,14 @@ const Main = () => {
       }
 
       const data = await response.json();
-      
+
       // Check if song already exists in playlist
       if (data.alreadyExists) {
         toast.error(`"${songName}" is already in this playlist`);
       } else {
         toast.success(`Added "${songName}" to playlist`);
       }
-      
+
       // Close dropdown
       setShowPlaylistDropdown(null);
       setRecentSongForPlaylist(null);
@@ -314,7 +327,7 @@ const Main = () => {
   const handleAddRecentToPlaylist = async (playlistId: string, song: Song) => {
     try {
       setAddingToPlaylist(playlistId);
-      
+
       const response = await fetch('/api/dashboard/addToPlaylist', {
         method: 'POST',
         headers: {
@@ -333,14 +346,14 @@ const Main = () => {
       }
 
       const data = await response.json();
-      
+
       // Check if song already exists in playlist
       if (data.alreadyExists) {
         toast.error(`"${song.name}" is already in this playlist`);
       } else {
         toast.success(`Added "${song.name}" to playlist`);
       }
-      
+
       // Close dropdown
       setRecentSongForPlaylist(null);
     } catch (error) {
@@ -351,15 +364,72 @@ const Main = () => {
     }
   };
 
+  const getTrendingTracks = async () => {
+    setIsTrendingLoading(true);
+    function formatNumber(num: number) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+      } else if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+      } else {
+        return num.toString();
+      }
+    }
+
+
+    try {
+      const response = await fetch('/api/dashboard/getNewReleases', {
+        method: 'POST',
+        headers: {
+          "Content-type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+
+      const data = await response.json()
+
+      const newArray = [];
+
+      for (let i = 0; i < data.data.count; i++) {
+        if (data.data.data[i].type === "song") {
+          const realData: Track = {
+            id: data.data.data[i].id,
+            title: data.data.data[i].title.replaceAll("&quot;", `"`).replaceAll("&amp;", `-`),
+            artist: data.data.data[i].subtitle.replaceAll("&quot;", `"`).replaceAll("&amp;", `-`) || '',
+            album: data.data.data[i].more_info.album || '',
+            coverUrl: data.data.data[i].image
+              .replace('http:', 'https:')
+              .replace('150x150', '500x500'),
+            plays: formatNumber(data.data.data[i].play_count),
+          }
+          newArray.push(realData);
+        }
+
+      }
+
+      setTrendingTracks(newArray);
+
+    } catch (error) {
+      console.error('Error fetching trending tracks:', error);
+      toast.error('Failed to fetch trending tracks. Please try again later.');
+    } finally {
+      setIsTrendingLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    getTrendingTracks()
+  }, []);
+
   // Function to handle playlist creation success
   const handlePlaylistCreated = (playlistId: string, playlistName: string) => {
     // Add the new playlist to the state
     setPlaylists(prev => [
-      { id: playlistId, name: playlistName, songCount: 0 },
+      { id: playlistId, name: playlistName, songCount: 0, cover: '' },
       ...prev
     ]);
   };
-  
+
   // Function to get playlist color based on index (copied from Sidebar)
   const getPlaylistColor = (index: number) => {
     const colors = [
@@ -375,14 +445,14 @@ const Main = () => {
   // Search result item component with updated styling
   const SearchResultItem = ({ item }: { item: SearchResultItem }) => {
     return (
-      <div 
+      <div
         className="flex items-center gap-3 p-2 hover:bg-zinc-900 rounded-md cursor-pointer transition-colors"
         onClick={() => handleSongSelect(item)}
       >
         <div className="relative w-10 h-10 flex-shrink-0 bg-zinc-900 rounded overflow-hidden">
-          {item.image.replace("150x150" , "500x500") ? (
-            <img 
-              src={item.image.replace("150x150" , "500x500")}
+          {item.image.replace("150x150", "500x500") ? (
+            <img
+              src={item.image.replace("150x150", "500x500")}
               alt={item.title.replaceAll("&quot;", `"`)}
               className="w-full h-full object-cover"
             />
@@ -401,7 +471,7 @@ const Main = () => {
           <p className="text-sm font-medium text-white truncate">{item.title.replaceAll("&quot;", `"`)}</p>
           <p className="text-xs text-zinc-400 truncate">{item.more_info?.artistMap?.primary_artists?.[0]?.name || item.subtitle || "Unknown artist"}</p>
         </div>
-        <button 
+        <button
           className="w-8 h-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center hover:from-purple-700 hover:to-indigo-700 transition-colors"
           onClick={(e) => {
             e.stopPropagation();
@@ -413,13 +483,13 @@ const Main = () => {
 
         {/* Dropdown for playlists */}
         {showPlaylistDropdown === item.id && (
-          <div 
+          <div
             ref={playlistDropdownRef}
             className="absolute right-12 mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl p-3 min-w-56 z-10"
           >
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
               <p className="text-sm text-white font-medium">Add to playlist</p>
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowPlaylistDropdown(null);
@@ -492,7 +562,7 @@ const Main = () => {
   const RecentPlayItem = ({ song }: { song: Song }) => {
     return (
       <div className="group relative flex items-center gap-4 p-2 hover:bg-zinc-900 rounded-md cursor-pointer transition-colors">
-        <div 
+        <div
           className="relative w-16 h-16 rounded overflow-hidden bg-zinc-900"
           onClick={() => {
             setCurrentSong(song);
@@ -500,8 +570,8 @@ const Main = () => {
           }}
         >
           {song.image ? (
-            <img 
-              src={song.image.replace('150x150' ,'500x500').replace('http:' , 'https:')}
+            <img
+              src={song.image.replace('150x150', '500x500').replace('http:', 'https:')}
               alt={song.name.replaceAll("&quot;", `"`)}
               className="w-full h-full object-cover"
             />
@@ -514,7 +584,7 @@ const Main = () => {
             <Play className="w-8 h-8 text-white" fill="white" />
           </div>
         </div>
-        <div 
+        <div
           className="flex-1 min-w-0"
           onClick={() => {
             setCurrentSong(song);
@@ -533,16 +603,16 @@ const Main = () => {
         >
           <MoreVertical className="w-4 h-4 text-zinc-400" />
         </button>
-        
+
         {/* Dropdown for adding recently played song to playlist */}
         {recentSongForPlaylist === song.id && (
-          <div 
+          <div
             ref={recentPlaylistDropdownRef}
             className="absolute right-0 top-full mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl p-3 min-w-56 z-10"
           >
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
               <p className="text-sm text-white font-medium">Add to playlist</p>
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setRecentSongForPlaylist(null);
@@ -628,7 +698,7 @@ const Main = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            
+
             {/* Search Results */}
             {showSuggestions && (
               <div ref={suggestionBoxRef} className="absolute mt-2 w-full bg-black border border-zinc-800 rounded-xl shadow-xl overflow-hidden z-10">
@@ -654,7 +724,7 @@ const Main = () => {
               </div>
             )}
           </div>
-          
+
           {/* User Profile */}
           <div className="flex items-center gap-3">
             <button className="w-8 h-8 bg-zinc-900 rounded-full flex items-center justify-center">
@@ -665,18 +735,77 @@ const Main = () => {
             </div>
           </div>
         </div>
-        
+
         <h1 className="text-3xl font-bold">Welcome Back , {userName}</h1>
         <p className="text-zinc-400 mt-1">Pick up where you left off</p>
       </div>
-      
+
+
+      {/* Recommendation Section */}
+      <div className="p-4">
+        <h2 className="text-xl font-bold mb-4">Recommendations</h2>
+        {isTrendingLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-8 gap-3">
+            {[...Array(16)].map((_, index) => (
+              <div key={`skeleton-${index}`} className="bg-zinc-900 rounded-xl p-4 animate-pulse">
+                <div className="w-full aspect-square bg-zinc-800 rounded-lg mb-3"></div>
+                <div className="h-4 bg-zinc-800 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-zinc-800 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-8 gap-3">
+            {trendingTracks.map((track, index) => (
+              <div
+                key={track.id}
+                className={`bg-zinc-900 rounded-xl p-3 hover:bg-zinc-800 transition-colors cursor-pointer ${getPlaylistColor(index)}`}
+                onClick={() => handleSongSelect({
+                  id: track.id,
+                  title: track.title,
+                  subtitle: track.artist,
+                  type: 'song',
+                  image: track.coverUrl,
+                  perma_url: '',
+                  more_info: {
+                    duration: '',
+                    album_id: '',
+                    album: '',
+                    label: '',
+                    encrypted_media_url: '',
+                    artistMap: {
+                      primary_artists: [{
+                        id: '',
+                        name: '',
+                        image: '',
+                        perma_url: ''
+                      }]
+                    }
+                  }
+                })}
+              >
+                <img
+                  src={track.coverUrl}
+                  alt={track.title}
+                  className="w-full aspect-square object-cover rounded-lg mb-2"
+                />
+                <h3 className="font-medium text-sm truncate">{track.title.replaceAll("&quot;", `"`)}</h3>
+                <p className="text-xs text-zinc-400 truncate">{track.artist.replaceAll("&quot;", `"`)}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+
+
       {/* Recently Played Section */}
-      <div className="p-6">
+      <div className="p-4">
         <h2 className="text-xl font-bold mb-4">Recently Played</h2>
         {recentlyPlayed.length === 0 ? (
           <div className="text-center py-10 bg-zinc-900 rounded-xl">
             <p className="text-zinc-400">Your recently played songs will appear here</p>
-            <button 
+            <button
               onClick={() => router.push('/dashboard/search')}
               className="mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:from-purple-700 hover:to-indigo-700 transition-colors"
             >
@@ -684,19 +813,79 @@ const Main = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {recentlyPlayed.slice(0, 8).map((song) => (
-              <RecentPlayItem key={song.id} song={song} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-8 gap-3">
+            {recentlyPlayed.slice(0, 8).map((song, index) => (
+              <div
+                key={song.id}
+                className={`bg-zinc-900 rounded-xl p-3 hover:bg-zinc-800 transition-colors cursor-pointer relative group ${getPlaylistColor(index)}`}
+              >
+                <img
+                  src={song.image}
+                  alt={song.name}
+                  className="w-full aspect-square object-cover rounded-lg mb-2"
+                />
+                <h3 className="font-medium text-sm truncate">{song.name.replaceAll("&quot;", `"`)}</h3>
+                <p className="text-xs text-zinc-400 truncate">{song.artist.replaceAll("&quot;", `"`)}</p>
+
+                {/* Play button overlay */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => setCurrentSong(song)}
+                    className="bg-green-500 text-white rounded-full p-3 shadow-lg hover:bg-green-600 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Menu options */}
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Toggle dropdown menu
+                        // You would add logic here to handle showing/hiding menu
+                      }}
+                      className="bg-black bg-opacity-50 rounded-full p-1 hover:bg-opacity-70"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                      </svg>
+                    </button>
+
+                    {/* Dropdown menu - hidden by default, would be shown with state management */}
+                    <div className="absolute right-0 mt-1 w-48 bg-zinc-800 rounded-md shadow-lg z-10 hidden">
+                      <div className="py-1">
+                        <button className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700">
+                          Play
+                        </button>
+                        <button className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700">
+                          Play Next
+                        </button>
+                        <button className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700">
+                          Add to Queue
+                        </button>
+                        <button className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700">
+                          Add to Playlist
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         )}
       </div>
-      
+
       {/* Your Playlists Section */}
       <div className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Your Playlists</h2>
-          <button 
+          <button
             onClick={() => setShowAddPlaylistPopup(true)}
             className="flex items-center gap-1 text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
           >
@@ -704,11 +893,11 @@ const Main = () => {
             <span>New Playlist</span>
           </button>
         </div>
-        
+
         {playlists.length === 0 ? (
           <div className="text-center py-10 bg-zinc-900 rounded-xl">
             <p className="text-zinc-400">Create your first playlist to start organizing your music</p>
-            <button 
+            <button
               onClick={() => setShowAddPlaylistPopup(true)}
               className="mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:from-purple-700 hover:to-indigo-700 transition-colors"
             >
@@ -718,13 +907,22 @@ const Main = () => {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {playlists.map((playlist, index) => (
-              <div 
+              <div
                 key={playlist.id}
                 className="bg-zinc-900 rounded-xl p-4 hover:bg-zinc-800 transition-colors cursor-pointer"
                 onClick={() => router.push(`/dashboard/playlist/${playlist.id}`)}
               >
-                <div className={`w-full aspect-square mb-3 bg-gradient-to-br ${getPlaylistColor(index)} rounded-lg flex items-center justify-center shadow-lg`}>
-                  <Music className="w-12 h-12 text-white opacity-80" />
+                <div className={`w-full aspect-square mb-3 bg-gradient-to-br ${getPlaylistColor(index)} rounded-lg flex items-center justify-center shadow-lg overflow-hidden`}>
+                  {playlist.cover ? (
+                    <img
+                      src={playlist.cover.replace('150x150', '500x500').replace('http:', 'https:')}
+                      alt={playlist.name}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <Music className="w-8 h-8 text-white" />
+                  )}
+                  <img src={playlist.cover} alt={playlist.name} />
                 </div>
                 <h3 className="font-medium truncate">{playlist.name}</h3>
                 <p className="text-xs text-zinc-400 mt-1">{playlist.songCount} songs</p>
@@ -733,11 +931,11 @@ const Main = () => {
           </div>
         )}
       </div>
-      
+
       {/* Add Playlist Popup */}
       {showAddPlaylistPopup && (
-        <AddPlaylistPopup 
-          isOpen={showAddPlaylistPopup} 
+        <AddPlaylistPopup
+          isOpen={showAddPlaylistPopup}
           onClose={() => setShowAddPlaylistPopup(false)}
           onSuccess={handlePlaylistCreated}
         />
