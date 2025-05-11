@@ -425,7 +425,7 @@ const MobilePlayer = () => {
         {/* Expanded Player */}
         {isExpanded && (
           <motion.div
-            className="min-h-[94vh] bg-gradient-to-b from-zinc-900 to-black flex flex-col overflow-auto"
+            className="min-h-screen bg-gradient-to-b from-zinc-900 to-black flex flex-col overflow-auto"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
