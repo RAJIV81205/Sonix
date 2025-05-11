@@ -288,9 +288,9 @@ const MobileSpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: MobileSpotify
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-100 backdrop-blur-sm ">
       <div className="w-full h-full bg-gradient-to-b from-gray-900 to-black overflow-auto">
-        <div className="p-4 flex flex-col h-full font-inter">
+        <div className="p-4 flex flex-col h-full font-inter pb-20">
           {/* Header */}
           <div className="flex justify-between items-center mb-4 sticky top-0 bg-gradient-to-b from-gray-900 to-transparent py-2 z-10">
             <div className="flex items-center gap-2">
@@ -336,7 +336,7 @@ const MobileSpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: MobileSpotify
           {!importedPlaylist ? (
             // Import Methods
             <div className="flex-1 flex flex-col">
-              <h3 className="text-lg font-semibold text-white text-center mb-6">Choose how to import</h3>
+              
 
               <div className="flex-1 flex flex-col gap-4">
                 {/* Spotify Login */}
@@ -414,7 +414,7 @@ const MobileSpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: MobileSpotify
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-zinc-500 mt-1 px-1">
+                    <p className="text-xs text-zinc-500 mt-1 px-1 truncate">
                       Example: https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M
                     </p>
                   </div>
