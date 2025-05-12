@@ -284,8 +284,19 @@ const MobileMain = () => {
   };
   
   const handleAddToPlaylist = async (song: Song) => {
-    setShowAddToPlaylistModal(song);
-    await fetchPlaylists();
+    try {
+      // Get full song details first
+      const songDetails = await getSongDetails(song.id);
+      if (!songDetails) {
+        toast.error('Failed to get song details');
+        return;
+      }
+      setShowAddToPlaylistModal(songDetails);
+      await fetchPlaylists();
+    } catch (error) {
+      console.error('Error getting song details:', error);
+      toast.error('Failed to get song details');
+    }
   };
 
   const getPlaylistColor = (index: number) => {
@@ -467,11 +478,10 @@ const MobileMain = () => {
                       ) : (
                         <button
                           className="p-2 text-zinc-400 hover:text-purple-500"
-                          onClick={async () => {
+                          onClick={async (e) => {
+                            e.stopPropagation();
                             try {
-                              // Use getSongDetails to get the full song information
                               const songDetails = await getSongDetails(item.id);
-                              
                               if (songDetails) {
                                 handleAddToPlaylist(songDetails);
                               }
