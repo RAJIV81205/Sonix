@@ -26,6 +26,7 @@ interface Playlist {
   id: string;
   name: string;
   songCount?: number;
+  cover:string;
 }
 
 const MobilePlayer = () => {
@@ -798,9 +799,17 @@ const MobilePlayer = () => {
                       whileTap={{ scale: 0.99 }}
                     >
                       <div className="w-12 h-12 bg-black/20 rounded flex items-center justify-center flex-shrink-0">
-                        <Music className="w-5 h-5" />
+                        {playlist.cover ? (
+                          <img
+                            src={playlist.cover.replace("150x150", "500x500").replace("http:", "https:")}
+                            alt={playlist.name.replaceAll("&quot;", `"`)}
+                            className="w-full h-full object-cover rounded"
+                          />
+                        ) : (
+                          <List className="w-6 h-6 text-zinc-400" />
+                        )}
                       </div>
-                      <div className="flex-1 text-left">
+                      <div className="flex-1 text-left w-2/3">
                         <p className="font-medium truncate">{playlist.name}</p>
                         <p className="text-xs text-black/70">
                           {playlist.songCount !== undefined

@@ -38,6 +38,7 @@ interface Song {
   artist: string;
   image: string;
   url: string;
+  duration:number;
 }
 
 interface Playlist {
@@ -233,6 +234,7 @@ const Main = () => {
         artist: songData.artists?.primary[0]?.name || 'Unknown Artist',
         image: songData.image[2]?.url ? (songData.image[2].url).replace(/^http:/, 'https:') : '',
         url: songData.downloadUrl[4]?.url ? (songData.downloadUrl[4].url).replace(/^http:/, 'https:') : '',
+        duration: songData.duration || 0,
       };
     } catch (error) {
       console.error('Error fetching song details:', error);

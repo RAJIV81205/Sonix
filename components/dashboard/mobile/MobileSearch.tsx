@@ -31,6 +31,7 @@ interface Song {
   artist: string;
   image: string;
   url: string;
+  duration:number;
 }
 
 const MobileSearch = () => {
@@ -399,6 +400,7 @@ const MobileSearch = () => {
           (songData.image[2].url || '').replace(/^http:/, 'https:') : '',
         url: songData.downloadUrl && songData.downloadUrl.length > 0 ?
           (songData.downloadUrl[4].url || '').replace(/^http:/, 'https:') : '',
+        duration: songData.duration || 0,
       };
 
       const stored = localStorage.getItem('recentlyPlayed');
