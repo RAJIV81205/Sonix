@@ -79,6 +79,7 @@ const Main = () => {
   const [userName, setUserName] = useState<string>("");
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState<boolean>(true);
+  const [showMenuOptions, setShowMenuOptions] = useState<string | null>(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -607,9 +608,9 @@ const Main = () => {
         </button>
 
         {/* Dropdown for adding recently played song to playlist */}
-        {recentSongForPlaylist === song.id && (
+        {showPlaylistDropdown === song.id && (
           <div
-            ref={recentPlaylistDropdownRef}
+            ref={playlistDropdownRef}
             className="absolute right-0 top-full mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl p-3 min-w-56 z-10"
           >
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
@@ -617,7 +618,7 @@ const Main = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setRecentSongForPlaylist(null);
+                  setShowPlaylistDropdown(null);
                 }}
                 className="text-zinc-400 hover:text-white transition-colors"
               >
@@ -633,7 +634,7 @@ const Main = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setRecentSongForPlaylist(null);
+                    setShowPlaylistDropdown(null);
                     setShowAddPlaylistPopup(true);
                   }}
                   className="w-full text-center text-sm bg-purple-600 hover:bg-purple-700 text-white py-1 px-3 rounded-md transition-colors"
@@ -666,7 +667,7 @@ const Main = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setRecentSongForPlaylist(null);
+                      setShowPlaylistDropdown(null);
                       setShowAddPlaylistPopup(true);
                     }}
                     className="w-full text-left px-3 py-2 text-sm text-indigo-400 hover:text-indigo-300 hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2"
@@ -679,6 +680,52 @@ const Main = () => {
             )}
           </div>
         )}
+
+        {/* Menu options */}
+        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenuOptions(showMenuOptions === song.id ? null : song.id);
+              }}
+              className="bg-black/20 bg-opacity-50 rounded-full p-1 hover:bg-opacity-70"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+              </svg>
+            </button>
+
+            {/* Dropdown menu */}
+            {showMenuOptions === song.id && (
+              <div className="absolute right-0 mt-1 w-48 bg-zinc-800 rounded-md shadow-lg z-10">
+                <div className="py-1">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentSong(song);
+                      setIsPlaying(true);
+                      setShowMenuOptions(null);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700"
+                  >
+                    Play
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPlaylistDropdown(song.id);
+                      setShowMenuOptions(null);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700"
+                  >
+                    Add to Playlist
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   };
@@ -846,8 +893,7 @@ const Main = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Toggle dropdown menu
-                        // You would add logic here to handle showing/hiding menu
+                        setShowMenuOptions(showMenuOptions === song.id ? null : song.id);
                       }}
                       className="bg-black/20 bg-opacity-50 rounded-full p-1 hover:bg-opacity-70"
                     >
@@ -856,23 +902,34 @@ const Main = () => {
                       </svg>
                     </button>
 
-                    {/* Dropdown menu - hidden by default, would be shown with state management */}
-                    <div className="absolute right-0 mt-1 w-48 bg-zinc-800 rounded-md shadow-lg z-10 hidden">
-                      <div className="py-1">
-                        <button className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700">
-                          Play
-                        </button>
-                        <button className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700">
-                          Play Next
-                        </button>
-                        <button className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700">
-                          Add to Queue
-                        </button>
-                        <button className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700">
-                          Add to Playlist
-                        </button>
+                    {/* Dropdown menu */}
+                    {showMenuOptions === song.id && (
+                      <div className="absolute right-0 mt-1 w-48 bg-zinc-800 rounded-md shadow-lg z-10">
+                        <div className="py-1">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentSong(song);
+                              setIsPlaying(true);
+                              setShowMenuOptions(null);
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700"
+                          >
+                            Play
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowPlaylistDropdown(song.id);
+                              setShowMenuOptions(null);
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700"
+                          >
+                            Add to Playlist
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -46,6 +46,16 @@ interface Playlist {
   songCount?: number;
 }
 
+interface Track {
+  id: string;
+  title: string;
+  artist: string;
+  album: string;
+  coverUrl: string;
+  plays?: string;
+  type?: string;
+}
+
 const MobileMain = () => {
   const router = useRouter();
   const { setCurrentSong, setIsPlaying } = usePlayer();
@@ -62,6 +72,8 @@ const MobileMain = () => {
   const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState(false);
   const suggestionBoxRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
+  const [isTrendingLoading, setIsTrendingLoading] = useState<boolean>(true);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
 
   useEffect(() => {
@@ -310,6 +322,64 @@ const MobileMain = () => {
     return colors[index % colors.length];
   };
 
+
+  const getTrendingTracks = async () => {
+    setIsTrendingLoading(true);
+    function formatNumber(num: number) {
+      if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+      } else if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+      } else {
+        return num.toString();
+      }
+    }
+
+
+    try {
+      const response = await fetch('/api/dashboard/getNewReleases', {
+        method: 'POST',
+        headers: {
+          "Content-type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+
+      const data = await response.json()
+
+      const newArray = [];
+
+      for (let i = 0; i < data.data.count; i++) {
+        if (data.data.data[i].type === "song") {
+          const realData: Track = {
+            id: data.data.data[i].id,
+            title: data.data.data[i].title.replaceAll("&quot;", `"`).replaceAll("&amp;", `-`),
+            artist: data.data.data[i].subtitle.replaceAll("&quot;", `"`).replaceAll("&amp;", `-`) || '',
+            album: data.data.data[i].more_info.album || '',
+            coverUrl: data.data.data[i].image
+              .replace('http:', 'https:')
+              .replace('150x150', '500x500'),
+            plays: formatNumber(data.data.data[i].play_count),
+          }
+          newArray.push(realData);
+        }
+
+      }
+
+      setTrendingTracks(newArray);
+
+    } catch (error) {
+      console.error('Error fetching trending tracks:', error);
+      toast.error('Failed to fetch trending tracks. Please try again later.');
+    } finally {
+      setIsTrendingLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    getTrendingTracks()
+  }, []);
+
   // Handle new playlist creation
   const handlePlaylistCreated = (playlistId: string, playlistName: string) => {
     // Add the new playlist to the state
@@ -508,6 +578,81 @@ const MobileMain = () => {
 
       {/* Content Area */}
       <div className="flex-1 p-4 overflow-y-auto pb-20">
+      <div className="py-4 pb-10">
+        <h2 className="text-xl font-bold mb-4">Recommendations</h2>
+        {isTrendingLoading ? (
+          <div className="grid grid-cols-2 gap-4">
+            {[...Array(6)].map((_, index) => (
+              <div key={`skeleton-${index}`} className="flex flex-col">
+                <div className="aspect-square bg-zinc-800 rounded-lg mb-2 animate-pulse"></div>
+                <div className="h-4 bg-zinc-800 rounded w-3/4 mb-2 animate-pulse"></div>
+                <div className="h-3 bg-zinc-800 rounded w-1/2 animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {trendingTracks.slice(0, 8).map((track) => (
+              <div
+                key={track.id}
+                className="flex flex-col"
+              >
+                <div 
+                  className="relative aspect-square bg-zinc-800 rounded-lg mb-2 overflow-hidden cursor-pointer"
+                  onClick={() => handleSongSelect({
+                    id: track.id,
+                    title: track.title,
+                    subtitle: track.artist,
+                    type: 'song',
+                    image: track.coverUrl,
+                    perma_url: '',
+                    more_info: {
+                      duration: '',
+                      album_id: '',
+                      album: '',
+                      label: '',
+                      encrypted_media_url: '',
+                      artistMap: {
+                        primary_artists: [{
+                          id: '',
+                          name: '',
+                          image: '',
+                          perma_url: ''
+                        }]
+                      }
+                    }
+                  })}
+                >
+                  <img
+                    src={track.coverUrl}
+                    alt={track.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <button 
+                    className="absolute bottom-2 right-2 p-2 rounded-full bg-black/60 text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToPlaylist({
+                        id: track.id,
+                        name: track.title,
+                        artist: track.artist,
+                        image: track.coverUrl,
+                        url: '',
+                        duration: 0
+                      });
+                    }}
+                  >
+                    <Plus size={18} />
+                  </button>
+                </div>
+                <h3 className="font-medium text-sm truncate">{track.title.replaceAll("&quot;", `"`)}</h3>
+                <p className="text-xs text-zinc-400 truncate">{track.artist.replaceAll("&quot;", `"`)}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
         {/* Recently Played Section */}
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4">Recently Played</h2>
