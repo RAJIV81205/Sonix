@@ -209,39 +209,8 @@ const PlaylistPage = () => {
   }
 
   return (
-    <div className="relative h-full overflow-y-auto px-6 py-6 bg-zinc-900/10">
-      <div className="absolute inset-0 z-[-1] w-full h-full  bg-gradient-to-br from-purple-900/20 via-indigo-900/20">
-        <div 
-          className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-black/20"
-          style={{
-            backgroundSize: '200% 200%',
-            animation: 'gradientMove 15s ease infinite'
-          }}
-        />
-        <div 
-          className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-transparent"
-          style={{
-            animation: 'pulse 4s ease-in-out infinite'
-          }}
-        />
-        <div 
-          className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent"
-          style={{
-            animation: 'pulse 4s ease-in-out infinite 1s'
-          }}
-        />
-        <style jsx>{`
-          @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-          @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-          }
-        `}</style>
-      </div>
+    <div className="h-full overflow-y-auto px-6 py-6 bg-zinc-900/10">
+      
       {/* Playlist Header */}
       <div className=" flex items-start gap-6 mb-8">
         <div className="absolute z-[-1] w-full h-full bg-amber-50"></div>
