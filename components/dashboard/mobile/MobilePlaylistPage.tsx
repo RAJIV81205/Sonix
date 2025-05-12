@@ -13,6 +13,7 @@ interface Song {
   artist: string;
   image: string;
   url: string;
+  duration:number
 }
 
 interface Playlist {
