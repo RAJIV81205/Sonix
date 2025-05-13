@@ -38,7 +38,7 @@ interface Song {
   artist: string;
   image: string;
   url: string;
-  duration:number;
+  duration: number;
 }
 
 interface Playlist {
@@ -561,175 +561,6 @@ const Main = () => {
     );
   };
 
-  // RecentPlayItem component with updated styling
-  const RecentPlayItem = ({ song }: { song: Song }) => {
-    return (
-      <div className="group relative flex items-center gap-4 p-2 hover:bg-zinc-900 rounded-md cursor-pointer transition-colors">
-        <div
-          className="relative w-16 h-16 rounded overflow-hidden bg-zinc-900"
-          onClick={() => {
-            setCurrentSong(song);
-            setIsPlaying(true);
-          }}
-        >
-          {song.image ? (
-            <img
-              src={song.image.replace('150x150', '500x500').replace('http:', 'https:')}
-              alt={song.name.replaceAll("&quot;", `"`)}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
-              <Music className="w-8 h-8 text-white" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-            <Play className="w-8 h-8 text-white" fill="white" />
-          </div>
-        </div>
-        <div
-          className="flex-1 min-w-0"
-          onClick={() => {
-            setCurrentSong(song);
-            setIsPlaying(true);
-          }}
-        >
-          <p className="text-sm font-medium text-white truncate">{song.name.replaceAll("&quot;", `"`)}</p>
-          <p className="text-xs text-zinc-400 truncate">{song.artist}</p>
-        </div>
-        <button
-          className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 bg-zinc-800 hover:bg-zinc-700 rounded-full flex items-center justify-center"
-          onClick={(e) => {
-            e.stopPropagation();
-            setRecentSongForPlaylist(song.id);
-          }}
-        >
-          <MoreVertical className="w-4 h-4 text-zinc-400" />
-        </button>
-
-        {/* Dropdown for adding recently played song to playlist */}
-        {showPlaylistDropdown === song.id && (
-          <div
-            ref={playlistDropdownRef}
-            className="absolute right-0 top-full mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl p-3 min-w-56 z-10"
-          >
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
-              <p className="text-sm text-white font-medium">Add to playlist</p>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowPlaylistDropdown(null);
-                }}
-                className="text-zinc-400 hover:text-white transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-            {playlists.length === 0 ? (
-              <div className="py-2">
-                <p className="text-xs text-zinc-500 mb-2">No playlists available</p>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowPlaylistDropdown(null);
-                    setShowAddPlaylistPopup(true);
-                  }}
-                  className="w-full text-center text-sm bg-purple-600 hover:bg-purple-700 text-white py-1 px-3 rounded-md transition-colors"
-                >
-                  Create Playlist
-                </button>
-              </div>
-            ) : (
-              <div className="max-h-60 overflow-y-auto">
-                {playlists.map(playlist => (
-                  <button
-                    key={playlist.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddRecentToPlaylist(playlist.id, song);
-                    }}
-                    disabled={addingToPlaylist === playlist.id}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2"
-                  >
-                    {addingToPlaylist === playlist.id ? (
-                      <Loader2 className="w-3 h-3 text-indigo-400 animate-spin" />
-                    ) : (
-                      <Music className="w-3 h-3 text-indigo-400" />
-                    )}
-                    <span>{playlist.name}</span>
-                    <span className="text-xs text-zinc-500 ml-auto">{playlist.songCount} songs</span>
-                  </button>
-                ))}
-                <div className="mt-2 pt-2 border-t border-zinc-800">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowPlaylistDropdown(null);
-                      setShowAddPlaylistPopup(true);
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm text-indigo-400 hover:text-indigo-300 hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Create New Playlist</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Menu options */}
-        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowMenuOptions(showMenuOptions === song.id ? null : song.id);
-              }}
-              className="bg-black/20 bg-opacity-50 rounded-full p-1 hover:bg-opacity-70"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-              </svg>
-            </button>
-
-            {/* Dropdown menu */}
-            {showMenuOptions === song.id && (
-              <div className="absolute right-0 mt-1 w-48 bg-zinc-800 rounded-md shadow-lg z-10">
-                <div className="py-1">
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentSong(song);
-                      setIsPlaying(true);
-                      setShowMenuOptions(null);
-                    }}
-                    className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700"
-                  >
-                    Play
-                  </button>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowPlaylistDropdown(song.id);
-                      setShowMenuOptions(null);
-                    }}
-                    className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700"
-                  >
-                    Add to Playlist
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="h-full overflow-y-auto pb-24 text-white">
       {/* Dashboard Header */}
@@ -866,7 +697,10 @@ const Main = () => {
             {recentlyPlayed.slice(0, 8).map((song, index) => (
               <div
                 key={song.id}
-                onClick={() => setCurrentSong(song)}
+                onClick={() => {
+                  setCurrentSong(song);
+                  setIsPlaying(true);
+                }}
                 className={`bg-zinc-900 rounded-xl p-3 hover:bg-zinc-800 transition-colors cursor-pointer relative group ${getPlaylistColor(index)}`}
               >
                 <img
@@ -906,7 +740,7 @@ const Main = () => {
                     {showMenuOptions === song.id && (
                       <div className="absolute right-0 mt-1 w-48 bg-zinc-800 rounded-md shadow-lg z-10">
                         <div className="py-1">
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setCurrentSong(song);
@@ -917,7 +751,7 @@ const Main = () => {
                           >
                             Play
                           </button>
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setShowPlaylistDropdown(song.id);
