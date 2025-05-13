@@ -228,7 +228,7 @@ const performSearch = async (query: string): Promise<void> => {
           processedSongs.push({
             id: item.id || `song-${Date.now()}-${Math.random()}`,
             title: item.title.replaceAll("&quot;", `"`).replaceAll("&quot;", `"`) || item.song.replaceAll("&quot;", `"`) || 'Unknown Title',
-            artist: item.more_info?.music || item.more_info?.artistMap?.primary_artists?.[0]?.name || item.primaryArtists || 'Unknown Artist',
+            artist: item.more_info?.artistMap?.primary_artists?.[0]?.name || item.primaryArtists || 'Unknown Artist',
             album: item.subtitle || '',
             coverUrl: item.image.replace("150x150", "500x500").replace("http:", 'https:') || item.albumartwork_large || '/api/placeholder/64/64',
             type: 'song'
@@ -239,7 +239,7 @@ const performSearch = async (query: string): Promise<void> => {
           processedAlbums.push({
             id: item.id || item.albumid || `album-${Date.now()}-${Math.random()}`,
             title: item.title.replaceAll("&quot;", `"`).replaceAll("&quot;", `"`) || item.album.replaceAll("&quot;", `"`) || 'Unknown Album',
-            artist: item.more_info?.music || item.more_info?.artistMap?.primary_artists?.[0]?.name || item.primaryArtists || 'Unknown Artist',
+            artist: item.more_info?.artistMap?.primary_artists?.[0]?.name || item.primaryArtists || 'Unknown Artist',
             album: item.subtitle || item.year || '',
             coverUrl: item.image.replace("150x150", "500x500").replace("http:", 'https:') || item.albumartwork_large || '/api/placeholder/64/64',
             type: 'album'
@@ -252,7 +252,7 @@ const performSearch = async (query: string): Promise<void> => {
             processedSongs.push({
               id: item.id || `song-${Date.now()}-${Math.random()}`,
               title: item.title.replaceAll("&quot;", `"`) || 'Unknown Title',
-              artist: item.artist || item.more_info?.singers || 'Unknown Artist',
+              artist: item.more_info?.artistMap?.primary_artists?.[0]?.name || item.more_info?.singers || item.subtitle,
               album: item.album || '',
               coverUrl: item.image.replace("150x150", "500x500").replace("http:", 'https:') || '/api/placeholder/64/64',
               type: 'song'
@@ -262,7 +262,7 @@ const performSearch = async (query: string): Promise<void> => {
             processedAlbums.push({
               id: item.id || `album-${Date.now()}-${Math.random()}`,
               title: item.title.replaceAll("&quot;", `"`) || 'Unknown Album',
-              artist: item.more_info?.music || item.artist || 'Unknown Artist',
+              artist: item.artist || item.more_info?.artistMap?.primary_artists?.[0]?.name || item.more_info?.singers || item.subtitle,
               album: item.subtitle || item.year || '',
               coverUrl: item.image.replace("150x150", "500x500").replace("http:", 'https:'),
               type: 'album'
@@ -280,7 +280,7 @@ const performSearch = async (query: string): Promise<void> => {
         processedAlbums.push({
           id: item.id || item.albumid || `album-${Date.now()}-${Math.random()}`,
           title: item.title.replaceAll("&quot;", `"`) || item.album || 'Unknown Album',
-          artist: item.more_info?.music || item.more_info?.primary_artists || item.artist || 'Unknown Artist',
+          artist: item.more_info?.primary_artists || item.artist || item.more_info?.artistMap?.primary_artists?.[0]?.name || item.more_info?.singers || item.subtitle,
           album: item.subtitle || item.year || '',
           coverUrl: item.image.replace("150x150", "500x500").replace("http:", 'https:'),
           type: 'album'
