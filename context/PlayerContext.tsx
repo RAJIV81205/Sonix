@@ -116,15 +116,77 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleEnded = () => {
-      playNext();
+    const handleEnded = async () => {
+      // If there are songs in queue, play the next one
+      if (queue.length > 0) {
+        const nextQueueIndex = currentQueueIndex + 1;
+        if (nextQueueIndex < queue.length) {
+          const nextSong = queue[nextQueueIndex];
+          setCurrentQueueIndex(nextQueueIndex);
+          setCurrentSongState(nextSong);
+          setCurrentSongIndex(-1);
+          
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('currentSong', JSON.stringify(nextSong));
+            localStorage.setItem('currentQueueIndex', nextQueueIndex.toString());
+            localStorage.removeItem('currentPosition');
+          }
+          
+          // Ensure audio is ready before playing
+          if (audioRef.current) {
+            audioRef.current.src = nextSong.url;
+            audioRef.current.load();
+            try {
+              await audioRef.current.play();
+              setIsPlaying(true);
+            } catch (error) {
+              console.error('Error playing next song:', error);
+              setIsPlaying(false);
+            }
+          }
+        } else {
+          setIsPlaying(false);
+        }
+      } else if (playlist.length > 0) {
+        // If no queue, try to play next from playlist
+        const nextIndex = currentSongIndex + 1;
+        if (nextIndex < playlist.length) {
+          const nextSong = playlist[nextIndex];
+          setCurrentSongIndex(nextIndex);
+          setCurrentSongState(nextSong);
+          setCurrentQueueIndex(-1);
+          
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('currentSong', JSON.stringify(nextSong));
+            localStorage.setItem('currentSongIndex', nextIndex.toString());
+            localStorage.removeItem('currentPosition');
+          }
+          
+          // Ensure audio is ready before playing
+          if (audioRef.current) {
+            audioRef.current.src = nextSong.url;
+            audioRef.current.load();
+            try {
+              await audioRef.current.play();
+              setIsPlaying(true);
+            } catch (error) {
+              console.error('Error playing next song:', error);
+              setIsPlaying(false);
+            }
+          }
+        } else {
+          setIsPlaying(false);
+        }
+      } else {
+        setIsPlaying(false);
+      }
     };
 
     audio.addEventListener('ended', handleEnded);
     return () => {
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [playlist, currentSongIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [queue, playlist, currentSongIndex, currentQueueIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save playback position periodically
   useEffect(() => {
@@ -206,7 +268,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [isPlaying]);
 
   // Play next song from playlist or queue
-  const playNext = () => {
+  const playNext = async () => {
     if (playlist.length === 0 && queue.length === 0) return;
     
     // If there are songs in queue, play the next one
@@ -216,7 +278,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         const nextSong = queue[nextQueueIndex];
         setCurrentQueueIndex(nextQueueIndex);
         setCurrentSongState(nextSong);
-        setCurrentSongIndex(-1); // Reset playlist index since we're playing from queue
+        setCurrentSongIndex(-1);
         
         if (typeof window !== 'undefined') {
           localStorage.setItem('currentSong', JSON.stringify(nextSong));
@@ -224,7 +286,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem('currentPosition');
         }
         
-        setIsPlaying(true);
+        // Ensure audio is ready before playing
+        if (audioRef.current) {
+          audioRef.current.src = nextSong.url;
+          audioRef.current.load();
+          try {
+            await audioRef.current.play();
+            setIsPlaying(true);
+          } catch (error) {
+            console.error('Error playing next song:', error);
+            setIsPlaying(false);
+          }
+        }
         return;
       }
     }
@@ -296,11 +369,23 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
     // Handle new song selection
     setCurrentSongState(song);
-    setCurrentQueueIndex(-1); // Reset queue index when manually selecting a song
+    
+    // If queue is empty, make this song the first in queue
+    if (queue.length === 0) {
+      setQueue([song]);
+      setCurrentQueueIndex(0);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('queue', JSON.stringify([song]));
+        localStorage.setItem('currentQueueIndex', '0');
+      }
+    } else {
+      // If queue is not empty, add the song to the end of the queue
+      setQueue(prevQueue => [...prevQueue, song]);
+      setCurrentQueueIndex(-1); // Reset queue index when manually selecting a song
+    }
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('currentSong', JSON.stringify(song));
-      localStorage.setItem('currentQueueIndex', '-1');
-      // Reset the saved position when changing songs
       localStorage.removeItem('currentPosition');
     }
   };
