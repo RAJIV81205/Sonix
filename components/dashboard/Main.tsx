@@ -534,7 +534,15 @@ const Main = () => {
                     {addingToPlaylist === playlist.id ? (
                       <Loader2 className="w-3 h-3 text-indigo-400 animate-spin" />
                     ) : (
-                      <Music className="w-3 h-3 text-indigo-400" />
+                      playlist.cover ? (
+                        <img
+                          src={playlist.cover.replace('150x150', '500x500').replace('http:', 'https:')}
+                          alt={playlist.name}
+                          className="w-6 h-6 rounded-md object-cover"
+                        />
+                      ) : (
+                        <Music className="w-3 h-3 text-indigo-400" />
+                      )
                     )}
                     <span>{playlist.name}</span>
                     <span className="text-xs text-zinc-500 ml-auto">{playlist.songCount} songs</span>
@@ -714,7 +722,11 @@ const Main = () => {
                 {/* Play button overlay */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
-                    onClick={() => setCurrentSong(song)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentSong(song);
+                      setIsPlaying(true);
+                    }}
                     className="bg-transparent text-white rounded-full p-3 shadow-lg transition-colors"
                   >
                     <Play className="w-5 h-5" fill="white" />
@@ -766,6 +778,88 @@ const Main = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Playlist Dropdown */}
+                {showPlaylistDropdown === song.id && (
+                  <div
+                    ref={playlistDropdownRef}
+                    className="absolute right-0 mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl p-3 min-w-100 z-10"
+                  >
+                    <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
+                      <p className="text-sm text-white font-medium">Add to playlist</p>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowPlaylistDropdown(null);
+                        }}
+                        className="text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
+                    </div>
+                    {playlists.length === 0 ? (
+                      <div className="py-2">
+                        <p className="text-xs text-zinc-500 mb-2">No playlists available</p>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowPlaylistDropdown(null);
+                            setShowAddPlaylistPopup(true);
+                          }}
+                          className="w-full text-center text-sm bg-purple-600 hover:bg-purple-700 text-white py-1 px-3 rounded-md transition-colors"
+                        >
+                          Create Playlist
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="max-h-60 overflow-y-auto">
+                        {playlists.map(playlist => (
+                          <button
+                            key={playlist.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddRecentToPlaylist(playlist.id, song);
+                            }}
+                            disabled={addingToPlaylist === playlist.id}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2"
+                          >
+                            {addingToPlaylist === playlist.id ? (
+                              <Loader2 className="w-3 h-3 text-indigo-400 animate-spin" />
+                            ) : (
+                              playlist.cover ? (
+                                <img
+                                  src={playlist.cover.replace('150x150', '500x500').replace('http:', 'https:')}
+                                  alt={playlist.name}
+                                  className="w-10 h-10 rounded-md object-cover"
+                                />
+                              ) : (
+                                <Music className="w-3 h-3 text-indigo-400" />
+                              )
+                            )}
+                            <span className='truncate w-2/3'>{playlist.name}</span>
+                            <span className="text-xs text-zinc-500 ml-auto">{playlist.songCount} songs</span>
+                          </button>
+                        ))}
+                        <div className="mt-2 pt-2 border-t border-zinc-800">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowPlaylistDropdown(null);
+                              setShowAddPlaylistPopup(true);
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm text-indigo-400 hover:text-indigo-300 hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2"
+                          >
+                            <Plus className="w-3 h-3" />
+                            <span>Create New Playlist</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
