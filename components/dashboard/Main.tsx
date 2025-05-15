@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User, Loader2, Plus, Music, Play, MoreVertical, LogOut, Settings, Heart } from 'lucide-react';
+import { Search, Bell, User, Loader2, Plus, Music, Play, MoreVertical, LogOut, Settings, Heart, Crown, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, useRef } from 'react';
 import { usePlayer } from '@/context/PlayerContext';
@@ -982,85 +982,83 @@ const Main = () => {
         )
       }
 
-      {
-        userPopup && (
-          <div className="absolute w-64 z-50 flex flex-col bg-zinc-900 top-16 right-6 rounded-xl border border-zinc-800 shadow-xl overflow-hidden">
-            {/* Profile Header */}
-            <div className="p-4 bg-gradient-to-r from-purple-800 to-indigo-800">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full flex items-center justify-center">
-                  <User className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-white">{userName}</h3>
-                  <p className="text-xs text-zinc-200">Free Account</p>
-                </div>
+      {userPopup && (
+        <div className="absolute w-64 z-50 flex flex-col bg-zinc-900 top-16 right-6 rounded-lg border border-zinc-800 shadow-lg overflow-hidden">
+          {/* Profile Header */}
+          <div className="p-4 bg-zinc-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center">
+                <User className="w-5 h-5 text-zinc-300" />
+              </div>
+              <div>
+                <h3 className="font-medium text-white">{userName}</h3>
+                <p className="text-xs text-zinc-400">Free Account</p>
               </div>
             </div>
-
-            {/* Menu Options */}
-            <div className="p-2">
-              <button
-                className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-lg transition-colors"
-                onClick={() => router.push('/dashboard/profile')}
-              >
-                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                  <User className="w-4 h-4 text-indigo-400" />
-                </div>
-                <span>Profile</span>
-              </button>
-
-              <button
-                className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-lg transition-colors"
-                onClick={() => router.push('/dashboard/favorites')}
-              >
-                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                  <Heart className="w-4 h-4 text-red-400" />
-                </div>
-                <span>Favorites</span>
-              </button>
-
-              <button
-                className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-lg transition-colors"
-                onClick={() => router.push('/dashboard/settings')}
-              >
-                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                  <Settings className="w-4 h-4 text-zinc-400" />
-                </div>
-                <span>Settings</span>
-              </button>
-
-              <div className="my-2 border-b border-zinc-800"></div>
-
-              <button
-                className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-lg transition-colors"
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  localStorage.removeItem('user');
-                  router.push('/auth/login');
-                }}
-              >
-                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                  <LogOut className="w-4 h-4 text-zinc-400" />
-                </div>
-                <span>Logout</span>
-              </button>
-            </div>
-
-            {/* Upgrade */}
-            <div className="p-4 bg-gradient-to-r from-purple-600 to-indigo-600 mt-2">
-              <p className="text-sm font-medium text-white mb-2">Upgrade to Premium</p>
-              <p className="text-xs text-zinc-200 mb-3">Unlock all features and enjoy ad-free music!</p>
-              <button
-                className="w-full bg-white text-indigo-900 rounded-full py-2 text-sm font-medium hover:bg-zinc-100 transition-colors"
-                onClick={() => router.push('/dashboard/upgrade')}
-              >
-                Upgrade Now
-              </button>
-            </div>
           </div>
-        )
-      }
+
+          {/* Menu Options */}
+          <div className="p-2">
+            <button
+              className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-md transition-colors"
+              onClick={() => router.push('/dashboard/profile')}
+            >
+              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                <User className="w-4 h-4 text-zinc-400" />
+              </div>
+              <span>Profile</span>
+            </button>
+
+            <button
+              className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-md transition-colors"
+              onClick={() => router.push('/dashboard/favorites')}
+            >
+              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                <Heart className="w-4 h-4 text-zinc-400" />
+              </div>
+              <span>Favorites</span>
+            </button>
+
+            <button
+              className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-md transition-colors"
+              onClick={() => router.push('/dashboard/settings')}
+            >
+              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                <Settings className="w-4 h-4 text-zinc-400" />
+              </div>
+              <span>Settings</span>
+            </button>
+
+            <div className="my-2 border-b border-zinc-800"></div>
+
+            <button
+              className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-md transition-colors"
+              onClick={() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                router.push('/auth/login');
+              }}
+            >
+              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                <LogOut className="w-4 h-4 text-zinc-400" />
+              </div>
+              <span>Logout</span>
+            </button>
+          </div>
+
+          {/* Upgrade */}
+          <div className="p-4 bg-zinc-800 mt-2">
+            <p className="text-sm font-medium text-white mb-2">Upgrade to Premium</p>
+            <p className="text-xs text-zinc-400 mb-3">Unlock all features and enjoy ad-free music!</p>
+            <button
+              className="w-full bg-white text-zinc-900 rounded-md py-2 text-sm font-medium hover:bg-zinc-100 transition-colors"
+              onClick={() => router.push('/dashboard/upgrade')}
+            >
+              Upgrade Now
+            </button>
+          </div>
+        </div>
+      )}
     </div >
   );
 };
