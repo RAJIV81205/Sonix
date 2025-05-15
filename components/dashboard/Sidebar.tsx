@@ -193,8 +193,8 @@ export default function Sidebar() {
                   </div>
                 )}
 
-                <div>
-                  <p className="text-sm font-medium">{playlist.name}</p>
+                <div className='w-2/3'>
+                  <p className="text-sm font-medium truncate">{playlist.name}</p>
                   <p className="text-xs text-zinc-500">
                     {playlist.songCount || 0} songs
                   </p>
