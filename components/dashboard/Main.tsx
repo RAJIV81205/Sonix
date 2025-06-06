@@ -1032,15 +1032,15 @@ const Main = () => {
             <div className="my-2 border-b border-zinc-800"></div>
 
             <button
-              className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-md transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-red-400 hover:bg-zinc-800 rounded-md transition-colors"
               onClick={() => {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 router.push('/auth/login');
               }}
             >
-              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                <LogOut className="w-4 h-4 text-zinc-400" />
+              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center ">
+                <LogOut className="w-4 h-4 text-red-400" />
               </div>
               <span>Logout</span>
             </button>
