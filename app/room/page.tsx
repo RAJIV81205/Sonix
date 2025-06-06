@@ -1,9 +1,10 @@
 import React from 'react'
+import Room from '@/components/rooms/Room'
 
-const page = () => {
+const RoomPage = () => {
   return (
-    <div>page</div>
+    <Room />
   )
 }
 
-export default page
+export default RoomPage
