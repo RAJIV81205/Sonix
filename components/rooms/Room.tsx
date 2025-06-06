@@ -142,38 +142,6 @@ const Room = () => {
             </p>
           </motion.div>
 
-          {/* Tab Selector */}
-          <motion.div variants={itemVariants} className="flex justify-center mb-8">
-            <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-xl p-2 flex">
-              <motion.button
-                variants={tabVariants}
-                animate={activeTab === 'create' ? 'active' : 'inactive'}
-                onClick={() => setActiveTab('create')}
-                className={`flex items-center px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                  activeTab === 'create'
-                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <Plus className="w-5 h-5 mr-2" />
-                Create Room
-              </motion.button>
-              <motion.button
-                variants={tabVariants}
-                animate={activeTab === 'join' ? 'active' : 'inactive'}
-                onClick={() => setActiveTab('join')}
-                className={`flex items-center px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
-                  activeTab === 'join'
-                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <Hash className="w-5 h-5 mr-2" />
-                Join Room
-              </motion.button>
-            </div>
-          </motion.div>
-
           {/* Content Cards */}
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Create Room Section */}
@@ -281,32 +249,7 @@ const Room = () => {
             </motion.div>
           </div>
 
-          {/* Features */}
-          <motion.div variants={itemVariants} className="mt-16 text-center">
-            <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Music className="w-6 h-6 text-purple-400" />
-                </div>
-                <h3 className="text-white font-semibold mb-2">Synchronized Playback</h3>
-                <p className="text-gray-400 text-sm">Everyone hears the same thing at the same time</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-6 h-6 text-blue-400" />
-                </div>
-                <h3 className="text-white font-semibold mb-2">Real-time Chat</h3>
-                <p className="text-gray-400 text-sm">Share reactions and discuss music together</p>
-              </div>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Zap className="w-6 h-6 text-green-400" />
-                </div>
-                <h3 className="text-white font-semibold mb-2">Instant Access</h3>
-                <p className="text-gray-400 text-sm">No downloads required, works in any browser</p>
-              </div>
-            </div>
-          </motion.div>
+        
         </motion.div>
       </div>
     </div>

@@ -100,7 +100,7 @@ export default function Sidebar() {
             <Search className="w-5 h-5 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
             <span className="text-sm font-medium">Search</span>
           </Link>
-          <Link href="/room" className="flex items-center gap-3 hover:bg-zinc-900 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
+          <Link href="/dashboard/room" className="flex items-center gap-3 hover:bg-zinc-900 py-2.5 px-3 rounded-lg text-zinc-300 hover:text-white transition-all duration-200 cursor-pointer group">
             <Compass className="w-5 h-5 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
             <span className="text-sm font-medium">Listen Together</span>
           </Link>
