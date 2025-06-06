@@ -70,7 +70,7 @@ const Room = () => {
 
   if (createdRoom) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-black">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -113,8 +113,8 @@ const Room = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-black">
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 py-10">
         <motion.div
           variants={containerVariants}
           initial="hidden"
