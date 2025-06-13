@@ -1,4 +1,4 @@
-import { integer, pgTable, varchar, uuid, primaryKey } from "drizzle-orm/pg-core";
+import { integer, pgTable, varchar, uuid, primaryKey, json, boolean } from "drizzle-orm/pg-core";
 
 // USERS TABLE
 export const usersTable = pgTable("users", {
@@ -38,3 +38,23 @@ export const playlistSongsTable = pgTable("playlist_songs", {
 }, (table) => ({
   pk: primaryKey({ columns: [table.playlistId, table.songId] }),
 }));
+
+// ROOMS TABLE
+export const roomsTable = pgTable("rooms", {
+  id: uuid().primaryKey(),
+  roomCode: varchar({ length: 6 }).notNull().unique(),
+  roomName: varchar({ length: 255 }).notNull(),
+  hostId: integer().notNull(),
+  participants: json().$type<number[]>().default([]),
+  
+  // Current track
+  currentTrackId: varchar({ length: 255 }),
+  currentPosition: integer().default(0),
+  isPlaying: boolean().default(false),
+  startTime: varchar(),
+  
+  // Queue
+  queue: json().$type<any[]>().default([]),
+  
+  createdAt: varchar().notNull(),
+});
