@@ -41,7 +41,7 @@ export const playlistSongsTable = pgTable("playlist_songs", {
 
 // ROOMS TABLE
 export const roomsTable = pgTable("rooms", {
-  id: uuid().primaryKey(),
+  id: uuid().primaryKey().defaultRandom(),
   roomCode: varchar({ length: 6 }).notNull().unique(),
   roomName: varchar({ length: 255 }).notNull(),
   hostId: integer().notNull(),
