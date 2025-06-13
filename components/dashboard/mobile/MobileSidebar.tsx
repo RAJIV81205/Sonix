@@ -202,16 +202,16 @@ export default function MobileSidebar() {
               </Link>
               
               <Link 
-                href="/dashboard/explore"
+                href="/dashboard/room"
                 className={`flex items-center gap-4 p-4 rounded-xl transition-colors ${
-                  activeItem === 'explore' 
+                  activeItem === 'room' 
                     ? 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 text-white' 
                     : 'text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors'
                 }`}
-                onClick={() => handleItemClick('explore')}
+                onClick={() => handleItemClick('room')}
               >
-                <Compass className={`w-6 h-6 ${activeItem === 'explore' ? 'text-purple-400' : ''}`} />
-                <span className="font-medium text-lg">Explore</span>
+                <Compass className={`w-6 h-6 ${activeItem === 'room' ? 'text-purple-400' : ''}`} />
+                <span className="font-medium text-lg">Listen Together</span>
               </Link>
             </nav>
           </div>
