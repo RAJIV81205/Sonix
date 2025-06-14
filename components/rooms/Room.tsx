@@ -3,6 +3,8 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Users, Plus, Hash, Copy, Music, Headphones, Zap } from 'lucide-react'
+import Link from 'next/link'
+
 
 type Room = {
   code: string
@@ -11,7 +13,6 @@ type Room = {
 
 
 const Room = () => {
-  const [activeTab, setActiveTab] = useState('create')
   const [roomCode, setRoomCode] = useState('')
   const [roomName, setRoomName] = useState('')
   const [joinCode, setJoinCode] = useState('')
@@ -100,12 +101,13 @@ const Room = () => {
               </div>
             </div>
             
-            <button
-              onClick={() => setCreatedRoom(null)}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
-            >
-              Create Another Room
-            </button>
+            <Link href={`/dashboard/room/${createdRoom.code}`}>
+              <button
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
+              >
+                Start Listening
+              </button>
+            </Link>
           </motion.div>
         </div>
       </div>
@@ -148,7 +150,7 @@ const Room = () => {
             <motion.div
               variants={itemVariants}
               className={`transition-all duration-500 ${
-                activeTab === 'create' ? 'opacity-100 scale-100' : 'opacity-50 scale-95 md:opacity-100 md:scale-100'
+                'opacity-100 scale-100'
               }`}
             >
               <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-2xl p-8 h-full">
@@ -204,7 +206,7 @@ const Room = () => {
             <motion.div
               variants={itemVariants}
               className={`transition-all duration-500 ${
-                activeTab === 'join' ? 'opacity-100 scale-100' : 'opacity-50 scale-95 md:opacity-100 md:scale-100'
+                'opacity-100 scale-100'
               }`}
             >
               <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-2xl p-8 h-full">

@@ -9,4 +9,5 @@ export async function createRoom(roomCode: string, roomName: string, hostId: num
         hostId,
         createdAt: new Date().toLocaleString(),
     }).returning();
+    return room;
 }
