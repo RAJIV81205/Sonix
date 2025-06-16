@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createRoom } from "@/lib/db/room";
 
 
 export async function POST(request: Request) {
