@@ -4,18 +4,18 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { roomName, roomType } = body;
+    const { name, code , host } = body;
 
     // Validate input
-    if (!roomName || !roomType) {
+    if (!name || !code) {
       return NextResponse.json({ error: "Room name and type are required" }, { status: 400 });
     }
 
     // Simulate room creation logic
     const newRoom = {
       id: Date.now(), // Simple unique ID based on timestamp
-      name: roomName,
-      type: roomType,
+      name: name,
+      code: code,
       createdAt: new Date().toISOString(),
     };
 
