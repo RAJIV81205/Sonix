@@ -109,17 +109,127 @@ A modern, feature-rich web music player built with cutting-edge technologies for
 ## 🏗️ Project Structure
 
 ```
-sonix/
-├── src/
-│   ├── app/                 # Next.js app directory
-│   ├── components/          # Reusable UI components
-│   ├── hooks/              # Custom React hooks
-│   ├── lib/                # Utility functions and configurations
-│   ├── store/              # State management
-│   └── types/              # TypeScript type definitions
-├── public/                 # Static assets
-├── styles/                 # Global styles
-└── docs/                   # Documentation
+
+rajiv81205-sonix/
+    ├── README.md
+    ├── drizzle.config.ts
+    ├── firebase.js
+    ├── next.config.ts
+    ├── package.json
+    ├── postcss.config.mjs
+    ├── tsconfig.json
+    ├── vercel.json
+    ├── .env.example
+    ├── app/
+    │   ├── globals.css
+    │   ├── layout.tsx
+    │   ├── page.tsx
+    │   ├── api/
+    │   │   ├── auth/
+    │   │   │   ├── googleLogin/
+    │   │   │   │   └── route.ts
+    │   │   │   ├── login/
+    │   │   │   │   └── route.ts
+    │   │   │   ├── register/
+    │   │   │   │   └── route.ts
+    │   │   │   ├── update-profile/
+    │   │   │   │   └── route.ts
+    │   │   │   └── verify/
+    │   │   │       └── route.ts
+    │   │   ├── dashboard/
+    │   │   │   ├── addToPlaylist/
+    │   │   │   │   └── route.ts
+    │   │   │   ├── deleteSong/
+    │   │   │   │   └── route.ts
+    │   │   │   ├── getAlbumUrl/
+    │   │   │   │   └── route.ts
+    │   │   │   ├── getNewReleases/
+    │   │   │   │   └── route.ts
+    │   │   │   ├── getPlaylist/
+    │   │   │   │   └── route.ts
+    │   │   │   ├── getSongUrl/
+    │   │   │   │   └── route.ts
+    │   │   │   ├── getUserPlaylists/
+    │   │   │   │   └── route.ts
+    │   │   │   ├── makePlaylist/
+    │   │   │   │   └── route.ts
+    │   │   │   ├── search/
+    │   │   │   │   └── route.ts
+    │   │   │   └── searchAlbum/
+    │   │   │       └── route.ts
+    │   │   ├── debug-jiosaavn/
+    │   │   │   └── route.ts
+    │   │   ├── room/
+    │   │   │   └── create-room/
+    │   │   │       └── route.ts
+    │   │   └── spotify/
+    │   │       ├── addSong/
+    │   │       │   └── route.ts
+    │   │       └── import/
+    │   │           └── route.ts
+    │   ├── auth/
+    │   │   ├── login/
+    │   │   │   └── page.tsx
+    │   │   └── register/
+    │   │       └── page.tsx
+    │   ├── dashboard/
+    │   │   ├── layout.tsx
+    │   │   ├── page.tsx
+    │   │   ├── playlist/
+    │   │   │   └── [id]/
+    │   │   │       └── page.tsx
+    │   │   ├── profile/
+    │   │   │   └── page.tsx
+    │   │   ├── room/
+    │   │   │   ├── page.tsx
+    │   │   │   └── [id]/
+    │   │   │       └── page.tsx
+    │   │   └── search/
+    │   │       └── page.tsx
+    │   └── debug/
+    │       └── page.tsx
+    ├── components/
+    │   ├── LoadingSpinner.tsx
+    │   ├── auth/
+    │   │   ├── Login.tsx
+    │   │   └── Signup.tsx
+    │   ├── dashboard/
+    │   │   ├── AddPlaylistPopup.tsx
+    │   │   ├── Main.tsx
+    │   │   ├── Player.tsx
+    │   │   ├── PlaylistPage.tsx
+    │   │   ├── Profile.tsx
+    │   │   ├── Search.tsx
+    │   │   ├── Sidebar.tsx
+    │   │   ├── SpotifyPopup.tsx
+    │   │   └── mobile/
+    │   │       ├── MobileAddPlaylistPopup.tsx
+    │   │       ├── MobileMain.tsx
+    │   │       ├── MobilePlayer.tsx
+    │   │       ├── MobilePlaylistPage.tsx
+    │   │       ├── MobileSearch.tsx
+    │   │       ├── MobileSidebar.tsx
+    │   │       └── MobileSpotifyPopup.tsx
+    │   ├── Landing/
+    │   │   ├── Hero.tsx
+    │   │   ├── LandingPage.tsx
+    │   │   ├── Navbar.tsx
+    │   │   └── TopCharts.tsx
+    │   └── rooms/
+    │       ├── Room.tsx
+    │       └── RoomDashboard.tsx
+    ├── context/
+    │   └── PlayerContext.tsx
+    └── lib/
+        ├── db/
+        │   ├── auth.ts
+        │   ├── index.ts
+        │   ├── room.ts
+        │   ├── schema.ts
+        │   └── song.ts
+        └── middleware/
+            └── verifyToken.ts
+         
 ```
 
 ## 🎨 Design Philosophy
