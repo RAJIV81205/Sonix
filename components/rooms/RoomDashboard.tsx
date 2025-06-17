@@ -46,7 +46,7 @@ const RoomDashboard = () => {
       try {
         // Mock data
         const mockRoomData: RoomDetails = {
-          id: params.id,
+          id: params.id as string,
           name: "Chill Vibes Room",
           description: "A place for relaxing music and good conversations",
           host: "John Doe",
