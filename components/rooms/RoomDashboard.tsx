@@ -119,7 +119,7 @@ const RoomDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black  text-white">
       {/* Header */}
       <div className="bg-black/20 backdrop-blur-sm border-b border-white/10 p-6">
         <div className="max-w-7xl mx-auto">
