@@ -1,4 +1,5 @@
 import {NextResponse} from 'next/server';
+import { getRoomById } from '@/lib/db/room';
 
 export async function GET(request: Request) {
     try {
