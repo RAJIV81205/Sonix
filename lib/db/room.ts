@@ -11,3 +11,9 @@ export async function createRoom(roomCode: string, roomName: string, hostId: num
     }).returning();
     return room;
 }
+
+
+export async function getRoomById(roomId: number) {
+    const room = await db.select().from(roomsTable).where(eq(roomsTable.id, roomId)).limit(1);
+    return room[0];
+}
