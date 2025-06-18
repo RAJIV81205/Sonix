@@ -52,9 +52,9 @@ const RoomDashboard = () => {
     try {
       console.log('🔍 Fetching room details for ID:', id)
       const response = await fetch(`/api/room/getRoom?roomId=${id}`)
-      
+
       console.log('📡 Room API Response Status:', response.status)
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch room details: ${response.status} ${response.statusText}`)
       }
@@ -80,7 +80,7 @@ const RoomDashboard = () => {
         createdAt: formattedDate,
         isActive: true
       }
-      
+
       console.log('✅ Processed Room Data:', RoomData)
       setRoomDetails(RoomData)
 
@@ -94,7 +94,7 @@ const RoomDashboard = () => {
     const fetchRoomDetails = async () => {
       try {
         console.log('🚀 Starting room dashboard initialization...')
-        
+
         const mockParticipants: Participant[] = [
           { id: 1, name: "John Doe", role: "host", avatar: "JD", isOnline: true },
           { id: 2, name: "Jane Smith", role: "member", avatar: "JS", isOnline: true },
@@ -142,7 +142,7 @@ const RoomDashboard = () => {
         },
         body: JSON.stringify(requestBody),
       })
-      
+
       console.log('📡 Search API Response Status:', response.status)
       console.log('📡 Search API Response Headers:', Object.fromEntries(response.headers.entries()))
 
@@ -155,26 +155,19 @@ const RoomDashboard = () => {
 
       // Process the search results based on your API response structure
       let processedResults: Song[] = []
-      
-      if (data.results && Array.isArray(data.results)) {
-        processedResults = data.results.map((item: any, index: number) => ({
+
+      if (data.songs && Array.isArray(data.songs)) {
+        processedResults = data.songs.map((item: any, index: number) => ({
           id: item.id || index,
           title: item.title || item.name || 'Unknown Title',
-          artist: item.artist || item.channel || 'Unknown Artist',
-          duration: item.duration || '0:00',
+          artist: item.artist || item.subtitle || 'Unknown Artist',
+          duration: item?.more_info?.duration
+            ? `${Math.floor(item.more_info.duration / 60)}:${String(item.more_info.duration % 60).padStart(2, '0')}`
+            : '0:00',
+
           album: item.album || 'Unknown Album',
           thumbnail: item.thumbnail || item.image,
           url: item.url // This might be empty initially
-        }))
-      } else if (data.tracks && Array.isArray(data.tracks)) {
-        processedResults = data.tracks.map((item: any, index: number) => ({
-          id: item.id || index,
-          title: item.title || item.name || 'Unknown Title',
-          artist: item.artist || item.channel || 'Unknown Artist',
-          duration: item.duration || '0:00',
-          album: item.album || 'Unknown Album',
-          thumbnail: item.thumbnail || item.image,
-          url: item.url
         }))
       } else {
         console.warn('⚠️ Unexpected API response structure, using mock data')
@@ -189,20 +182,20 @@ const RoomDashboard = () => {
 
       console.log('✅ Processed search results:', processedResults)
       setSearchResults(processedResults)
-      
+
     } catch (error) {
       console.error('❌ Error searching songs:', error)
-      
+
       // Show user-friendly error message
       if (error instanceof Error) {
         console.error('Error details:', error.message)
       }
-      
+
       setSearchResults([]) // Clear results on error
-      
+
       // You might want to show a toast notification here
       // toast.error('Failed to search songs. Please try again.')
-      
+
     } finally {
       setSearchLoading(false)
       console.log('🏁 Search operation completed')
@@ -217,7 +210,7 @@ const RoomDashboard = () => {
       const token = localStorage.getItem('token')
       console.log('🔑 Auth token exists for song URL:', !!token)
 
-      const requestBody = { 
+      const requestBody = {
         songId: song.id,
         title: song.title,
         artist: song.artist
@@ -232,7 +225,7 @@ const RoomDashboard = () => {
         },
         body: JSON.stringify(requestBody),
       })
-      
+
       console.log('📡 Song URL API Response Status:', response.status)
 
       const data = await response.json()
@@ -249,17 +242,17 @@ const RoomDashboard = () => {
       }
 
       console.log('✅ Got song URL:', updatedSong.url)
-      
+
       // Now play the song
       playSong(updatedSong)
-      
+
     } catch (error) {
       console.error('❌ Error getting song URL:', error)
-      
+
       // Even if URL fetch fails, we can still "play" the song (UI state)
       console.log('⚠️ Playing song without URL (fallback)')
       playSong(song)
-      
+
     } finally {
       setSongUrlLoading(null)
       console.log('🏁 Song URL operation completed')
@@ -272,10 +265,10 @@ const RoomDashboard = () => {
       artist: song.artist,
       hasUrl: !!song.url
     })
-    
+
     setCurrentSong(song)
     setIsPlaying(true)
-    
+
     if (song.url) {
       console.log('🔗 Song has URL, ready to stream:', song.url)
       // Here you would integrate with your audio player
@@ -286,7 +279,7 @@ const RoomDashboard = () => {
 
   const handleSongClick = (song: Song) => {
     console.log('🎯 Song clicked:', song.title)
-    
+
     if (song.url) {
       // Song already has URL, play directly
       playSong(song)
