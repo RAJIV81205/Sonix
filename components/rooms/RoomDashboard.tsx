@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Search, Play, Pause, SkipForward, Volume2, Users, MessageCircle, Music, Clock, User, Loader2 } from 'lucide-react'
 
+
 // Type definitions
 type Participant = {
   id: number
@@ -179,9 +180,7 @@ const RoomDashboard = () => {
       const token = localStorage.getItem('token')
 
       const requestBody = {
-        songId: song.id,
-        title: song.title,
-        artist: song.artist
+        id: song.id
       }
 
       const response = await fetch(`/api/dashboard/getSongUrl`, {
