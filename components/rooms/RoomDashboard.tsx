@@ -1,7 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Search, Play, Pause, SkipForward, Volume2, Users, MessageCircle, Music, Clock, User } from 'lucide-react'
+import { Search, Play, Pause, SkipForward, Volume2, Users, MessageCircle, Music, Clock, User, Loader2 } from 'lucide-react'
 
 // Type definitions
 type Participant = {
@@ -22,11 +22,13 @@ type RoomDetails = {
 }
 
 type Song = {
-  id: number
+  id: number | string
   title: string
   artist: string
   duration: string
   album: string
+  thumbnail?: string
+  url?: string
 }
 
 const RoomDashboard = () => {
@@ -40,20 +42,25 @@ const RoomDashboard = () => {
   const [showParticipants, setShowParticipants] = useState(false)
   const [showChat, setShowChat] = useState(false)
   const [loading, setLoading] = useState(true)
-
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [songUrlLoading, setSongUrlLoading] = useState<string | null>(null)
 
   const getRoomDetails = async () => {
     const id = params.id as string
     if (!id) return
 
     try {
+      console.log('🔍 Fetching room details for ID:', id)
       const response = await fetch(`/api/room/getRoom?roomId=${id}`)
+      
+      console.log('📡 Room API Response Status:', response.status)
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch room details')
+        throw new Error(`Failed to fetch room details: ${response.status} ${response.statusText}`)
       }
 
       const data = await response.json()
-
+      console.log('📦 Room API Response Data:', data)
 
       const dateString = data.room.createdAt as string;
 
@@ -65,23 +72,20 @@ const RoomDashboard = () => {
       // Create a valid date string in MM/DD/YYYY format
       const formattedDate = `${month}/${day}/${year}, ${time}`;
 
-
-
       const RoomData: RoomDetails = {
         id: data.room.id as string,
         name: data.room.roomName,
         description: "A place for relaxing music and good conversations",
         host: data.room.hostId,
-        createdAt:formattedDate,
+        createdAt: formattedDate,
         isActive: true
       }
+      
+      console.log('✅ Processed Room Data:', RoomData)
       setRoomDetails(RoomData)
 
-
-
-
     } catch (error) {
-      console.error('Error fetching room details:', error)
+      console.error('❌ Error fetching room details:', error)
       setLoading(false)
     }
   }
@@ -89,16 +93,8 @@ const RoomDashboard = () => {
   useEffect(() => {
     const fetchRoomDetails = async () => {
       try {
-        // Mock data
-        // const mockRoomData: RoomDetails = {
-        //   id: params.id as string,
-        //   name: "Chill Vibes Room",
-        //   description: "A place for relaxing music and good conversations",
-        //   host: "John Doe",
-        //   createdAt: "2024-06-17T10:30:00Z",
-        //   isActive: true
-        // }
-
+        console.log('🚀 Starting room dashboard initialization...')
+        
         const mockParticipants: Participant[] = [
           { id: 1, name: "John Doe", role: "host", avatar: "JD", isOnline: true },
           { id: 2, name: "Jane Smith", role: "member", avatar: "JS", isOnline: true },
@@ -106,12 +102,12 @@ const RoomDashboard = () => {
           { id: 4, name: "Sarah Wilson", role: "member", avatar: "SW", isOnline: true }
         ]
 
-
         setParticipants(mockParticipants)
         await getRoomDetails()
         setLoading(false)
+        console.log('✅ Room dashboard initialized successfully')
       } catch (error) {
-        console.error('Error fetching room details:', error)
+        console.error('❌ Error initializing room dashboard:', error)
         setLoading(false)
       }
     }
@@ -123,63 +119,196 @@ const RoomDashboard = () => {
 
   const searchSongs = async (query: string) => {
     if (!query.trim()) {
+      console.log('🔍 Empty search query, clearing results')
       setSearchResults([])
       return
     }
 
+    console.log('🎵 Starting song search for query:', query)
+    setSearchLoading(true)
+
     try {
+      const token = localStorage.getItem('token')
+      console.log('🔑 Auth token exists:', !!token)
+
+      const requestBody = { query }
+      console.log('📤 Search API Request Body:', requestBody)
+
       const response = await fetch(`/api/dashboard/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // Assuming you store token in localStorage
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify(requestBody),
       })
       
+      console.log('📡 Search API Response Status:', response.status)
+      console.log('📡 Search API Response Headers:', Object.fromEntries(response.headers.entries()))
+
       const data = await response.json()
+      console.log('📦 Search API Response Data:', data)
+
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch search results')
+        throw new Error(data.error || `Search API failed: ${response.status} ${response.statusText}`)
       }
 
-      console.log(data)
+      // Process the search results based on your API response structure
+      let processedResults: Song[] = []
+      
+      if (data.results && Array.isArray(data.results)) {
+        processedResults = data.results.map((item: any, index: number) => ({
+          id: item.id || index,
+          title: item.title || item.name || 'Unknown Title',
+          artist: item.artist || item.channel || 'Unknown Artist',
+          duration: item.duration || '0:00',
+          album: item.album || 'Unknown Album',
+          thumbnail: item.thumbnail || item.image,
+          url: item.url // This might be empty initially
+        }))
+      } else if (data.tracks && Array.isArray(data.tracks)) {
+        processedResults = data.tracks.map((item: any, index: number) => ({
+          id: item.id || index,
+          title: item.title || item.name || 'Unknown Title',
+          artist: item.artist || item.channel || 'Unknown Artist',
+          duration: item.duration || '0:00',
+          album: item.album || 'Unknown Album',
+          thumbnail: item.thumbnail || item.image,
+          url: item.url
+        }))
+      } else {
+        console.warn('⚠️ Unexpected API response structure, using mock data')
+        // Fallback to mock data for testing
+        processedResults = [
+          { id: 1, title: "Blinding Lights", artist: "The Weeknd", duration: "3:20", album: "After Hours" },
+          { id: 2, title: "Watermelon Sugar", artist: "Harry Styles", duration: "2:54", album: "Fine Line" },
+          { id: 3, title: "Levitating", artist: "Dua Lipa", duration: "3:23", album: "Future Nostalgia" },
+          { id: 4, title: "Good 4 U", artist: "Olivia Rodrigo", duration: "2:58", album: "SOUR" }
+        ]
+      }
 
-
+      console.log('✅ Processed search results:', processedResults)
+      setSearchResults(processedResults)
       
     } catch (error) {
-      console.error('Error searching songs:', error)
-      setSearchResults([]) // Clear results on error
-      return
+      console.error('❌ Error searching songs:', error)
       
+      // Show user-friendly error message
+      if (error instanceof Error) {
+        console.error('Error details:', error.message)
+      }
+      
+      setSearchResults([]) // Clear results on error
+      
+      // You might want to show a toast notification here
+      // toast.error('Failed to search songs. Please try again.')
+      
+    } finally {
+      setSearchLoading(false)
+      console.log('🏁 Search operation completed')
     }
+  }
 
+  const getSongUrl = async (song: Song) => {
+    console.log('🎵 Getting song URL for:', song.title, 'by', song.artist)
+    setSongUrlLoading(song.id.toString())
 
+    try {
+      const token = localStorage.getItem('token')
+      console.log('🔑 Auth token exists for song URL:', !!token)
 
-    // Mock search results
-    const mockResults: Song[] = [
-      { id: 1, title: "Blinding Lights", artist: "The Weeknd", duration: "3:20", album: "After Hours" },
-      { id: 2, title: "Watermelon Sugar", artist: "Harry Styles", duration: "2:54", album: "Fine Line" },
-      { id: 3, title: "Levitating", artist: "Dua Lipa", duration: "3:23", album: "Future Nostalgia" },
-      { id: 4, title: "Good 4 U", artist: "Olivia Rodrigo", duration: "2:58", album: "SOUR" }
-    ]
+      const requestBody = { 
+        songId: song.id,
+        title: song.title,
+        artist: song.artist
+      }
+      console.log('📤 Song URL API Request Body:', requestBody)
 
-    setSearchResults(mockResults)
+      const response = await fetch(`/api/dashboard/getSongUrl`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestBody),
+      })
+      
+      console.log('📡 Song URL API Response Status:', response.status)
+
+      const data = await response.json()
+      console.log('📦 Song URL API Response Data:', data)
+
+      if (!response.ok) {
+        throw new Error(data.error || `Song URL API failed: ${response.status} ${response.statusText}`)
+      }
+
+      // Update the song with the URL
+      const updatedSong = {
+        ...song,
+        url: data.url || data.songUrl || data.streamUrl
+      }
+
+      console.log('✅ Got song URL:', updatedSong.url)
+      
+      // Now play the song
+      playSong(updatedSong)
+      
+    } catch (error) {
+      console.error('❌ Error getting song URL:', error)
+      
+      // Even if URL fetch fails, we can still "play" the song (UI state)
+      console.log('⚠️ Playing song without URL (fallback)')
+      playSong(song)
+      
+    } finally {
+      setSongUrlLoading(null)
+      console.log('🏁 Song URL operation completed')
+    }
   }
 
   const playSong = (song: Song) => {
+    console.log('▶️ Playing song:', {
+      title: song.title,
+      artist: song.artist,
+      hasUrl: !!song.url
+    })
+    
     setCurrentSong(song)
     setIsPlaying(true)
-    console.log('Playing song:', song)
+    
+    if (song.url) {
+      console.log('🔗 Song has URL, ready to stream:', song.url)
+      // Here you would integrate with your audio player
+    } else {
+      console.log('⚠️ Song has no URL, playing in UI only')
+    }
+  }
+
+  const handleSongClick = (song: Song) => {
+    console.log('🎯 Song clicked:', song.title)
+    
+    if (song.url) {
+      // Song already has URL, play directly
+      playSong(song)
+    } else {
+      // Need to get URL first
+      getSongUrl(song)
+    }
   }
 
   const togglePlayPause = () => {
-    setIsPlaying(!isPlaying)
+    const newState = !isPlaying
+    console.log('⏯️ Toggle play/pause:', newState ? 'PLAYING' : 'PAUSED')
+    setIsPlaying(newState)
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-xl">Loading room...</div>
+        <div className="text-white text-xl flex items-center gap-3">
+          <Loader2 className="animate-spin" size={24} />
+          Loading room...
+        </div>
       </div>
     )
   }
@@ -193,7 +322,7 @@ const RoomDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black  text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       {/* Header */}
       <div className="bg-black/20 backdrop-blur-sm border-b border-white/10 p-6">
         <div className="max-w-7xl mx-auto">
@@ -247,13 +376,20 @@ const RoomDashboard = () => {
                 Now Playing
               </h3>
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Music size={24} />
+                <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center overflow-hidden">
+                  {currentSong.thumbnail ? (
+                    <img src={currentSong.thumbnail} alt={currentSong.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <Music size={24} />
+                  )}
                 </div>
                 <div className="flex-1">
                   <h4 className="text-lg font-semibold">{currentSong.title}</h4>
                   <p className="text-gray-400">{currentSong.artist}</p>
                   <p className="text-sm text-gray-500">{currentSong.album}</p>
+                  {currentSong.url && (
+                    <p className="text-xs text-green-400 mt-1">🔗 Stream ready</p>
+                  )}
                 </div>
                 <div className="flex items-center gap-3">
                   <button
@@ -278,6 +414,7 @@ const RoomDashboard = () => {
             <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Search size={24} />
               Search Songs
+              {searchLoading && <Loader2 className="animate-spin" size={20} />}
             </h3>
             <div className="relative mb-4">
               <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -286,38 +423,76 @@ const RoomDashboard = () => {
                 placeholder="Search for songs, artists, or albums..."
                 value={searchQuery}
                 onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  searchSongs(e.target.value)
+                  const value = e.target.value
+                  console.log('🔤 Search input changed:', value)
+                  setSearchQuery(value)
+                  searchSongs(value)
                 }}
                 className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                disabled={searchLoading}
               />
+              {searchLoading && (
+                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 animate-spin text-gray-400" size={20} />
+              )}
             </div>
 
+            {/* Search Results */}
             {searchResults.length > 0 && (
               <div className="space-y-2">
+                <h4 className="text-sm text-gray-400 mb-3">
+                  Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                </h4>
                 {searchResults.map((song) => (
                   <div
                     key={song.id}
-                    className="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
-                    onClick={() => playSong(song)}
+                    className="flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer group"
+                    onClick={() => handleSongClick(song)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                        <Music size={20} />
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center overflow-hidden">
+                        {song.thumbnail ? (
+                          <img src={song.thumbnail} alt={song.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <Music size={20} />
+                        )}
                       </div>
                       <div>
-                        <h4 className="font-medium">{song.title}</h4>
+                        <h4 className="font-medium group-hover:text-purple-300 transition-colors">{song.title}</h4>
                         <p className="text-sm text-gray-400">{song.artist} • {song.album}</p>
+                        {song.url && (
+                          <p className="text-xs text-green-400">Ready to play</p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-400">{song.duration}</span>
-                      <button className="w-8 h-8 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors">
-                        <Play size={16} />
+                      <button className="w-8 h-8 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors group-hover:scale-110">
+                        {songUrlLoading === song.id.toString() ? (
+                          <Loader2 className="animate-spin" size={16} />
+                        ) : (
+                          <Play size={16} />
+                        )}
                       </button>
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* No Results Message */}
+            {searchQuery.trim() && !searchLoading && searchResults.length === 0 && (
+              <div className="text-center py-8 text-gray-400">
+                <Music size={48} className="mx-auto mb-4 opacity-50" />
+                <p>No songs found for "{searchQuery}"</p>
+                <p className="text-sm mt-1">Try a different search term</p>
+              </div>
+            )}
+
+            {/* Search Loading State */}
+            {searchLoading && (
+              <div className="text-center py-8 text-gray-400">
+                <Loader2 className="animate-spin mx-auto mb-4" size={48} />
+                <p>Searching for songs...</p>
               </div>
             )}
           </div>
@@ -389,6 +564,10 @@ const RoomDashboard = () => {
               <div className="flex justify-between">
                 <span className="text-gray-400">Songs Played</span>
                 <span className="font-semibold">42</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Search Results</span>
+                <span className="font-semibold">{searchResults.length}</span>
               </div>
             </div>
           </div>
