@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Search, Play, Pause, SkipForward, Volume2, Users, MessageCircle, Music, Clock, User, Loader2 } from 'lucide-react'
 
@@ -50,17 +50,13 @@ const RoomDashboard = () => {
     if (!id) return
 
     try {
-      console.log('🔍 Fetching room details for ID:', id)
       const response = await fetch(`/api/room/getRoom?roomId=${id}`)
-
-      console.log('📡 Room API Response Status:', response.status)
 
       if (!response.ok) {
         throw new Error(`Failed to fetch room details: ${response.status} ${response.statusText}`)
       }
 
       const data = await response.json()
-      console.log('📦 Room API Response Data:', data)
 
       const dateString = data.room.createdAt as string;
 
@@ -81,58 +77,25 @@ const RoomDashboard = () => {
         isActive: true
       }
 
-      console.log('✅ Processed Room Data:', RoomData)
       setRoomDetails(RoomData)
 
     } catch (error) {
-      console.error('❌ Error fetching room details:', error)
       setLoading(false)
     }
   }
 
-  useEffect(() => {
-    const fetchRoomDetails = async () => {
-      try {
-        console.log('🚀 Starting room dashboard initialization...')
-
-        const mockParticipants: Participant[] = [
-          { id: 1, name: "John Doe", role: "host", avatar: "JD", isOnline: true },
-          { id: 2, name: "Jane Smith", role: "member", avatar: "JS", isOnline: true },
-          { id: 3, name: "Mike Johnson", role: "member", avatar: "MJ", isOnline: false },
-          { id: 4, name: "Sarah Wilson", role: "member", avatar: "SW", isOnline: true }
-        ]
-
-        setParticipants(mockParticipants)
-        await getRoomDetails()
-        setLoading(false)
-        console.log('✅ Room dashboard initialized successfully')
-      } catch (error) {
-        console.error('❌ Error initializing room dashboard:', error)
-        setLoading(false)
-      }
-    }
-
-    if (params.id) {
-      fetchRoomDetails()
-    }
-  }, [params, params.id])
-
   const searchSongs = async (query: string) => {
     if (!query.trim()) {
-      console.log('🔍 Empty search query, clearing results')
       setSearchResults([])
       return
     }
 
-    console.log('🎵 Starting song search for query:', query)
     setSearchLoading(true)
 
     try {
       const token = localStorage.getItem('token')
-      console.log('🔑 Auth token exists:', !!token)
 
       const requestBody = { query }
-      console.log('📤 Search API Request Body:', requestBody)
 
       const response = await fetch(`/api/dashboard/search`, {
         method: 'POST',
@@ -143,11 +106,7 @@ const RoomDashboard = () => {
         body: JSON.stringify(requestBody),
       })
 
-      console.log('📡 Search API Response Status:', response.status)
-      console.log('📡 Search API Response Headers:', Object.fromEntries(response.headers.entries()))
-
       const data = await response.json()
-      console.log('📦 Search API Response Data:', data)
 
       if (!response.ok) {
         throw new Error(data.error || `Search API failed: ${response.status} ${response.statusText}`)
@@ -165,12 +124,11 @@ const RoomDashboard = () => {
             ? `${Math.floor(item.more_info.duration / 60)}:${String(item.more_info.duration % 60).padStart(2, '0')}`
             : '0:00',
 
-          album: item.album || 'Unknown Album',
+          album: item.more_info.album || '',
           thumbnail: item.thumbnail || item.image,
           url: item.url // This might be empty initially
         }))
       } else {
-        console.warn('⚠️ Unexpected API response structure, using mock data')
         // Fallback to mock data for testing
         processedResults = [
           { id: 1, title: "Blinding Lights", artist: "The Weeknd", duration: "3:20", album: "After Hours" },
@@ -180,42 +138,51 @@ const RoomDashboard = () => {
         ]
       }
 
-      console.log('✅ Processed search results:', processedResults)
       setSearchResults(processedResults)
 
     } catch (error) {
-      console.error('❌ Error searching songs:', error)
-
-      // Show user-friendly error message
       if (error instanceof Error) {
-        console.error('Error details:', error.message)
+        // Handle error appropriately
       }
 
       setSearchResults([]) // Clear results on error
 
-      // You might want to show a toast notification here
-      // toast.error('Failed to search songs. Please try again.')
-
     } finally {
       setSearchLoading(false)
-      console.log('🏁 Search operation completed')
+    }
+  }
+
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce((query: string) => {
+      searchSongs(query)
+    }, 500),
+    []
+  )
+
+  // Debounce utility function
+  function debounce<T extends (...args: any[]) => any>(
+    func: T,
+    delay: number
+  ): (...args: Parameters<T>) => void {
+    let timeoutId: NodeJS.Timeout
+    return (...args: Parameters<T>) => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => func(...args), delay)
     }
   }
 
   const getSongUrl = async (song: Song) => {
-    console.log('🎵 Getting song URL for:', song.title, 'by', song.artist)
     setSongUrlLoading(song.id.toString())
 
     try {
       const token = localStorage.getItem('token')
-      console.log('🔑 Auth token exists for song URL:', !!token)
 
       const requestBody = {
         songId: song.id,
         title: song.title,
         artist: song.artist
       }
-      console.log('📤 Song URL API Request Body:', requestBody)
 
       const response = await fetch(`/api/dashboard/getSongUrl`, {
         method: 'POST',
@@ -226,10 +193,7 @@ const RoomDashboard = () => {
         body: JSON.stringify(requestBody),
       })
 
-      console.log('📡 Song URL API Response Status:', response.status)
-
       const data = await response.json()
-      console.log('📦 Song URL API Response Data:', data)
 
       if (!response.ok) {
         throw new Error(data.error || `Song URL API failed: ${response.status} ${response.statusText}`)
@@ -241,45 +205,28 @@ const RoomDashboard = () => {
         url: data.url || data.songUrl || data.streamUrl
       }
 
-      console.log('✅ Got song URL:', updatedSong.url)
-
       // Now play the song
       playSong(updatedSong)
 
     } catch (error) {
-      console.error('❌ Error getting song URL:', error)
-
       // Even if URL fetch fails, we can still "play" the song (UI state)
-      console.log('⚠️ Playing song without URL (fallback)')
       playSong(song)
 
     } finally {
       setSongUrlLoading(null)
-      console.log('🏁 Song URL operation completed')
     }
   }
 
   const playSong = (song: Song) => {
-    console.log('▶️ Playing song:', {
-      title: song.title,
-      artist: song.artist,
-      hasUrl: !!song.url
-    })
-
     setCurrentSong(song)
     setIsPlaying(true)
 
     if (song.url) {
-      console.log('🔗 Song has URL, ready to stream:', song.url)
       // Here you would integrate with your audio player
-    } else {
-      console.log('⚠️ Song has no URL, playing in UI only')
     }
   }
 
   const handleSongClick = (song: Song) => {
-    console.log('🎯 Song clicked:', song.title)
-
     if (song.url) {
       // Song already has URL, play directly
       playSong(song)
@@ -291,9 +238,43 @@ const RoomDashboard = () => {
 
   const togglePlayPause = () => {
     const newState = !isPlaying
-    console.log('⏯️ Toggle play/pause:', newState ? 'PLAYING' : 'PAUSED')
     setIsPlaying(newState)
   }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchQuery(value)
+    
+    if (value.trim()) {
+      debouncedSearch(value)
+    } else {
+      setSearchResults([])
+      setSearchLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const fetchRoomDetails = async () => {
+      try {
+        const mockParticipants: Participant[] = [
+          { id: 1, name: "John Doe", role: "host", avatar: "JD", isOnline: true },
+          { id: 2, name: "Jane Smith", role: "member", avatar: "JS", isOnline: true },
+          { id: 3, name: "Mike Johnson", role: "member", avatar: "MJ", isOnline: false },
+          { id: 4, name: "Sarah Wilson", role: "member", avatar: "SW", isOnline: true }
+        ]
+
+        setParticipants(mockParticipants)
+        await getRoomDetails()
+        setLoading(false)
+      } catch (error) {
+        setLoading(false)
+      }
+    }
+
+    if (params.id) {
+      fetchRoomDetails()
+    }
+  }, [params, params.id])
 
   if (loading) {
     return (
@@ -415,12 +396,7 @@ const RoomDashboard = () => {
                 type="text"
                 placeholder="Search for songs, artists, or albums..."
                 value={searchQuery}
-                onChange={(e) => {
-                  const value = e.target.value
-                  console.log('🔤 Search input changed:', value)
-                  setSearchQuery(value)
-                  searchSongs(value)
-                }}
+                onChange={handleSearchChange}
                 className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 disabled={searchLoading}
               />
