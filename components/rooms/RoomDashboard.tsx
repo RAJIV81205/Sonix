@@ -17,7 +17,7 @@ type RoomDetails = {
   name: string
   description: string
   host: string
-  createdAt: string
+  createdAt: Date | string
   isActive: boolean
 }
 
@@ -41,18 +41,63 @@ const RoomDashboard = () => {
   const [showChat, setShowChat] = useState(false)
   const [loading, setLoading] = useState(true)
 
+
+  const getRoomDetails = async () => {
+    const id = params.id as string
+    if (!id) return
+
+    try {
+      const response = await fetch(`/api/room/get-room?roomId=${id}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch room details')
+      }
+
+      const data = await response.json()
+
+
+      const dateString = data.room.createdAt as string;
+
+      // Convert it to a format Date understands (MM/DD/YYYY hh:mm:ss am/pm)
+      const parts = dateString.split(", ");
+      const [day, month, year] = parts[0].split("/").map(Number);
+      const time = parts[1];
+
+      // Create a valid date string in MM/DD/YYYY format
+      const formattedDate = `${month}/${day}/${year}, ${time}`;
+
+
+
+      const RoomData: RoomDetails = {
+        id: data.room.id as string,
+        name: data.room.roomName,
+        description: "A place for relaxing music and good conversations",
+        host: data.room.hostId,
+        createdAt:formattedDate,
+        isActive: true
+      }
+      setRoomDetails(RoomData)
+
+
+
+
+    } catch (error) {
+      console.error('Error fetching room details:', error)
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     const fetchRoomDetails = async () => {
       try {
         // Mock data
-        const mockRoomData: RoomDetails = {
-          id: params.id as string,
-          name: "Chill Vibes Room",
-          description: "A place for relaxing music and good conversations",
-          host: "John Doe",
-          createdAt: "2024-06-17T10:30:00Z",
-          isActive: true
-        }
+        // const mockRoomData: RoomDetails = {
+        //   id: params.id as string,
+        //   name: "Chill Vibes Room",
+        //   description: "A place for relaxing music and good conversations",
+        //   host: "John Doe",
+        //   createdAt: "2024-06-17T10:30:00Z",
+        //   isActive: true
+        // }
 
         const mockParticipants: Participant[] = [
           { id: 1, name: "John Doe", role: "host", avatar: "JD", isOnline: true },
@@ -61,8 +106,9 @@ const RoomDashboard = () => {
           { id: 4, name: "Sarah Wilson", role: "member", avatar: "SW", isOnline: true }
         ]
 
-        setRoomDetails(mockRoomData)
+
         setParticipants(mockParticipants)
+        await getRoomDetails()
         setLoading(false)
       } catch (error) {
         console.error('Error fetching room details:', error)
