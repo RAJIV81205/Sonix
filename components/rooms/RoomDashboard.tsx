@@ -85,7 +85,7 @@ const RoomDashboard = () => {
   }
 
   const searchSongs = async (query: string) => {
-    if (!query.trim()) {
+    if (!query.trim() || query.length === 0) {
       setSearchResults([])
       return
     }
