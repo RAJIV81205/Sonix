@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Search, Play, Pause, SkipForward, Volume2, Users, MessageCircle, Music, Clock, User, Loader2 } from 'lucide-react'
+import { usePlayer } from '@/context/PlayerContext'
 
 
 // Type definitions
@@ -34,6 +35,7 @@ type Song = {
 
 const RoomDashboard = () => {
   const params = useParams()
+  
   const [roomDetails, setRoomDetails] = useState<RoomDetails | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -119,15 +121,14 @@ const RoomDashboard = () => {
       if (data.songs && Array.isArray(data.songs)) {
         processedResults = data.songs.map((item: any, index: number) => ({
           id: item.id || index,
-          title: item.title || item.name || 'Unknown Title',
+          title: item.title.replaceAll("&quot;", `"`) || item.name.replaceAll("&quot;", `"`) || 'Unknown Title',
           artist: item.artist || item.subtitle || 'Unknown Artist',
           duration: item?.more_info?.duration
             ? `${Math.floor(item.more_info.duration / 60)}:${String(item.more_info.duration % 60).padStart(2, '0')}`
             : '0:00',
 
           album: item.more_info.album || '',
-          thumbnail: item.thumbnail || item.image,
-          url: item.url // This might be empty initially
+          thumbnail: item.thumbnail || item.image
         }))
       } else {
         // Fallback to mock data for testing
@@ -243,7 +244,7 @@ const RoomDashboard = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchQuery(value)
-    
+
     if (value.trim()) {
       debouncedSearch(value)
     } else {
