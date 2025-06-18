@@ -47,7 +47,7 @@ const RoomDashboard = () => {
     if (!id) return
 
     try {
-      const response = await fetch(`/api/room/get-room?roomId=${id}`)
+      const response = await fetch(`/api/room/getRoom?roomId=${id}`)
       if (!response.ok) {
         throw new Error('Failed to fetch room details')
       }
