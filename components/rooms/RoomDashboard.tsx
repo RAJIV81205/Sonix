@@ -121,11 +121,39 @@ const RoomDashboard = () => {
     }
   }, [params, params.id])
 
-  const searchSongs = (query: string) => {
+  const searchSongs = async (query: string) => {
     if (!query.trim()) {
       setSearchResults([])
       return
     }
+
+    try {
+      const response = await fetch(`/api/dashboard/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Assuming you store token in localStorage
+        },
+        body: JSON.stringify({ query }),
+      })
+      
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch search results')
+      }
+
+      console.log(data)
+
+
+      
+    } catch (error) {
+      console.error('Error searching songs:', error)
+      setSearchResults([]) // Clear results on error
+      return
+      
+    }
+
+
 
     // Mock search results
     const mockResults: Song[] = [
