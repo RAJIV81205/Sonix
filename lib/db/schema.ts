@@ -1,5 +1,11 @@
 import { integer, pgTable, varchar, uuid, primaryKey, json, boolean } from "drizzle-orm/pg-core";
 
+
+type Participant = {
+  id: number;
+  name: string;
+};
+
 // USERS TABLE
 export const usersTable = pgTable("users", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -45,7 +51,7 @@ export const roomsTable = pgTable("rooms", {
   roomCode: varchar({ length: 6 }).notNull().unique(),
   roomName: varchar({ length: 255 }).notNull(),
   hostId: integer().notNull(),
-  participants: json().$type<number[]>().default([]),
+  participants: json().$type<Participant[]>().default([]),
   
   // Current track
   currentTrackId: varchar({ length: 255 }),
