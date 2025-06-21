@@ -30,6 +30,7 @@ interface RoomState {
   isPlaying: boolean;
   currentTime: number;
   participants: User[];
+  lastUpdateTime: number; // Server timestamp when last updated
 }
 
 interface UseSocketReturn {
@@ -43,6 +44,7 @@ interface UseSocketReturn {
   syncTime: (currentTime: number) => void;
   sendMessage: (message: string) => void;
   disconnect: () => void;
+  requestTimeSync: () => void;
 }
 
 export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL): UseSocketReturn => {
@@ -52,9 +54,20 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
     currentSong: null,
     isPlaying: false,
     currentTime: 0,
-    participants: []
+    participants: [],
+    lastUpdateTime: 0
   });
   const [messages, setMessages] = useState<Message[]>([]);
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Calculate synced time based on server timestamp and elapsed time
+  const calculateSyncedTime = useCallback((serverTime: number, serverTimestamp: number, isPlaying: boolean) => {
+    if (!isPlaying) return serverTime;
+    
+    const now = Date.now();
+    const elapsed = (now - serverTimestamp) / 1000; // Convert to seconds
+    return serverTime + elapsed;
+  }, []);
 
   useEffect(() => {
     // Initialize socket connection
@@ -74,6 +87,11 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
     socket.on('disconnect', () => {
       console.log('Disconnected from socket server');
       setIsConnected(false);
+      // Clear sync interval on disconnect
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+        syncIntervalRef.current = null;
+      }
     });
 
     socket.on('connect_error', (error) => {
@@ -84,32 +102,53 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
     // Room state handlers
     socket.on('room-state', (state: RoomState) => {
       console.log('Received room state:', state);
-      setRoomState(state);
+      const syncedTime = calculateSyncedTime(state.currentTime, state.lastUpdateTime, state.isPlaying);
+      setRoomState({
+        ...state,
+        currentTime: syncedTime
+      });
     });
 
     socket.on('song-changed', (data: { song: Song; isPlaying: boolean; currentTime: number; timestamp: number }) => {
       console.log('Song changed:', data.song.title);
+      const syncedTime = calculateSyncedTime(data.currentTime, data.timestamp, data.isPlaying);
       setRoomState(prev => ({
         ...prev,
         currentSong: data.song,
         isPlaying: data.isPlaying,
-        currentTime: data.currentTime
+        currentTime: syncedTime,
+        lastUpdateTime: data.timestamp
       }));
     });
 
     socket.on('playback-state-changed', (data: { isPlaying: boolean; currentTime: number; timestamp: number }) => {
       console.log('Playback state changed:', data.isPlaying ? 'playing' : 'paused');
+      const syncedTime = calculateSyncedTime(data.currentTime, data.timestamp, data.isPlaying);
       setRoomState(prev => ({
         ...prev,
         isPlaying: data.isPlaying,
-        currentTime: data.currentTime
+        currentTime: syncedTime,
+        lastUpdateTime: data.timestamp
       }));
     });
 
-    socket.on('time-synced', (data: { currentTime: number; timestamp: number }) => {
+    socket.on('time-synced', (data: { currentTime: number; timestamp: number; isPlaying: boolean }) => {
+      const syncedTime = calculateSyncedTime(data.currentTime, data.timestamp, data.isPlaying);
       setRoomState(prev => ({
         ...prev,
-        currentTime: data.currentTime
+        currentTime: syncedTime,
+        lastUpdateTime: data.timestamp
+      }));
+    });
+
+    // Time sync response handler
+    socket.on('time-sync-response', (data: { currentTime: number; isPlaying: boolean; timestamp: number }) => {
+      const syncedTime = calculateSyncedTime(data.currentTime, data.timestamp, data.isPlaying);
+      setRoomState(prev => ({
+        ...prev,
+        currentTime: syncedTime,
+        isPlaying: data.isPlaying,
+        lastUpdateTime: data.timestamp
       }));
     });
 
@@ -139,10 +178,12 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
     // Activity handlers
     socket.on('user-activity', () => {
       console.log('User activity detected');
-      // You can trigger any UI updates here
     });
 
     return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
       socket.off('connect');
       socket.off('disconnect');
       socket.off('connect_error');
@@ -150,6 +191,7 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
       socket.off('song-changed');
       socket.off('playback-state-changed');
       socket.off('time-synced');
+      socket.off('time-sync-response');
       socket.off('participants-updated');
       socket.off('user-joined');
       socket.off('user-left');
@@ -157,7 +199,28 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
       socket.off('user-activity');
       socket.disconnect();
     };
-  }, [serverUrl]);
+  }, [serverUrl, calculateSyncedTime]);
+
+  // Start periodic time sync when playing
+  useEffect(() => {
+    if (roomState.isPlaying && isConnected) {
+      // Request time sync every 5 seconds when playing
+      syncIntervalRef.current = setInterval(() => {
+        requestTimeSync();
+      }, 5000);
+    } else {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+        syncIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
+  }, [roomState.isPlaying, isConnected]);
 
   const joinRoom = useCallback((roomId: string, user?: User) => {
     if (!socketRef.current) return;
@@ -176,7 +239,8 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
     socketRef.current.emit('play-song', {
       song,
       isPlaying: true,
-      currentTime
+      currentTime,
+      timestamp: Date.now() // Client timestamp
     });
   }, []);
 
@@ -186,14 +250,26 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
     console.log('Toggle play/pause:', isPlaying);
     socketRef.current.emit('toggle-play-pause', {
       isPlaying,
-      currentTime
+      currentTime,
+      timestamp: Date.now() // Client timestamp
     });
   }, []);
 
   const syncTime = useCallback((currentTime: number) => {
     if (!socketRef.current) return;
     
-    socketRef.current.emit('sync-time', { currentTime });
+    socketRef.current.emit('sync-time', { 
+      currentTime,
+      timestamp: Date.now() // Client timestamp
+    });
+  }, []);
+
+  const requestTimeSync = useCallback(() => {
+    if (!socketRef.current) return;
+    
+    socketRef.current.emit('request-time-sync', {
+      timestamp: Date.now()
+    });
   }, []);
 
   const sendMessage = useCallback((message: string) => {
@@ -219,6 +295,7 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
     togglePlayPause,
     syncTime,
     sendMessage,
-    disconnect
+    disconnect,
+    requestTimeSync
   };
 };

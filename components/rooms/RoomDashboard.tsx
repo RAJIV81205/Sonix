@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { Search, Play, Pause, SkipForward, Volume2, Users, MessageCircle, Music, Clock, User, Loader2, Send } from 'lucide-react'
 import { useSocket } from '@/lib/hooks/useSocket'
@@ -64,7 +64,8 @@ const RoomDashboard = () => {
     joinRoom,
     playSong: socketPlaySong,
     togglePlayPause: socketTogglePlayPause,
-    sendMessage: socketSendMessage
+    sendMessage: socketSendMessage,
+    syncTime: socketSyncTime
   } = useSocket()
 
   // Player context hook
@@ -86,41 +87,148 @@ const RoomDashboard = () => {
   const [songUrlLoading, setSongUrlLoading] = useState<string | null>(null)
   const [chatMessage, setChatMessage] = useState('')
 
+  // Refs for tracking sync state
+  const syncingRef = useRef(false)
+  const lastSyncTimeRef = useRef(0)
+  const timeUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const isUserInteractionRef = useRef(false)
+
   // Get current song and playing state from socket
   const currentSong = roomState.currentSong
   const isPlaying = roomState.isPlaying
   const participants = roomState.participants
+  const socketCurrentTime = roomState.currentTime
 
-  // Sync socket song changes with player context
+  // Debounce utility function
+  function debounce<T extends (...args: any[]) => any>(
+    func: T,
+    delay: number
+  ): (...args: Parameters<T>) => void {
+    let timeoutId: NodeJS.Timeout
+    return (...args: Parameters<T>) => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => func(...args), delay)
+    }
+  }
+
+  // Sync socket song changes with player context (only when socket changes)
   useEffect(() => {
+    if (syncingRef.current) return
+
     if (currentSong && currentSong.url) {
       const playerSong = convertToPlayerSong(currentSong)
 
       // Only update if it's a different song
       if (!playerCurrentSong || playerCurrentSong.id !== playerSong.id) {
+        syncingRef.current = true
         setPlayerCurrentSong(playerSong)
+        
+        // Set audio source and sync time
+        if (audioRef.current) {
+          audioRef.current.src = currentSong.url
+          audioRef.current.load()
+          
+          // Wait for audio to load then sync time
+          const handleCanPlay = () => {
+            if (audioRef.current && socketCurrentTime > 0) {
+              audioRef.current.currentTime = socketCurrentTime
+            }
+            audioRef.current?.removeEventListener('canplay', handleCanPlay)
+            syncingRef.current = false
+          }
+          
+          audioRef.current.addEventListener('canplay', handleCanPlay)
+        } else {
+          syncingRef.current = false
+        }
       }
 
       // Sync playing state
-      if (playerIsPlaying !== isPlaying) {
+      if (playerIsPlaying !== isPlaying && !isUserInteractionRef.current) {
         setPlayerIsPlaying(isPlaying)
+        
+        if (audioRef.current) {
+          if (isPlaying) {
+            audioRef.current.play().catch(console.error)
+          } else {
+            audioRef.current.pause()
+          }
+        }
+      }
+
+      // Sync time if difference is significant (more than 2 seconds)
+      if (audioRef.current && Math.abs(audioRef.current.currentTime - socketCurrentTime) > 2 && !syncingRef.current) {
+        syncingRef.current = true
+        audioRef.current.currentTime = socketCurrentTime
+        setTimeout(() => {
+          syncingRef.current = false
+        }, 500)
       }
     }
-  }, [currentSong, isPlaying, playerCurrentSong, playerIsPlaying, setPlayerCurrentSong, setPlayerIsPlaying])
+  }, [currentSong, isPlaying, socketCurrentTime, playerCurrentSong, playerIsPlaying, setPlayerCurrentSong, setPlayerIsPlaying, audioRef])
 
-  // Sync player context changes back to socket (for manual controls)
+  // Handle audio element events for better sync
   useEffect(() => {
-    if (audioRef.current && currentSong) {
-      const handleTimeUpdate = () => {
-        // You can add time sync logic here if needed
-      }
+    if (!audioRef.current) return
 
-      audioRef.current.addEventListener('timeupdate', handleTimeUpdate)
-      return () => {
-        audioRef.current?.removeEventListener('timeupdate', handleTimeUpdate)
+    const audio = audioRef.current
+
+    const handleTimeUpdate = () => {
+      if (syncingRef.current || isUserInteractionRef.current) return
+      
+      const currentTime = audio.currentTime
+      const now = Date.now()
+      
+      // Only sync time to socket if significant time has passed and there's a difference
+      if (now - lastSyncTimeRef.current > 5000 && Math.abs(currentTime - socketCurrentTime) > 1) {
+        lastSyncTimeRef.current = now
+        socketSyncTime(currentTime)
       }
     }
-  }, [audioRef, currentSong])
+
+    const handlePlay = () => {
+      if (!isUserInteractionRef.current) return
+      isUserInteractionRef.current = false
+      
+      if (!playerIsPlaying) {
+        setPlayerIsPlaying(true)
+        socketTogglePlayPause(true, audio.currentTime)
+      }
+    }
+
+    const handlePause = () => {
+      if (!isUserInteractionRef.current) return
+      isUserInteractionRef.current = false
+      
+      if (playerIsPlaying) {
+        setPlayerIsPlaying(false)
+        socketTogglePlayPause(false, audio.currentTime)
+      }
+    }
+
+    const handleSeeked = () => {
+      if (!isUserInteractionRef.current) return
+      
+      const currentTime = audio.currentTime
+      socketSyncTime(currentTime)
+      
+      setTimeout(() => {
+        isUserInteractionRef.current = false
+      }, 1000)
+    }
+
+    audio.addEventListener('timeupdate', handleTimeUpdate)
+    audio.addEventListener('play', handlePlay)
+    audio.addEventListener('pause', handlePause)
+    audio.addEventListener('seeked', handleSeeked)
+
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate)
+      audio.removeEventListener('play', handlePlay)
+      audio.removeEventListener('pause', handlePause)
+      audio.removeEventListener('seeked', handleSeeked)
+    }
+  }, [audioRef, socketCurrentTime, playerIsPlaying, socketTogglePlayPause, socketSyncTime])
 
   const getRoomDetails = useCallback(async () => {
     if (!roomId) return
@@ -206,7 +314,6 @@ const RoomDashboard = () => {
         }));
       }
 
-
       setSearchResults(processedResults)
 
     } catch (error) {
@@ -224,18 +331,6 @@ const RoomDashboard = () => {
     }, 500),
     []
   )
-
-  // Debounce utility function
-  function debounce<T extends (...args: any[]) => any>(
-    func: T,
-    delay: number
-  ): (...args: Parameters<T>) => void {
-    let timeoutId: NodeJS.Timeout
-    return (...args: Parameters<T>) => {
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => func(...args), delay)
-    }
-  }
 
   const getSongUrl = async (song: Song) => {
     setSongUrlLoading(song.id.toString())
@@ -259,24 +354,26 @@ const RoomDashboard = () => {
         throw new Error(data.error || `Song URL API failed: ${response.status} ${response.statusText}`)
       }
 
-      console.log('Song URL data:', data)
-
       const updatedSong = {
         ...song,
         url: data.data[0].downloadUrl[4].url.replaceAll("http://", "https://")
       }
 
+      // Mark as user interaction to prevent circular updates
+      isUserInteractionRef.current = true
+      
       // Convert to player song format and set in player context
       const playerSong = convertToPlayerSong(updatedSong)
       setPlayerCurrentSong(playerSong)
       setPlayerIsPlaying(true)
 
-      // Also use socket to sync with other users
+      // Use socket to sync with other users
       socketPlaySong(updatedSong)
 
     } catch (error) {
       console.error('Error getting song URL:', error)
       // Even if URL fetch fails, we can still "play" the song (UI state)
+      isUserInteractionRef.current = true
       socketPlaySong(song)
     } finally {
       setSongUrlLoading(null)
@@ -285,6 +382,9 @@ const RoomDashboard = () => {
 
   const handleSongClick = (song: Song) => {
     if (song.url) {
+      // Mark as user interaction
+      isUserInteractionRef.current = true
+      
       // Convert to player song format and set in player context
       const playerSong = convertToPlayerSong(song)
       setPlayerCurrentSong(playerSong)
@@ -298,13 +398,17 @@ const RoomDashboard = () => {
   }
 
   const togglePlayPause = () => {
+    // Mark as user interaction
+    isUserInteractionRef.current = true
+    
     const newPlayingState = !isPlaying
+    const currentTime = audioRef.current?.currentTime || 0
 
     // Update player context
     setPlayerIsPlaying(newPlayingState)
 
     // Sync with socket
-    socketTogglePlayPause(newPlayingState, roomState.currentTime)
+    socketTogglePlayPause(newPlayingState, currentTime)
   }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -348,6 +452,17 @@ const RoomDashboard = () => {
     joinRoom(roomId, user);
 
   }, [roomId, getRoomDetails, joinRoom]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeUpdateIntervalRef.current) {
+        clearInterval(timeUpdateIntervalRef.current)
+      }
+      syncingRef.current = false
+      isUserInteractionRef.current = false
+    }
+  }, [])
 
   if (loading) {
     return (
@@ -430,8 +545,11 @@ const RoomDashboard = () => {
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Music size={24} />
                 Now Playing (Synced)
-                {playerIsPlaying && (
+                {(isPlaying || playerIsPlaying) && (
                   <span className="text-green-400 text-sm">● Live</span>
+                )}
+                {syncingRef.current && (
+                  <span className="text-yellow-400 text-sm">⟳ Syncing</span>
                 )}
               </h3>
               <div className="flex items-center gap-4">
@@ -459,6 +577,9 @@ const RoomDashboard = () => {
                   {(currentSong?.url || playerCurrentSong?.url) && (
                     <p className="text-xs text-green-400 mt-1">🔗 Stream ready</p>
                   )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Sync time: {Math.floor(socketCurrentTime)}s
+                  </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <button

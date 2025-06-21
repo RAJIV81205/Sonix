@@ -25,6 +25,7 @@ const roomStates = {
     currentSong: null,
     isPlaying: false,
     currentTime: 0,
+    lastUpdateTime: 0, // Server timestamp when last updated
     participants: {
       socketId: {
         id: "userId",
@@ -34,6 +35,29 @@ const roomStates = {
   }
 };
 
+// Helper function to get current synced time
+const getSyncedTime = (roomState) => {
+  if (!roomState.isPlaying) return roomState.currentTime;
+  
+  const now = Date.now();
+  const elapsed = (now - roomState.lastUpdateTime) / 1000; // Convert to seconds
+  return roomState.currentTime + elapsed;
+};
+
+// Helper function to update room time and broadcast
+const updateRoomTime = (roomId, currentTime, isPlaying = null) => {
+  if (!roomStates[roomId]) return;
+  
+  const now = Date.now();
+  roomStates[roomId].currentTime = currentTime;
+  roomStates[roomId].lastUpdateTime = now;
+  
+  if (isPlaying !== null) {
+    roomStates[roomId].isPlaying = isPlaying;
+  }
+  
+  return now;
+};
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -51,6 +75,7 @@ io.on('connection', (socket) => {
         currentSong: null,
         isPlaying: false,
         currentTime: 0,
+        lastUpdateTime: Date.now(),
         participants: {}
       };
     }
@@ -63,8 +88,15 @@ io.on('connection', (socket) => {
     
     console.log(`Socket ${socket.id} joined room ${roomId}`);
     
-    // Send current room state to the new user
-    socket.emit('room-state', roomStates[roomId]);
+    // Send current room state to the new user with synced time
+    const syncedTime = getSyncedTime(roomStates[roomId]);
+    const currentRoomState = {
+      ...roomStates[roomId],
+      currentTime: syncedTime,
+      participants: Object.values(roomStates[roomId].participants)
+    };
+    
+    socket.emit('room-state', currentRoomState);
     
     // Notify other users in the room
     socket.to(roomId).emit('user-joined', {
@@ -84,22 +116,28 @@ io.on('connection', (socket) => {
     const roomId = socketToRoom[socket.id];
     if (!roomId || !roomStates[roomId]) return;
 
-    const { song, isPlaying = true, currentTime = 0 } = data;
+    const { song, isPlaying = true, currentTime = 0, timestamp: clientTimestamp } = data;
     
-    // Update room state
+    // Update room state with server timestamp
     roomStates[roomId].currentSong = song;
-    roomStates[roomId].isPlaying = isPlaying;
-    roomStates[roomId].currentTime = currentTime;
+    const serverTimestamp = updateRoomTime(roomId, currentTime, isPlaying);
+    
+    // Calculate network latency compensation (optional)
+    const networkDelay = clientTimestamp ? (Date.now() - clientTimestamp) / 2 : 0;
+    const compensatedTime = currentTime + (networkDelay / 1000);
+    
+    // Update with compensated time
+    updateRoomTime(roomId, compensatedTime, isPlaying);
     
     // Broadcast to all users in the room
     io.to(roomId).emit('song-changed', {
       song,
       isPlaying,
-      currentTime,
-      timestamp: Date.now()
+      currentTime: compensatedTime,
+      timestamp: roomStates[roomId].lastUpdateTime
     });
     
-    console.log(`Song played in room ${roomId}:`, song.title);
+    console.log(`Song played in room ${roomId}:`, song.title, `at ${compensatedTime}s`);
   });
 
   // Handle play/pause toggle
@@ -107,19 +145,25 @@ io.on('connection', (socket) => {
     const roomId = socketToRoom[socket.id];
     if (!roomId || !roomStates[roomId]) return;
 
-    const { isPlaying, currentTime = 0 } = data;
+    const { isPlaying, currentTime, timestamp: clientTimestamp } = data;
     
-    roomStates[roomId].isPlaying = isPlaying;
-    roomStates[roomId].currentTime = currentTime;
+    // If we have current time, use it; otherwise calculate synced time
+    const timeToUse = currentTime !== undefined ? currentTime : getSyncedTime(roomStates[roomId]);
+    
+    // Calculate network latency compensation
+    const networkDelay = clientTimestamp ? (Date.now() - clientTimestamp) / 2 : 0;
+    const compensatedTime = timeToUse + (networkDelay / 1000);
+    
+    const serverTimestamp = updateRoomTime(roomId, compensatedTime, isPlaying);
     
     // Broadcast to all users in the room
     io.to(roomId).emit('playback-state-changed', {
       isPlaying,
-      currentTime,
-      timestamp: Date.now()
+      currentTime: compensatedTime,
+      timestamp: serverTimestamp
     });
     
-    console.log(`Playback ${isPlaying ? 'resumed' : 'paused'} in room ${roomId}`);
+    console.log(`Playback ${isPlaying ? 'resumed' : 'paused'} in room ${roomId} at ${compensatedTime}s`);
   });
 
   // Handle seek/time sync
@@ -127,13 +171,44 @@ io.on('connection', (socket) => {
     const roomId = socketToRoom[socket.id];
     if (!roomId || !roomStates[roomId]) return;
 
-    const { currentTime } = data;
-    roomStates[roomId].currentTime = currentTime;
+    const { currentTime, timestamp: clientTimestamp } = data;
     
+    // Calculate network latency compensation
+    const networkDelay = clientTimestamp ? (Date.now() - clientTimestamp) / 2 : 0;
+    const compensatedTime = currentTime + (networkDelay / 1000);
+    
+    const serverTimestamp = updateRoomTime(roomId, compensatedTime);
+    
+    // Broadcast to other users in the room (not the sender)
     socket.to(roomId).emit('time-synced', {
-      currentTime,
-      timestamp: Date.now()
+      currentTime: compensatedTime,
+      timestamp: serverTimestamp,
+      isPlaying: roomStates[roomId].isPlaying
     });
+    
+    console.log(`Time synced in room ${roomId} to ${compensatedTime}s`);
+  });
+
+  // Handle time sync requests
+  socket.on('request-time-sync', (data) => {
+    const roomId = socketToRoom[socket.id];
+    if (!roomId || !roomStates[roomId]) return;
+
+    const { timestamp: clientTimestamp } = data;
+    const syncedTime = getSyncedTime(roomStates[roomId]);
+    
+    // Calculate network latency
+    const networkDelay = clientTimestamp ? (Date.now() - clientTimestamp) / 2 : 0;
+    
+    // Send back current synced time
+    socket.emit('time-sync-response', {
+      currentTime: syncedTime,
+      isPlaying: roomStates[roomId].isPlaying,
+      timestamp: Date.now(),
+      networkDelay: networkDelay
+    });
+    
+    console.log(`Time sync requested for room ${roomId}, current time: ${syncedTime}s`);
   });
 
   // Handle chat messages
@@ -155,6 +230,14 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('new-message', messageData);
     
     console.log(`Message sent in room ${roomId} by ${user.name}: ${message}`);
+  });
+
+  // Handle room activity ping
+  socket.on('room-activity', () => {
+    const roomId = socketToRoom[socket.id];
+    if (roomId) {
+      socket.to(roomId).emit('user-activity');
+    }
   });
 
   // Handle disconnect
@@ -192,16 +275,30 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle room activity ping
-  socket.on('room-activity', () => {
-    const roomId = socketToRoom[socket.id];
-    if (roomId) {
-      socket.to(roomId).emit('user-activity');
-    }
-  });
+  // Periodic time sync broadcast (every 10 seconds for active rooms)
+  setInterval(() => {
+    Object.keys(roomStates).forEach(roomId => {
+      const roomState = roomStates[roomId];
+      if (roomState.isPlaying && Object.keys(roomState.participants).length > 1) {
+        const syncedTime = getSyncedTime(roomState);
+        
+        // Update room state
+        updateRoomTime(roomId, syncedTime);
+        
+        // Broadcast to all users in room
+        io.to(roomId).emit('time-synced', {
+          currentTime: syncedTime,
+          timestamp: roomState.lastUpdateTime,
+          isPlaying: roomState.isPlaying
+        });
+        
+        console.log(`Auto-sync broadcast for room ${roomId}: ${syncedTime}s`);
+      }
+    });
+  }, 10000); // Every 10 seconds
 });
 
-const PORT = process.env.PORT || 3001; // Changed to match frontend
+const PORT = process.env.PORT || 3001;
 
 server.listen(PORT, () => {
   console.log(`Socket server is running on port ${PORT}`);
