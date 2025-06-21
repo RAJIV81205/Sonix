@@ -173,19 +173,6 @@ const RoomDashboard = () => {
 
     const audio = audioRef.current
 
-    const handleTimeUpdate = () => {
-      if (syncingRef.current || isUserInteractionRef.current) return
-      
-      const currentTime = audio.currentTime
-      const now = Date.now()
-      
-      // Only sync time to socket if significant time has passed and there's a difference
-      if (now - lastSyncTimeRef.current > 5000 && Math.abs(currentTime - socketCurrentTime) > 1) {
-        lastSyncTimeRef.current = now
-        socketSyncTime(currentTime)
-      }
-    }
-
     const handlePlay = () => {
       if (!isUserInteractionRef.current) return
       isUserInteractionRef.current = false
@@ -217,13 +204,11 @@ const RoomDashboard = () => {
       }, 1000)
     }
 
-    audio.addEventListener('timeupdate', handleTimeUpdate)
     audio.addEventListener('play', handlePlay)
     audio.addEventListener('pause', handlePause)
     audio.addEventListener('seeked', handleSeeked)
 
     return () => {
-      audio.removeEventListener('timeupdate', handleTimeUpdate)
       audio.removeEventListener('play', handlePlay)
       audio.removeEventListener('pause', handlePause)
       audio.removeEventListener('seeked', handleSeeked)

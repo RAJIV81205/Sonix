@@ -116,28 +116,42 @@ io.on('connection', (socket) => {
     const roomId = socketToRoom[socket.id];
     if (!roomId || !roomStates[roomId]) return;
 
-    const { song, isPlaying = true, currentTime = 0, timestamp: clientTimestamp } = data;
+    const { song } = data; // We don't need other props from client here
     
-    // Update room state with server timestamp
+    // Update room state: set new song, but as paused at the beginning
     roomStates[roomId].currentSong = song;
-    const serverTimestamp = updateRoomTime(roomId, currentTime, isPlaying);
+    const serverTimestamp = updateRoomTime(roomId, 0, false);
     
-    // Calculate network latency compensation (optional)
-    const networkDelay = clientTimestamp ? (Date.now() - clientTimestamp) / 2 : 0;
-    const compensatedTime = currentTime + (networkDelay / 1000);
-    
-    // Update with compensated time
-    updateRoomTime(roomId, compensatedTime, isPlaying);
-    
-    // Broadcast to all users in the room
+    // Broadcast to all users that a new song is being prepared
     io.to(roomId).emit('song-changed', {
       song,
-      isPlaying,
-      currentTime: compensatedTime,
-      timestamp: roomStates[roomId].lastUpdateTime
+      isPlaying: false,
+      currentTime: 0,
+      timestamp: serverTimestamp
     });
     
-    console.log(`Song played in room ${roomId}:`, song.title, `at ${compensatedTime}s`);
+    console.log(`Preparing to play in room ${roomId}: ${song.title}`);
+
+    // Wait for 2 seconds to allow clients to buffer
+    setTimeout(() => {
+      // Check if room still exists and song hasn't changed
+      if (!roomStates[roomId] || roomStates[roomId].currentSong?.id !== song.id) {
+        console.log(`Playback aborted for ${song.title}, song changed again.`);
+        return;
+      }
+
+      // Now, update state to playing
+      const playTimestamp = updateRoomTime(roomId, 0, true);
+      
+      // Broadcast to all clients to start playing
+      io.to(roomId).emit('playback-state-changed', {
+        isPlaying: true,
+        currentTime: 0,
+        timestamp: playTimestamp
+      });
+      
+      console.log(`Playback started in room ${roomId}: ${song.title}`);
+    }, 2000);
   });
 
   // Handle play/pause toggle
@@ -275,7 +289,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Periodic time sync broadcast (every 10 seconds for active rooms)
+  // Periodic time sync broadcast (every 3 seconds for active rooms)
   setInterval(() => {
     Object.keys(roomStates).forEach(roomId => {
       const roomState = roomStates[roomId];
@@ -295,7 +309,7 @@ io.on('connection', (socket) => {
         console.log(`Auto-sync broadcast for room ${roomId}: ${syncedTime}s`);
       }
     });
-  }, 10000); // Every 10 seconds
+  }, 3000); // Every 3 seconds
 });
 
 const PORT = process.env.PORT || 3001;

@@ -202,6 +202,7 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
   }, [serverUrl, calculateSyncedTime]);
 
   // Start periodic time sync when playing
+  /* This is now handled by server-side broadcasts
   useEffect(() => {
     if (roomState.isPlaying && isConnected) {
       // Request time sync every 5 seconds when playing
@@ -221,6 +222,7 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
       }
     };
   }, [roomState.isPlaying, isConnected]);
+  */
 
   const joinRoom = useCallback((roomId: string, user?: User) => {
     if (!socketRef.current) return;
