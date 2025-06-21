@@ -261,10 +261,13 @@ const RoomDashboard = () => {
     setLoading(true);
     getRoomDetails().finally(() => setLoading(false));
 
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+
+
     // Join the socket room
     const user = {
-      id: Date.now().toString(),
-      name: `User ${Date.now().toString().slice(-4)}`
+      id: userData.id,
+      name: userData.name || `User ${Date.now()}`,
     }
     joinRoom(roomId, user);
 
