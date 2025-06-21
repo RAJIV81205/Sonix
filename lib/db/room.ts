@@ -40,7 +40,7 @@ export async function joinRoom(
   const currentParticipants = existingRoom.participants || [];
 
   if (currentParticipants.some(p => p.id === userId)) {
-    throw new Error("User already in the room");
+    return existingRoom; // User already in the room, return existing room
   }
 
   const newParticipant = {
