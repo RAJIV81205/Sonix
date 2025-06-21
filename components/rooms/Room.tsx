@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Plus, Hash, Copy, Music, Headphones, Zap, CheckCircle } from 'lucide-react'
+import { Users, Plus, Hash, Copy, Music, Headphones, Zap, CheckCircle, Type } from 'lucide-react'
 import Link from 'next/link'
 
 type Room = {
@@ -103,12 +103,27 @@ const Room: React.FC = () => {
     try {
       // Add your room joining API logic here
       console.log('Joining room:', joinCode)
-      
-      // Simulate API call
-      setTimeout(() => {
-        // Redirect to room or handle join logic
-        window.location.href = `/dashboard/room/${joinCode}`
-      }, 1000)
+
+      const response = await fetch('/api/room/joinRoom', {
+        method: 'POST',
+        headers: {
+          "Content-Type": 'application/json',
+          "Authorization": `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify({ roomCode: joinCode })
+      })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to join room')
+      }
+
+      const roomData = await response.json()
+      console.log('Room data:', roomData)
+      window.location.href = `/dashboard/room/${joinCode}`
+      // Reset join code after successful join
+      setJoinCode('')
+      setIsJoining(false)
+
 
     } catch (error) {
       console.error('Error joining room:', error)
