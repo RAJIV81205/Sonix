@@ -45,7 +45,7 @@ interface UseSocketReturn {
   disconnect: () => void;
 }
 
-export const useSocket = (serverUrl: string = 'http://localhost:3001'): UseSocketReturn => {
+export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL): UseSocketReturn => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [roomState, setRoomState] = useState<RoomState>({
