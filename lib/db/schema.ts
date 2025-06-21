@@ -4,6 +4,7 @@ import { integer, pgTable, varchar, uuid, primaryKey, json, boolean } from "driz
 type Participant = {
   id: number;
   name: string;
+  role: "host" | "participant"; // Define roles as needed
 };
 
 // USERS TABLE

@@ -64,7 +64,8 @@ const Room: React.FC = () => {
       const response = await fetch('/api/room/create-room', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({ 
           name: roomName.trim(), 
