@@ -9,7 +9,7 @@ import { usePlayer } from '@/context/PlayerContext'
 type Participant = {
   id: number
   name: string
-  role: "host" | "member"
+  role: 'host' | 'member'
   avatar: string
   isOnline: boolean
 }
@@ -77,10 +77,11 @@ const RoomDashboard = () => {
         description: "A place for relaxing music and good conversations",
         host: data.room.hostId,
         createdAt: formattedDate,
-        isActive: true
+        isActive: true,
       }
 
       setRoomDetails(RoomData)
+      setParticipants(data.room.participants || [])
 
     } catch (error) {
       setLoading(false)
@@ -256,14 +257,14 @@ const RoomDashboard = () => {
   useEffect(() => {
     const fetchRoomDetails = async () => {
       try {
-        const mockParticipants: Participant[] = [
-          { id: 1, name: "John Doe", role: "host", avatar: "JD", isOnline: true },
-          { id: 2, name: "Jane Smith", role: "member", avatar: "JS", isOnline: true },
-          { id: 3, name: "Mike Johnson", role: "member", avatar: "MJ", isOnline: false },
-          { id: 4, name: "Sarah Wilson", role: "member", avatar: "SW", isOnline: true }
-        ]
+        // const mockParticipants: Participant[] = [
+        //   { id: 1, name: "John Doe", role: "host", avatar: "JD", isOnline: true },
+        //   { id: 2, name: "Jane Smith", role: "member", avatar: "JS", isOnline: true },
+        //   { id: 3, name: "Mike Johnson", role: "member", avatar: "MJ", isOnline: false },
+        //   { id: 4, name: "Sarah Wilson", role: "member", avatar: "SW", isOnline: true }
+        // ]
 
-        setParticipants(mockParticipants)
+ 
         await getRoomDetails()
         setLoading(false)
       } catch (error) {
