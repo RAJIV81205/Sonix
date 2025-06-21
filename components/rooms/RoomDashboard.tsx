@@ -1,17 +1,16 @@
 "use client"
 import React, { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { Search, Play, Pause, SkipForward, Volume2, Users, MessageCircle, Music, Clock, User, Loader2 } from 'lucide-react'
-import { usePlayer } from '@/context/PlayerContext'
-
+import { Search, Play, Pause, SkipForward, Volume2, Users, MessageCircle, Music, Clock, User, Loader2, Send } from 'lucide-react'
+import { useSocket } from '@/lib/hooks/useSocket'
 
 // Type definitions
 type Participant = {
-  id: number
+  id: string
   name: string
-  role: 'host' | 'member'
-  avatar: string
-  isOnline: boolean
+  role?: 'host' | 'member'
+  avatar?: string
+  isOnline?: boolean
 }
 
 type RoomDetails = {
@@ -35,25 +34,39 @@ type Song = {
 
 const RoomDashboard = () => {
   const params = useParams()
+  const roomId = params.id as string
+  
+  // Socket hook
+  const { 
+    isConnected, 
+    roomState, 
+    messages, 
+    joinRoom, 
+    playSong: socketPlaySong, 
+    togglePlayPause: socketTogglePlayPause, 
+    sendMessage: socketSendMessage 
+  } = useSocket()
   
   const [roomDetails, setRoomDetails] = useState<RoomDetails | null>(null)
-  const [participants, setParticipants] = useState<Participant[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Song[]>([])
-  const [currentSong, setCurrentSong] = useState<Song | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
   const [showParticipants, setShowParticipants] = useState(false)
   const [showChat, setShowChat] = useState(false)
   const [loading, setLoading] = useState(true)
   const [searchLoading, setSearchLoading] = useState(false)
   const [songUrlLoading, setSongUrlLoading] = useState<string | null>(null)
+  const [chatMessage, setChatMessage] = useState('')
 
-  const getRoomDetails = async () => {
-    const id = params.id as string
-    if (!id) return
+  // Get current song and playing state from socket
+  const currentSong = roomState.currentSong
+  const isPlaying = roomState.isPlaying
+  const participants = roomState.participants
+
+  const getRoomDetails = useCallback(async () => {
+    if (!roomId) return
 
     try {
-      const response = await fetch(`/api/room/getRoom?roomId=${id}`)
+      const response = await fetch(`/api/room/getRoom?roomId=${roomId}`)
 
       if (!response.ok) {
         throw new Error(`Failed to fetch room details: ${response.status} ${response.statusText}`)
@@ -62,12 +75,10 @@ const RoomDashboard = () => {
       const data = await response.json()
 
       const dateString = data.room.createdAt as string;
-
       // Convert it to a format Date understands (MM/DD/YYYY hh:mm:ss am/pm)
       const parts = dateString.split(", ");
       const [day, month, year] = parts[0].split("/").map(Number);
       const time = parts[1];
-
       // Create a valid date string in MM/DD/YYYY format
       const formattedDate = `${month}/${day}/${year}, ${time}`;
 
@@ -81,12 +92,12 @@ const RoomDashboard = () => {
       }
 
       setRoomDetails(RoomData)
-      setParticipants(data.room.participants || [])
 
     } catch (error) {
+      console.error('Error fetching room details:', error)
       setLoading(false)
     }
-  }
+  }, [roomId])
 
   const searchSongs = async (query: string) => {
     if (!query.trim() || query.length === 0) {
@@ -98,7 +109,6 @@ const RoomDashboard = () => {
 
     try {
       const token = localStorage.getItem('token')
-
       const requestBody = { query }
 
       const response = await fetch(`/api/dashboard/search`, {
@@ -116,7 +126,6 @@ const RoomDashboard = () => {
         throw new Error(data.error || `Search API failed: ${response.status} ${response.statusText}`)
       }
 
-      // Process the search results based on your API response structure
       let processedResults: Song[] = []
 
       if (data.songs && Array.isArray(data.songs)) {
@@ -127,7 +136,6 @@ const RoomDashboard = () => {
           duration: item?.more_info?.duration
             ? `${Math.floor(item.more_info.duration / 60)}:${String(item.more_info.duration % 60).padStart(2, '0')}`
             : '0:00',
-
           album: item.more_info.album || '',
           thumbnail: item.thumbnail || item.image
         }))
@@ -144,12 +152,8 @@ const RoomDashboard = () => {
       setSearchResults(processedResults)
 
     } catch (error) {
-      if (error instanceof Error) {
-        // Handle error appropriately
-      }
-
-      setSearchResults([]) // Clear results on error
-
+      console.error('Search error:', error)
+      setSearchResults([])
     } finally {
       setSearchLoading(false)
     }
@@ -180,10 +184,7 @@ const RoomDashboard = () => {
 
     try {
       const token = localStorage.getItem('token')
-
-      const requestBody = {
-        id: song.id
-      }
+      const requestBody = { id: song.id }
 
       const response = await fetch(`/api/dashboard/getSongUrl`, {
         method: 'POST',
@@ -200,46 +201,33 @@ const RoomDashboard = () => {
         throw new Error(data.error || `Song URL API failed: ${response.status} ${response.statusText}`)
       }
 
-      // Update the song with the URL
       const updatedSong = {
         ...song,
         url: data.url || data.songUrl || data.streamUrl
       }
 
-      // Now play the song
-      playSong(updatedSong)
+      // Use socket to play the song for all users
+      socketPlaySong(updatedSong)
 
     } catch (error) {
+      console.error('Error getting song URL:', error)
       // Even if URL fetch fails, we can still "play" the song (UI state)
-      playSong(song)
-
+      socketPlaySong(song)
     } finally {
       setSongUrlLoading(null)
     }
   }
 
-  const playSong = (song: Song) => {
-    setCurrentSong(song)
-    setIsPlaying(true)
-
-    if (song.url) {
-      // Here you would integrate with your audio player
-    }
-  }
-
   const handleSongClick = (song: Song) => {
     if (song.url) {
-      // Song already has URL, play directly
-      playSong(song)
+      socketPlaySong(song)
     } else {
-      // Need to get URL first
       getSongUrl(song)
     }
   }
 
   const togglePlayPause = () => {
-    const newState = !isPlaying
-    setIsPlaying(newState)
+    socketTogglePlayPause(!isPlaying, roomState.currentTime)
   }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,28 +242,33 @@ const RoomDashboard = () => {
     }
   }
 
+  const handleSendMessage = () => {
+    if (chatMessage.trim()) {
+      socketSendMessage(chatMessage)
+      setChatMessage('')
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSendMessage()
+    }
+  }
+
   useEffect(() => {
-    const fetchRoomDetails = async () => {
-      try {
-        // const mockParticipants: Participant[] = [
-        //   { id: 1, name: "John Doe", role: "host", avatar: "JD", isOnline: true },
-        //   { id: 2, name: "Jane Smith", role: "member", avatar: "JS", isOnline: true },
-        //   { id: 3, name: "Mike Johnson", role: "member", avatar: "MJ", isOnline: false },
-        //   { id: 4, name: "Sarah Wilson", role: "member", avatar: "SW", isOnline: true }
-        // ]
+    if (!roomId) return;
 
- 
-        await getRoomDetails()
-        setLoading(false)
-      } catch (error) {
-        setLoading(false)
-      }
-    }
+    setLoading(true);
+    getRoomDetails().finally(() => setLoading(false));
 
-    if (params.id) {
-      fetchRoomDetails()
+    // Join the socket room
+    const user = {
+      id: Date.now().toString(),
+      name: `User ${Date.now().toString().slice(-4)}`
     }
-  }, [params, params.id])
+    joinRoom(roomId, user);
+
+  }, [roomId, getRoomDetails, joinRoom]);
 
   if (loading) {
     return (
@@ -318,6 +311,10 @@ const RoomDashboard = () => {
                   <div className={`w-2 h-2 rounded-full ${roomDetails.isActive ? 'bg-green-400' : 'bg-red-400'}`}></div>
                   {roomDetails.isActive ? 'Active' : 'Inactive'}
                 </span>
+                <span className={`flex items-center gap-1 ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                  {isConnected ? 'Connected' : 'Disconnected'}
+                </span>
               </div>
             </div>
             <div className="flex gap-3">
@@ -334,6 +331,11 @@ const RoomDashboard = () => {
               >
                 <MessageCircle size={20} />
                 Group Chat
+                {messages.length > 0 && (
+                  <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {messages.length}
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -348,7 +350,7 @@ const RoomDashboard = () => {
             <div className="bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-white/10">
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Music size={24} />
-                Now Playing
+                Now Playing (Synced)
               </h3>
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center overflow-hidden">
@@ -475,23 +477,30 @@ const RoomDashboard = () => {
             <div className="bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-white/10">
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Users size={24} />
-                Participants
+                Participants ({participants.length})
               </h3>
               <div className="space-y-3">
-                {participants.map((participant) => (
-                  <div key={participant.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
-                    <div className="relative">
-                      <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-sm font-semibold">
-                        {participant.avatar}
+                {participants.length > 0 ? (
+                  participants.map((participant) => (
+                    <div key={participant.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
+                      <div className="relative">
+                        <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center text-sm font-semibold">
+                          {participant.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-gray-800 bg-green-400"></div>
                       </div>
-                      <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-gray-800 ${participant.isOnline ? 'bg-green-400' : 'bg-gray-500'}`}></div>
+                      <div className="flex-1">
+                        <p className="font-medium">{participant.name}</p>
+                        <p className="text-xs text-gray-400">Online</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{participant.name}</p>
-                      <p className="text-xs text-gray-400 capitalize">{participant.role}</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-400 py-4">
+                    <Users size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>No participants yet</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           )}
@@ -504,15 +513,36 @@ const RoomDashboard = () => {
                 Group Chat
               </h3>
               <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
-                <div className="text-sm text-gray-400 text-center">Start a conversation...</div>
+                {messages.length > 0 ? (
+                  messages.map((message) => (
+                    <div key={message.id} className="p-2 bg-white/5 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-medium text-purple-300">{message.user.name}</span>
+                        <span className="text-xs text-gray-500">
+                          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-200">{message.message}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-gray-400 text-center py-4">Start a conversation...</div>
+                )}
               </div>
               <div className="flex gap-2">
                 <input
                   type="text"
                   placeholder="Type a message..."
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                 />
-                <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-sm">
+                <button 
+                  onClick={handleSendMessage}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-sm flex items-center gap-1"
+                >
+                  <Send size={16} />
                   Send
                 </button>
               </div>
@@ -525,19 +555,25 @@ const RoomDashboard = () => {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-400">Online Members</span>
-                <span className="font-semibold">{participants.filter(p => p.isOnline).length}</span>
+                <span className="font-semibold">{participants.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Total Members</span>
                 <span className="font-semibold">{participants.length}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Songs Played</span>
-                <span className="font-semibold">42</span>
+                <span className="text-gray-400">Messages</span>
+                <span className="font-semibold">{messages.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-400">Search Results</span>
                 <span className="font-semibold">{searchResults.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Connection</span>
+                <span className={`font-semibold ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
+                  {isConnected ? 'Connected' : 'Disconnected'}
+                </span>
               </div>
             </div>
           </div>
