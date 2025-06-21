@@ -201,9 +201,11 @@ const RoomDashboard = () => {
         throw new Error(data.error || `Song URL API failed: ${response.status} ${response.statusText}`)
       }
 
+      console.log('Song URL data:', data)
+
       const updatedSong = {
         ...song,
-        url: data.url || data.songUrl || data.streamUrl
+        url:data.data[0].downloadUrl[4].url.replaceAll("http","https")
       }
 
       // Use socket to play the song for all users
