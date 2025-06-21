@@ -207,3 +207,7 @@ server.listen(PORT, () => {
   console.log(`Socket server is running on port ${PORT}`);
   console.log(`CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
 });
+
+app.get("/", (req, res) => {
+  res.send("Socket server is running");
+});
