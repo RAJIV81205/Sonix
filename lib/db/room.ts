@@ -13,7 +13,7 @@ export async function createRoom(
     roomCode,
     roomName,
     hostId,
-    createdAt: new Date().toISOString(),
+    createdAt: new Date().toLocaleString(),
     participants: [{ id: hostId, name: hostname, role: "host" as const }],
   }).returning();
 
