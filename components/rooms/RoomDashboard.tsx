@@ -55,27 +55,27 @@ const parseDuration = (durationStr: string): number => {
 const RoomDashboard = () => {
   const params = useParams()
   const roomId = params.id as string
-  
+
   // Socket hook
-  const { 
-    isConnected, 
-    roomState, 
-    messages, 
-    joinRoom, 
-    playSong: socketPlaySong, 
-    togglePlayPause: socketTogglePlayPause, 
-    sendMessage: socketSendMessage 
+  const {
+    isConnected,
+    roomState,
+    messages,
+    joinRoom,
+    playSong: socketPlaySong,
+    togglePlayPause: socketTogglePlayPause,
+    sendMessage: socketSendMessage
   } = useSocket()
 
   // Player context hook
-  const { 
-    currentSong: playerCurrentSong, 
-    isPlaying: playerIsPlaying, 
-    setCurrentSong: setPlayerCurrentSong, 
+  const {
+    currentSong: playerCurrentSong,
+    isPlaying: playerIsPlaying,
+    setCurrentSong: setPlayerCurrentSong,
     setIsPlaying: setPlayerIsPlaying,
     audioRef
   } = usePlayer()
-  
+
   const [roomDetails, setRoomDetails] = useState<RoomDetails | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Song[]>([])
@@ -95,12 +95,12 @@ const RoomDashboard = () => {
   useEffect(() => {
     if (currentSong && currentSong.url) {
       const playerSong = convertToPlayerSong(currentSong)
-      
+
       // Only update if it's a different song
       if (!playerCurrentSong || playerCurrentSong.id !== playerSong.id) {
         setPlayerCurrentSong(playerSong)
       }
-      
+
       // Sync playing state
       if (playerIsPlaying !== isPlaying) {
         setPlayerIsPlaying(isPlaying)
@@ -114,7 +114,7 @@ const RoomDashboard = () => {
       const handleTimeUpdate = () => {
         // You can add time sync logic here if needed
       }
-      
+
       audioRef.current.addEventListener('timeupdate', handleTimeUpdate)
       return () => {
         audioRef.current?.removeEventListener('timeupdate', handleTimeUpdate)
@@ -189,25 +189,23 @@ const RoomDashboard = () => {
       let processedResults: Song[] = []
 
       if (data.songs && Array.isArray(data.songs)) {
-        processedResults = data.songs.map((item: any, index: number) => ({
-          id: item.id || index,
-          title: item.title.replaceAll("&quot;", `"`) || item.name.replaceAll("&quot;", `"`) || 'Unknown Title',
+        processedResults = data.songs.slice(0, 5).map((item: any, index: number) => ({
+          id: item.id ,
+          title:
+            item.title?.replaceAll("&quot;", `"`) ||
+            item.name?.replaceAll("&quot;", `"`) ||
+            'Unknown Title',
           artist: item.artist || item.subtitle || 'Unknown Artist',
           duration: item?.more_info?.duration
             ? `${Math.floor(item.more_info.duration / 60)}:${String(item.more_info.duration % 60).padStart(2, '0')}`
             : '0:00',
-          album: item.more_info.album || '',
-          thumbnail: (item.thumbnail || item.image || '').replace('http://', 'https://').replace('150x150', '500x500'),
-        }))
-      } else {
-        // Fallback to mock data for testing
-        processedResults = [
-          { id: 1, title: "Blinding Lights", artist: "The Weeknd", duration: "3:20", album: "After Hours" },
-          { id: 2, title: "Watermelon Sugar", artist: "Harry Styles", duration: "2:54", album: "Fine Line" },
-          { id: 3, title: "Levitating", artist: "Dua Lipa", duration: "3:23", album: "Future Nostalgia" },
-          { id: 4, title: "Good 4 U", artist: "Olivia Rodrigo", duration: "2:58", album: "SOUR" }
-        ]
+          album: item.more_info?.album || '',
+          thumbnail: (item.thumbnail || item.image || '')
+            .replace('http://', 'https://')
+            .replace('150x150', '500x500'),
+        }));
       }
+
 
       setSearchResults(processedResults)
 
@@ -291,7 +289,7 @@ const RoomDashboard = () => {
       const playerSong = convertToPlayerSong(song)
       setPlayerCurrentSong(playerSong)
       setPlayerIsPlaying(true)
-      
+
       // Also sync with socket
       socketPlaySong(song)
     } else {
@@ -301,10 +299,10 @@ const RoomDashboard = () => {
 
   const togglePlayPause = () => {
     const newPlayingState = !isPlaying
-    
+
     // Update player context
     setPlayerIsPlaying(newPlayingState)
-    
+
     // Sync with socket
     socketTogglePlayPause(newPlayingState, roomState.currentTime)
   }
@@ -439,10 +437,10 @@ const RoomDashboard = () => {
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center overflow-hidden">
                   {(currentSong?.thumbnail || playerCurrentSong?.image) ? (
-                    <img 
-                      src={currentSong?.thumbnail || playerCurrentSong?.image} 
-                      alt={currentSong?.title || playerCurrentSong?.name} 
-                      className="w-full h-full object-cover" 
+                    <img
+                      src={currentSong?.thumbnail || playerCurrentSong?.image}
+                      alt={currentSong?.title || playerCurrentSong?.name}
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <Music size={24} />
@@ -632,7 +630,7 @@ const RoomDashboard = () => {
                   onKeyPress={handleKeyPress}
                   className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                 />
-                <button 
+                <button
                   onClick={handleSendMessage}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-sm flex items-center gap-1"
                 >
