@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Search, Play, Pause, SkipForward, Volume2, Users, MessageCircle, Music, Clock, User, Loader2, Send } from 'lucide-react'
 import { useSocket } from '@/lib/hooks/useSocket'
+import { usePlayer } from '@/context/PlayerContext'
 
 // Type definitions
 type Participant = {
@@ -32,6 +33,25 @@ type Song = {
   url?: string
 }
 
+// Convert function to match PlayerContext Song interface
+const convertToPlayerSong = (song: Song) => ({
+  id: song.id.toString(),
+  name: song.title,
+  artist: song.artist,
+  image: song.thumbnail || '/default-album.png',
+  url: song.url || '',
+  duration: parseDuration(song.duration) // Convert duration string to seconds
+})
+
+// Helper function to parse duration string (e.g., "3:20" -> 200 seconds)
+const parseDuration = (durationStr: string): number => {
+  const parts = durationStr.split(':')
+  if (parts.length === 2) {
+    return parseInt(parts[0]) * 60 + parseInt(parts[1])
+  }
+  return 0
+}
+
 const RoomDashboard = () => {
   const params = useParams()
   const roomId = params.id as string
@@ -46,6 +66,15 @@ const RoomDashboard = () => {
     togglePlayPause: socketTogglePlayPause, 
     sendMessage: socketSendMessage 
   } = useSocket()
+
+  // Player context hook
+  const { 
+    currentSong: playerCurrentSong, 
+    isPlaying: playerIsPlaying, 
+    setCurrentSong: setPlayerCurrentSong, 
+    setIsPlaying: setPlayerIsPlaying,
+    audioRef
+  } = usePlayer()
   
   const [roomDetails, setRoomDetails] = useState<RoomDetails | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -61,6 +90,37 @@ const RoomDashboard = () => {
   const currentSong = roomState.currentSong
   const isPlaying = roomState.isPlaying
   const participants = roomState.participants
+
+  // Sync socket song changes with player context
+  useEffect(() => {
+    if (currentSong && currentSong.url) {
+      const playerSong = convertToPlayerSong(currentSong)
+      
+      // Only update if it's a different song
+      if (!playerCurrentSong || playerCurrentSong.id !== playerSong.id) {
+        setPlayerCurrentSong(playerSong)
+      }
+      
+      // Sync playing state
+      if (playerIsPlaying !== isPlaying) {
+        setPlayerIsPlaying(isPlaying)
+      }
+    }
+  }, [currentSong, isPlaying, playerCurrentSong, playerIsPlaying, setPlayerCurrentSong, setPlayerIsPlaying])
+
+  // Sync player context changes back to socket (for manual controls)
+  useEffect(() => {
+    if (audioRef.current && currentSong) {
+      const handleTimeUpdate = () => {
+        // You can add time sync logic here if needed
+      }
+      
+      audioRef.current.addEventListener('timeupdate', handleTimeUpdate)
+      return () => {
+        audioRef.current?.removeEventListener('timeupdate', handleTimeUpdate)
+      }
+    }
+  }, [audioRef, currentSong])
 
   const getRoomDetails = useCallback(async () => {
     if (!roomId) return
@@ -137,7 +197,7 @@ const RoomDashboard = () => {
             ? `${Math.floor(item.more_info.duration / 60)}:${String(item.more_info.duration % 60).padStart(2, '0')}`
             : '0:00',
           album: item.more_info.album || '',
-          thumbnail: item.thumbnail || item.image
+          thumbnail: (item.thumbnail || item.image || '').replace('http://', 'https://').replace('150x150', '500x500'),
         }))
       } else {
         // Fallback to mock data for testing
@@ -205,10 +265,15 @@ const RoomDashboard = () => {
 
       const updatedSong = {
         ...song,
-        url:data.data[0].downloadUrl[4].url.replaceAll("http","https")
+        url: data.data[0].downloadUrl[4].url.replaceAll("http://", "https://")
       }
 
-      // Use socket to play the song for all users
+      // Convert to player song format and set in player context
+      const playerSong = convertToPlayerSong(updatedSong)
+      setPlayerCurrentSong(playerSong)
+      setPlayerIsPlaying(true)
+
+      // Also use socket to sync with other users
       socketPlaySong(updatedSong)
 
     } catch (error) {
@@ -222,6 +287,12 @@ const RoomDashboard = () => {
 
   const handleSongClick = (song: Song) => {
     if (song.url) {
+      // Convert to player song format and set in player context
+      const playerSong = convertToPlayerSong(song)
+      setPlayerCurrentSong(playerSong)
+      setPlayerIsPlaying(true)
+      
+      // Also sync with socket
       socketPlaySong(song)
     } else {
       getSongUrl(song)
@@ -229,7 +300,13 @@ const RoomDashboard = () => {
   }
 
   const togglePlayPause = () => {
-    socketTogglePlayPause(!isPlaying, roomState.currentTime)
+    const newPlayingState = !isPlaying
+    
+    // Update player context
+    setPlayerIsPlaying(newPlayingState)
+    
+    // Sync with socket
+    socketTogglePlayPause(newPlayingState, roomState.currentTime)
   }
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -264,7 +341,6 @@ const RoomDashboard = () => {
     getRoomDetails().finally(() => setLoading(false));
 
     const userData = JSON.parse(localStorage.getItem('user') || '{}');
-
 
     // Join the socket room
     const user = {
@@ -351,25 +427,38 @@ const RoomDashboard = () => {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Current Song Player */}
-          {currentSong && (
+          {(currentSong || playerCurrentSong) && (
             <div className="bg-black/30 backdrop-blur-sm rounded-xl p-6 border border-white/10">
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Music size={24} />
                 Now Playing (Synced)
+                {playerIsPlaying && (
+                  <span className="text-green-400 text-sm">● Live</span>
+                )}
               </h3>
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center overflow-hidden">
-                  {currentSong.thumbnail ? (
-                    <img src={currentSong.thumbnail} alt={currentSong.title} className="w-full h-full object-cover" />
+                  {(currentSong?.thumbnail || playerCurrentSong?.image) ? (
+                    <img 
+                      src={currentSong?.thumbnail || playerCurrentSong?.image} 
+                      alt={currentSong?.title || playerCurrentSong?.name} 
+                      className="w-full h-full object-cover" 
+                    />
                   ) : (
                     <Music size={24} />
                   )}
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-lg font-semibold">{currentSong.title}</h4>
-                  <p className="text-gray-400">{currentSong.artist}</p>
-                  <p className="text-sm text-gray-500">{currentSong.album}</p>
-                  {currentSong.url && (
+                  <h4 className="text-lg font-semibold">
+                    {currentSong?.title || playerCurrentSong?.name}
+                  </h4>
+                  <p className="text-gray-400">
+                    {currentSong?.artist || playerCurrentSong?.artist}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {currentSong?.album}
+                  </p>
+                  {(currentSong?.url || playerCurrentSong?.url) && (
                     <p className="text-xs text-green-400 mt-1">🔗 Stream ready</p>
                   )}
                 </div>
@@ -378,7 +467,7 @@ const RoomDashboard = () => {
                     onClick={togglePlayPause}
                     className="w-12 h-12 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors"
                   >
-                    {isPlaying ? <Pause size={24} /> : <Play size={24} />}
+                    {(isPlaying || playerIsPlaying) ? <Pause size={24} /> : <Play size={24} />}
                   </button>
                   <button className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors">
                     <SkipForward size={20} />
@@ -578,6 +667,12 @@ const RoomDashboard = () => {
                 <span className="text-gray-400">Connection</span>
                 <span className={`font-semibold ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
                   {isConnected ? 'Connected' : 'Disconnected'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Player Status</span>
+                <span className={`font-semibold ${playerIsPlaying ? 'text-green-400' : 'text-gray-400'}`}>
+                  {playerIsPlaying ? 'Playing' : 'Paused'}
                 </span>
               </div>
             </div>
