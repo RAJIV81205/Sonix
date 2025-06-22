@@ -26,39 +26,6 @@ export async function getRoomById(roomId: string) {
     return room[0];
 }
 
-// ✅ 3. JOIN ROOM
-export async function joinRoom(
-  roomCode: string,
-  userId: number,
-  userName: string
-) {
-  const existingRoom = await getRoomById(roomCode);
-  if (!existingRoom) {
-    throw new Error("Room not found");
-  }
-
-  const currentParticipants = existingRoom.participants || [];
-
-  if (currentParticipants.some(p => p.id === userId)) {
-    return existingRoom; // User already in the room, return existing room
-  }
-
-  const newParticipant = {
-    id: userId,
-    name: userName,
-    role: "participant" as const,
-  };
-
-  const updatedParticipants = [...currentParticipants, newParticipant];
-
-  const updatedRoom = await db
-    .update(roomsTable)
-    .set({ participants: updatedParticipants })
-    .where(eq(roomsTable.roomCode, roomCode))
-    .returning();
-
-  return updatedRoom[0];
-}
 
 
 export async function deleteRoom(roomCode: string) {
