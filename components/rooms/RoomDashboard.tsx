@@ -1,9 +1,10 @@
 "use client"
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
-import { Search, Play, Pause, SkipForward, Volume2, Users, MessageCircle, Music, Clock, User, Loader2, Send } from 'lucide-react'
+import { Search, Play, Pause, SkipForward, Volume2, Users, MessageCircle, Music, Clock, User, Loader2, Send, LogOut } from 'lucide-react'
 import { useSocket } from '@/lib/hooks/useSocket'
 import { usePlayer } from '@/context/PlayerContext'
+import { toast } from 'react-hot-toast'
 
 // Type definitions
 type Participant = {
@@ -122,12 +123,12 @@ const RoomDashboard = () => {
       if (!playerCurrentSong || playerCurrentSong.id !== playerSong.id) {
         syncingRef.current = true
         setPlayerCurrentSong(playerSong)
-        
+
         // Set audio source and sync time
         if (audioRef.current) {
           audioRef.current.src = currentSong.url
           audioRef.current.load()
-          
+
           // Wait for audio to load then sync time
           const handleCanPlay = () => {
             if (audioRef.current && socketCurrentTime > 0) {
@@ -136,7 +137,7 @@ const RoomDashboard = () => {
             audioRef.current?.removeEventListener('canplay', handleCanPlay)
             syncingRef.current = false
           }
-          
+
           audioRef.current.addEventListener('canplay', handleCanPlay)
         } else {
           syncingRef.current = false
@@ -146,7 +147,7 @@ const RoomDashboard = () => {
       // Sync playing state
       if (playerIsPlaying !== isPlaying && !isUserInteractionRef.current) {
         setPlayerIsPlaying(isPlaying)
-        
+
         if (audioRef.current) {
           if (isPlaying) {
             audioRef.current.play().catch(console.error)
@@ -176,7 +177,7 @@ const RoomDashboard = () => {
     const handlePlay = () => {
       if (!isUserInteractionRef.current) return
       isUserInteractionRef.current = false
-      
+
       if (!playerIsPlaying) {
         setPlayerIsPlaying(true)
         socketTogglePlayPause(true, audio.currentTime)
@@ -186,7 +187,7 @@ const RoomDashboard = () => {
     const handlePause = () => {
       if (!isUserInteractionRef.current) return
       isUserInteractionRef.current = false
-      
+
       if (playerIsPlaying) {
         setPlayerIsPlaying(false)
         socketTogglePlayPause(false, audio.currentTime)
@@ -195,10 +196,10 @@ const RoomDashboard = () => {
 
     const handleSeeked = () => {
       if (!isUserInteractionRef.current) return
-      
+
       const currentTime = audio.currentTime
       socketSyncTime(currentTime)
-      
+
       setTimeout(() => {
         isUserInteractionRef.current = false
       }, 1000)
@@ -283,7 +284,7 @@ const RoomDashboard = () => {
 
       if (data.songs && Array.isArray(data.songs)) {
         processedResults = data.songs.slice(0, 5).map((item: any, index: number) => ({
-          id: item.id ,
+          id: item.id,
           title:
             item.title?.replaceAll("&quot;", `"`) ||
             item.name?.replaceAll("&quot;", `"`) ||
@@ -346,7 +347,7 @@ const RoomDashboard = () => {
 
       // Mark as user interaction to prevent circular updates
       isUserInteractionRef.current = true
-      
+
       // Convert to player song format and set in player context
       const playerSong = convertToPlayerSong(updatedSong)
       setPlayerCurrentSong(playerSong)
@@ -369,7 +370,7 @@ const RoomDashboard = () => {
     if (song.url) {
       // Mark as user interaction
       isUserInteractionRef.current = true
-      
+
       // Convert to player song format and set in player context
       const playerSong = convertToPlayerSong(song)
       setPlayerCurrentSong(playerSong)
@@ -385,7 +386,7 @@ const RoomDashboard = () => {
   const togglePlayPause = () => {
     // Mark as user interaction
     isUserInteractionRef.current = true
-    
+
     const newPlayingState = !isPlaying
     const currentTime = audioRef.current?.currentTime || 0
 
@@ -515,6 +516,11 @@ const RoomDashboard = () => {
                     {messages.length}
                   </span>
                 )}
+              </button>
+              <button onClick={() => { window.location.pathname = `/dashboard/room` }} className='flex items-center gap-2 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg transition-colors'>
+                <LogOut size={20} />
+                Leave Room
+
               </button>
             </div>
           </div>
