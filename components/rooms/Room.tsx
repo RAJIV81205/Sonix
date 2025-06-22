@@ -104,22 +104,6 @@ const Room: React.FC = () => {
     try {
       // Add your room joining API logic here
       console.log('Joining room:', joinCode)
-
-      const response = await fetch('/api/room/joinRoom', {
-        method: 'POST',
-        headers: {
-          "Content-Type": 'application/json',
-          "Authorization": `Bearer ${localStorage.getItem('token') || ''}`
-        },
-        body: JSON.stringify({ roomCode: joinCode })
-      })
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to join room')
-      }
-
-      const roomData = await response.json()
-      console.log('Room data:', roomData)
       window.location.href = `/dashboard/room/${joinCode}`
       // Reset join code after successful join
       setJoinCode('')
