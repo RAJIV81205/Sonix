@@ -35,6 +35,32 @@ const roomStates = {
   }
 };
 
+// Helper function to delete room from database
+const deleteRoomFromDB = async (roomCode) => {
+  try {
+    const apiUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const response = await fetch(`${apiUrl}/api/room/deleteRoom`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ roomCode })
+    });
+
+    if (!response.ok) {
+      console.error(`Failed to delete room ${roomCode} from database:`, response.statusText);
+      return false;
+    }
+
+    const result = await response.json();
+    console.log(`Successfully deleted room ${roomCode} from database:`, result.message);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting room ${roomCode} from database:`, error);
+    return false;
+  }
+};
+
 // Helper function to get current synced time
 const getSyncedTime = (roomState) => {
   if (!roomState.isPlaying) return roomState.currentTime;
@@ -277,8 +303,20 @@ io.on('connection', (socket) => {
         count: Object.keys(roomStates[roomId].participants).length
       });
       
-      // Clean up room if empty
+      // Clean up room if empty and delete from database
       if (Object.keys(roomStates[roomId].participants).length === 0) {
+        console.log(`Room ${roomId} is now empty, cleaning up and deleting from database...`);
+        
+        // Delete from database
+        deleteRoomFromDB(roomId).then((success) => {
+          if (success) {
+            console.log(`Room ${roomId} successfully deleted from database`);
+          } else {
+            console.log(`Failed to delete room ${roomId} from database, but local state cleaned up`);
+          }
+        });
+        
+        // Clean up local state
         delete roomStates[roomId];
         console.log(`Room ${roomId} cleaned up - no participants left`);
       }
