@@ -59,3 +59,14 @@ export async function joinRoom(
 
   return updatedRoom[0];
 }
+
+
+export async function deleteRoom(roomCode: string) {
+  const room = await getRoomById(roomCode);
+  if (!room) {
+    throw new Error("Room not found");
+  }
+
+  await db.delete(roomsTable).where(eq(roomsTable.roomCode, roomCode));
+  return { message: "Room deleted successfully" };
+}
