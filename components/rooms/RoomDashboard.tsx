@@ -452,7 +452,7 @@ const RoomDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex items-center justify-center">
         <div className="text-white text-xl flex items-center gap-3">
           <Loader2 className="animate-spin" size={24} />
           Loading room...
@@ -463,7 +463,7 @@ const RoomDashboard = () => {
 
   if (!roomDetails) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex items-center justify-center">
         <div className="text-white text-xl">Room not found</div>
       </div>
     )
