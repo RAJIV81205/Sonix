@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Plus, Hash, Copy, Music, Headphones, Zap, CheckCircle, Type } from 'lucide-react'
+import { Users, Plus, Hash, Copy, Music, Headphones, Loader2, CheckCircle, AlertCircle, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 type Room = {
@@ -60,7 +60,6 @@ const Room: React.FC = () => {
         throw new Error('User not found. Please log in again.')
       }
 
-
       const response = await fetch('/api/room/create-room', {
         method: 'POST',
         headers: {
@@ -102,14 +101,10 @@ const Room: React.FC = () => {
     setError('')
 
     try {
-      // Add your room joining API logic here
       console.log('Joining room:', joinCode)
       window.location.href = `/dashboard/room/${joinCode}`
-      // Reset join code after successful join
       setJoinCode('')
       setIsJoining(false)
-
-
     } catch (error) {
       console.error('Error joining room:', error)
       setError('Failed to join room. Please check the code and try again.')
@@ -124,7 +119,6 @@ const Room: React.FC = () => {
       setTimeout(() => setCopySuccess(false), 2000)
     } catch (error) {
       console.error('Failed to copy to clipboard:', error)
-      // Fallback for older browsers
       const textArea = document.createElement('textarea')
       textArea.value = roomCode
       document.body.appendChild(textArea)
@@ -136,53 +130,54 @@ const Room: React.FC = () => {
     }
   }
 
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
+  const fadeInUp = {
+    initial: { opacity: 0, y: 40 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6, ease: "easeOut" }
+  }
+
+  const staggerContainer = {
+    animate: {
       transition: {
-        duration: 0.6,
         staggerChildren: 0.1
       }
     }
   }
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  }
-
   // Success screen after room creation
   if (createdRoom) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
-        <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-screen">
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-2xl p-8 max-w-md w-full text-center"
+            transition={{ duration: 0.5 }}
+            className="bg-white dark:bg-slate-800 shadow-xl rounded-3xl p-8 max-w-md w-full text-center border border-slate-200 dark:border-slate-700"
           >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="w-16 h-16 mx-auto mb-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center"
-            >
-              <Music className="w-8 h-8 text-white" />
-            </motion.div>
+            <div className="w-20 h-20 mx-auto mb-6 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center">
+              <CheckCircle className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
+            </div>
 
-            <h2 className="text-2xl font-bold text-white mb-2">Room Created!</h2>
-            <p className="text-gray-300 mb-6">Share this code with your friends</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+              Room Created Successfully
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 mb-8">
+              Share this code with your friends to start listening together
+            </p>
 
-            <div className="bg-gray-900/50 rounded-lg p-4 mb-6 relative">
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 mb-8 relative">
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Room Code</p>
               <div className="flex items-center justify-between">
-                <span className="text-3xl font-mono font-bold text-purple-400">{createdRoom.code}</span>
+                <span className="text-3xl font-mono font-bold text-slate-900 dark:text-white tracking-wider">
+                  {createdRoom.code}
+                </span>
                 <button
                   onClick={copyToClipboard}
-                  className={`p-2 rounded-lg transition-all duration-200 ${
+                  className={`p-3 rounded-xl transition-all duration-200 ${
                     copySuccess 
-                      ? 'bg-green-600 text-white' 
-                      : 'hover:bg-gray-700 text-gray-400'
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' 
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                   title={copySuccess ? 'Copied!' : 'Copy to clipboard'}
                 >
@@ -194,14 +189,13 @@ const Room: React.FC = () => {
                 </button>
               </div>
               {copySuccess && (
-                <motion.div
+                <motion.p
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-green-400 text-sm"
+                  className="text-emerald-600 dark:text-emerald-400 text-sm mt-2"
                 >
                   Copied to clipboard!
-                </motion.div>
+                </motion.p>
               )}
             </div>
 
@@ -209,9 +203,10 @@ const Room: React.FC = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
+                className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-4 rounded-2xl font-semibold hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors duration-200 flex items-center justify-center"
               >
                 Start Listening
+                <ArrowRight className="w-5 h-5 ml-2" />
               </motion.button>
             </Link>
           </motion.div>
@@ -221,77 +216,72 @@ const Room: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
-      <div className="flex flex-col items-center justify-center min-h-screen p-4 py-10">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <div className="container mx-auto px-4 py-25 lg:py-16">
         <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="w-full max-w-4xl"
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="max-w-6xl mx-auto"
         >
           {/* Header */}
-          <motion.div variants={itemVariants} className="text-center mb-12">
-            <div className="flex items-center justify-center mb-4">
-              <motion.div
-                animate={{
-                  boxShadow: [
-                    '0 0 20px rgba(168, 85, 247, 0.5)', 
-                    '0 0 40px rgba(168, 85, 247, 0.8)', 
-                    '0 0 20px rgba(168, 85, 247, 0.5)'
-                  ]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mr-4"
-              >
-                <Headphones className="w-8 h-8 text-white" />
-              </motion.div>
-              <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+          <motion.div variants={fadeInUp} className="text-center mb-16">
+            <div className="flex items-center justify-center mb-6">
+              <div className="p-4 bg-slate-900 dark:bg-white rounded-2xl mr-4">
+                <Headphones className="w-8 h-8 text-white dark:text-slate-900" />
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 dark:text-white">
                 Listen Together
               </h1>
             </div>
-            <p className="text-gray-300 text-lg md:text-xl">
-              Create or join a room to enjoy music with your friends in real-time
+            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+              Create or join a room to enjoy music with your friends in perfect sync
             </p>
           </motion.div>
 
           {/* Error Message */}
           {error && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6 max-w-md mx-auto"
+              className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-8 max-w-md mx-auto"
             >
-              <p className="text-red-400 text-center">{error}</p>
+              <div className="flex items-center">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-3 flex-shrink-0" />
+                <p className="text-red-700 dark:text-red-300">{error}</p>
+              </div>
             </motion.div>
           )}
 
-          {/* Content Cards */}
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {/* Main Content */}
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
             {/* Create Room Section */}
-            <motion.div variants={itemVariants}>
-              <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-2xl p-8 h-full">
-                <div className="flex items-center mb-6">
-                  <div className="p-3 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl mr-4">
-                    <Plus className="w-6 h-6 text-white" />
+            <motion.div variants={fadeInUp}>
+              <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 lg:p-10 shadow-xl border border-slate-200 dark:border-slate-700 h-full">
+                <div className="flex items-center mb-8">
+                  <div className="p-4 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl mr-4">
+                    <Plus className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <h2 className="text-2xl font-bold text-white">Create a Room</h2>
+                  <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
+                    Create Room
+                  </h2>
                 </div>
 
-                <p className="text-gray-300 mb-6">
-                  Start a new listening session and invite your friends to join you
+                <p className="text-slate-600 dark:text-slate-400 mb-8 text-lg">
+                  Start a new listening session and invite friends to join you
                 </p>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
                       Room Name
                     </label>
                     <input
                       type="text"
                       value={roomName}
                       onChange={(e) => setRoomName(e.target.value)}
-                      placeholder="Enter room name..."
-                      className="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all"
+                      placeholder="e.g., Friday Night Vibes"
+                      className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-600 rounded-2xl px-4 py-4 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 transition-all"
                       maxLength={50}
                     />
                   </div>
@@ -301,22 +291,16 @@ const Room: React.FC = () => {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleCreateRoom}
                     disabled={!roomName.trim() || isCreating}
-                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white disabled:text-slate-500 py-4 rounded-2xl font-semibold transition-colors duration-200 flex items-center justify-center"
                   >
                     {isCreating ? (
                       <>
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="mr-2"
-                        >
-                          <Zap className="w-5 h-5" />
-                        </motion.div>
+                        <Loader2 className="w-5 h-5 mr-3 animate-spin" />
                         Creating Room...
                       </>
                     ) : (
                       <>
-                        <Users className="w-5 h-5 mr-2" />
+                        <Users className="w-5 h-5 mr-3" />
                         Create Room
                       </>
                     )}
@@ -326,31 +310,33 @@ const Room: React.FC = () => {
             </motion.div>
 
             {/* Join Room Section */}
-            <motion.div variants={itemVariants}>
-              <div className="bg-gray-800/50 backdrop-blur-lg border border-gray-700 rounded-2xl p-8 h-full">
-                <div className="flex items-center mb-6">
-                  <div className="p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl mr-4">
-                    <Hash className="w-6 h-6 text-white" />
+            <motion.div variants={fadeInUp}>
+              <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 lg:p-10 shadow-xl border border-slate-200 dark:border-slate-700 h-full">
+                <div className="flex items-center mb-8">
+                  <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-2xl mr-4">
+                    <Hash className="w-7 h-7 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <h2 className="text-2xl font-bold text-white">Join a Room</h2>
+                  <h2 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
+                    Join Room
+                  </h2>
                 </div>
 
-                <p className="text-gray-300 mb-6">
+                <p className="text-slate-600 dark:text-slate-400 mb-8 text-lg">
                   Enter a room code to join an existing listening session
                 </p>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
                       Room Code
                     </label>
                     <input
                       type="text"
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                      placeholder="Enter 6-digit code..."
+                      placeholder="ABCD12"
                       maxLength={6}
-                      className="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all font-mono text-center text-lg tracking-widest"
+                      className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-600 rounded-2xl px-4 py-4 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 transition-all font-mono text-center text-xl tracking-widest"
                     />
                   </div>
 
@@ -359,22 +345,16 @@ const Room: React.FC = () => {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleJoinRoom}
                     disabled={joinCode.length !== 6 || isJoining}
-                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-4 rounded-lg font-semibold hover:from-blue-700 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center"
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white disabled:text-slate-500 py-4 rounded-2xl font-semibold transition-colors duration-200 flex items-center justify-center"
                   >
                     {isJoining ? (
                       <>
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="mr-2"
-                        >
-                          <Zap className="w-5 h-5" />
-                        </motion.div>
-                        Joining...
+                        <Loader2 className="w-5 h-5 mr-3 animate-spin" />
+                        Joining Room...
                       </>
                     ) : (
                       <>
-                        <Users className="w-5 h-5 mr-2" />
+                        <ArrowRight className="w-5 h-5 mr-3" />
                         Join Room
                       </>
                     )}
@@ -383,6 +363,8 @@ const Room: React.FC = () => {
               </div>
             </motion.div>
           </div>
+
+          
         </motion.div>
       </div>
     </div>
