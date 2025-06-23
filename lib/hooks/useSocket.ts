@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { toast } from 'react-hot-toast';
 
 interface User {
   id: string;
@@ -63,7 +64,7 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
   // Calculate synced time based on server timestamp and elapsed time
   const calculateSyncedTime = useCallback((serverTime: number, serverTimestamp: number, isPlaying: boolean) => {
     if (!isPlaying) return serverTime;
-    
+
     const now = Date.now();
     const elapsed = (now - serverTimestamp) / 1000; // Convert to seconds
     return serverTime + elapsed;
@@ -81,6 +82,7 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
     // Connection event handlers
     socket.on('connect', () => {
       console.log('Connected to socket server:', socket.id);
+      toast.success('Connected to the server');
       setIsConnected(true);
     });
 
@@ -96,6 +98,7 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
 
     socket.on('connect_error', (error) => {
       console.error('Socket connection error:', error);
+      toast.error('Failed to connect to the server. Please try again later.');
       setIsConnected(false);
     });
 
@@ -167,6 +170,7 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
 
     socket.on('user-left', (data: { user: User; participantCount: number }) => {
       console.log('User left:', data.user?.name || 'Unknown user');
+      toast.error(`${data.user?.name || 'A user'} has left the room`);
     });
 
     // Chat handlers
@@ -226,8 +230,9 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
 
   const joinRoom = useCallback((roomId: string, user?: User) => {
     if (!socketRef.current) return;
-    
+
     console.log('Joining room:', roomId);
+    toast.loading(`Joining room... ` + roomId );
     socketRef.current.emit('join-room', {
       roomId,
       user: user || { id: socketRef.current.id, name: `User ${Date.now()}` }
@@ -236,8 +241,9 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
 
   const playSong = useCallback((song: Song, currentTime: number = 0) => {
     if (!socketRef.current) return;
-    
+
     console.log('Playing song:', song.title);
+    toast.success(`Now playing: ${song.title}`);
     socketRef.current.emit('play-song', {
       song,
       isPlaying: true,
@@ -248,8 +254,12 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
 
   const togglePlayPause = useCallback((isPlaying: boolean, currentTime: number = 0) => {
     if (!socketRef.current) return;
-    
+
     console.log('Toggle play/pause:', isPlaying);
+    toast(isPlaying ? 'Playing' : 'Paused', {
+      duration: 2000,
+      icon: isPlaying ? '▶️' : '⏸️',
+    });
     socketRef.current.emit('toggle-play-pause', {
       isPlaying,
       currentTime,
@@ -259,8 +269,8 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
 
   const syncTime = useCallback((currentTime: number) => {
     if (!socketRef.current) return;
-    
-    socketRef.current.emit('sync-time', { 
+
+    socketRef.current.emit('sync-time', {
       currentTime,
       timestamp: Date.now() // Client timestamp
     });
@@ -268,7 +278,7 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
 
   const requestTimeSync = useCallback(() => {
     if (!socketRef.current) return;
-    
+
     socketRef.current.emit('request-time-sync', {
       timestamp: Date.now()
     });
@@ -276,8 +286,7 @@ export const useSocket = (serverUrl: any = process.env.NEXT_PUBLIC_SOCKET_SERVER
 
   const sendMessage = useCallback((message: string) => {
     if (!socketRef.current || !message.trim()) return;
-    
-    console.log('Sending message:', message);
+
     socketRef.current.emit('send-message', { message });
   }, []);
 
