@@ -583,7 +583,7 @@ const MobileMain = () => {
         <h2 className="text-xl font-bold mb-4">Recommendations</h2>
         {isTrendingLoading ? (
           <div className="grid grid-cols-4 gap-4">
-            {[...Array(6)].map((_, index) => (
+            {[...Array(12)].map((_, index) => (
               <div key={`skeleton-${index}`} className="flex flex-col">
                 <div className="aspect-square bg-zinc-800 rounded-lg mb-2 animate-pulse"></div>
                 <div className="h-4 bg-zinc-800 rounded w-3/4 mb-2 animate-pulse"></div>
@@ -671,6 +671,16 @@ const MobileMain = () => {
             </div>
           )}
         </div>
+
+        {/* Artists Section */}
+        <div className="mb-8">
+
+        </div>
+
+
+
+
+        
 
         {/* Made For You Section */}
         <div>
