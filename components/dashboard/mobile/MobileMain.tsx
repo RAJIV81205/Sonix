@@ -659,7 +659,7 @@ const MobileMain = () => {
           <h2 className="text-xl font-bold mb-4">Recently Played</h2>
           
           {recentlyPlayed.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               {recentlyPlayed.slice(0, 6).map((song) => (
                 <RecentPlayItem key={song.id} song={song} />
               ))}
