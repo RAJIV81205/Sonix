@@ -246,6 +246,7 @@ const MobileMain = () => {
       setCurrentSong(song);
       setIsPlaying(true);
       setShowSuggestions(false);
+      setSearchQuery(""); // Clear the input box after playing a song
       toast.success(`Now playing: ${item.title.replaceAll("&quot;", `"`)}`);
     } catch (error) {
       console.error('Error playing song:', error);
