@@ -581,7 +581,7 @@ const MobileMain = () => {
       <div className="py-4 pb-10">
         <h2 className="text-xl font-bold mb-4">Recommendations</h2>
         {isTrendingLoading ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             {[...Array(6)].map((_, index) => (
               <div key={`skeleton-${index}`} className="flex flex-col">
                 <div className="aspect-square bg-zinc-800 rounded-lg mb-2 animate-pulse"></div>
@@ -591,8 +591,8 @@ const MobileMain = () => {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
-            {trendingTracks.slice(0, 8).map((track) => (
+          <div className="grid grid-cols-4 gap-4">
+            {trendingTracks.slice(0, 12).map((track) => (
               <div
                 key={track.id}
                 className="flex flex-col"
