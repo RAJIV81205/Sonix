@@ -674,13 +674,24 @@ const MobileMain = () => {
 
         {/* Artists Section */}
         <div className="mb-8">
+        <h2 className="text-xl font-bold mb-4">Top Artists</h2>
+        <div className="grid grid-cols-3 gap-4">
+          {[1, 2, 3, 4 , 5, 6].map((item) => (
+            <div key={item} className="flex flex-col">
+              <div className="aspect-square bg-zinc-800 rounded-full mb-2"></div>
+              <h3 className="font-medium text-sm">Artist Name {item}</h3>
+              <p className="text-xs text-zinc-400">Genre</p>
+            </div>
+          ))}
+
+        </div>
 
         </div>
 
 
 
 
-        
+
 
         {/* Made For You Section */}
         <div>
@@ -695,6 +706,7 @@ const MobileMain = () => {
             ))}
           </div>
         </div>
+
       </div>
       
       {/* Add to Playlist Modal */}
