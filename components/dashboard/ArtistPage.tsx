@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { Play, Pause, Heart, Share2, ExternalLink, Calendar, Users, Music } from 'lucide-react'
+import { usePlayer } from '@/context/PlayerContext'
 
 // Skeleton Components
 const SkeletonLoader = () => (
@@ -87,12 +88,13 @@ const ArtistPage = () => {
     const [currentPlaying, setCurrentPlaying] = useState<string | null>(null)
     const [isPlaying, setIsPlaying] = useState<boolean>(false)
     const param = useParams().id
+    const { setCurrentSong } = usePlayer()
 
     useEffect(() => {
         const fetchArtist = async () => {
             try {
                 setIsLoading(true)
-                const response = await fetch(`https://saavn.dev/api/artists/${param}?songCount=1000`)
+                const response = await fetch(`https://saavn.dev/api/artists/${param}?songCount=100`)
 
                 if (!response.ok) {
                     throw new Error("Failed to fetch artist data")
