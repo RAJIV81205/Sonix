@@ -397,12 +397,12 @@ const MobileMain = () => {
 
   /// Top Artists
   const topArtists = [
-    { id: 'diljit-dosanjh', name: 'Diljit Dosanjh', genre: 'Punjabi Pop' },
-    { id: 'arijit-singh', name: 'Arijit Singh', genre: 'Bollywood' },
-    { id: 'neha-kakkar', name: 'Neha Kakkar', genre: 'Pop' },
-    { id: 'badshah', name: 'Badshah', genre: 'Hip-Hop' },
-    { id: 'shreya-ghoshal', name: 'Shreya Ghoshal', genre: 'Classical/Bollywood' },
-    { id: 'jubin-nautiyal', name: 'Jubin Nautiyal', genre: 'Romantic' },
+    { id: '468245', name: 'Diljit Dosanjh', genre: 'Punjabi Pop', img: "https://c.saavncdn.com/artists/Diljit_Dosanjh_005_20231025073054_500x500.jpg" },
+    { id: '459320', name: 'Arijit Singh', genre: 'Bollywood', img: "https://c.saavncdn.com/artists/Arijit_Singh_004_20241118063717_500x500.jpg" },
+    { id: '464932', name: 'Neha Kakkar', genre: 'Pop', img: "https://c.saavncdn.com/artists/Neha_Kakkar_007_20241212115832_500x500.jpg" },
+    { id: '456863', name: 'Badshah', genre: 'Hip-Hop', img: "https://c.saavncdn.com/artists/Badshah_006_20241118064015_500x500.jpg" },
+    { id: '455130', name: 'Shreya Ghoshal', genre: 'Classical/Bollywood', img: "https://c.saavncdn.com/artists/Shreya_Ghoshal_007_20241101074144_500x500.jpg" },
+    { id: '881158', name: 'Jubin Nautiyal', genre: 'Romantic', img: "https://c.saavncdn.com/artists/Jubin_Nautiyal_003_20231130204020_500x500.jpg" },
   ];
 
   // Recently played item component
@@ -707,31 +707,31 @@ const MobileMain = () => {
 
 
 
-      {/* Made For You Section */}
-      <div>
-        <h2 className="text-xl font-bold mb-4">Made For You</h2>
-        <div className="grid grid-cols-2 gap-4">
-          {[1, 2, 3, 4].map((item) => (
-            <div key={item} className="flex flex-col">
-              <div className="aspect-square bg-zinc-800 rounded-lg mb-2"></div>
-              <h3 className="font-medium text-sm">Album Title {item}</h3>
-              <p className="text-xs text-zinc-400">Artist Name</p>
-            </div>
-          ))}
+        {/* Made For You Section */}
+        <div>
+          <h2 className="text-xl font-bold mb-4">Made For You</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((item) => (
+              <div key={item} className="flex flex-col">
+                <div className="aspect-square bg-zinc-800 rounded-lg mb-2"></div>
+                <h3 className="font-medium text-sm">Album Title {item}</h3>
+                <p className="text-xs text-zinc-400">Artist Name</p>
+              </div>
+            ))}
+          </div>
         </div>
+
       </div>
 
-    </div>
-      
-      {/* Add to Playlist Modal */ }
-  <AddToPlaylistModal />
+      {/* Add to Playlist Modal */}
+      <AddToPlaylistModal />
 
-  {/* Add Playlist Popup */ }
-  <MobileAddPlaylistPopup
-    isOpen={showAddPlaylistPopup}
-    onClose={() => setShowAddPlaylistPopup(false)}
-    onSuccess={handlePlaylistCreated}
-  />
+      {/* Add Playlist Popup */}
+      <MobileAddPlaylistPopup
+        isOpen={showAddPlaylistPopup}
+        onClose={() => setShowAddPlaylistPopup(false)}
+        onSuccess={handlePlaylistCreated}
+      />
     </div >
   );
 };
