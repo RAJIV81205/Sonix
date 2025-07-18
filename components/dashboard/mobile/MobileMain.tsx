@@ -6,6 +6,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { usePlayer } from '@/context/PlayerContext';
 import { toast } from 'react-hot-toast';
 import MobileAddPlaylistPopup from './MobileAddPlaylistPopup';
+import Link from 'next/link';
 
 interface SearchResultItem {
   id: string;
@@ -37,7 +38,7 @@ interface Song {
   artist: string;
   image: string;
   url: string;
-  duration:number;
+  duration: number;
 }
 
 interface Playlist {
@@ -105,12 +106,12 @@ const MobileMain = () => {
       setRecentlyPlayed(JSON.parse(stored));
     }
   }, []);
-  
+
   // Add event listener to close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        suggestionBoxRef.current && 
+        suggestionBoxRef.current &&
         !suggestionBoxRef.current.contains(event.target as Node) &&
         showSuggestions
       ) {
@@ -119,18 +120,18 @@ const MobileMain = () => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    
-    
+
+
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      
+
     };
   }, [showSuggestions]);
-  
+
   // Fetch playlists when needed
   const fetchPlaylists = async () => {
     if (!token) return;
-    
+
     try {
       setIsLoadingPlaylists(true);
       const response = await fetch('/api/dashboard/getUserPlaylists', {
@@ -179,7 +180,7 @@ const MobileMain = () => {
       setSearching(false);
     }
   };
-      
+
 
   const getSongDetails = async (id: string): Promise<Song | null> => {
     try {
@@ -200,14 +201,14 @@ const MobileMain = () => {
       }
 
       const data = await response.json();
-      
+
       if (!data.data || !data.data[0]) {
         toast.error('Song data not found');
         return null;
       }
-      
+
       const songData = data.data[0];
-      
+
       return {
         id: songData.id,
         name: songData.name,
@@ -226,9 +227,9 @@ const MobileMain = () => {
   const handleSongSelect = async (item: SearchResultItem) => {
     try {
       setLoadingSong(item.id);
-      
+
       const song = await getSongDetails(item.id);
-      
+
       if (!song) {
         setLoadingSong(null);
         return;
@@ -255,7 +256,7 @@ const MobileMain = () => {
       setLoadingSong(null);
     }
   };
-  
+
   const addSongToPlaylist = async (playlistId: string, song: Song) => {
     try {
       setAddingToPlaylist(playlistId);
@@ -278,14 +279,14 @@ const MobileMain = () => {
       }
 
       const data = await response.json();
-      
+
       // Check if song already exists in playlist
       if (data.alreadyExists) {
         toast.error(`"${song.name}" is already in this playlist`);
       } else {
         toast.success(`Added "${song.name}" to playlist`);
       }
-      
+
       // Close modal
       setShowAddToPlaylistModal(null);
     } catch (error) {
@@ -295,7 +296,7 @@ const MobileMain = () => {
       setAddingToPlaylist(null);
     }
   };
-  
+
   const handleAddToPlaylist = async (song: Song) => {
     try {
       // Get full song details first
@@ -392,20 +393,32 @@ const MobileMain = () => {
     setShowAddPlaylistPopup(false);
   };
 
+
+
+  /// Top Artists
+  const topArtists = [
+    { id: 'diljit-dosanjh', name: 'Diljit Dosanjh', genre: 'Punjabi Pop' },
+    { id: 'arijit-singh', name: 'Arijit Singh', genre: 'Bollywood' },
+    { id: 'neha-kakkar', name: 'Neha Kakkar', genre: 'Pop' },
+    { id: 'badshah', name: 'Badshah', genre: 'Hip-Hop' },
+    { id: 'shreya-ghoshal', name: 'Shreya Ghoshal', genre: 'Classical/Bollywood' },
+    { id: 'jubin-nautiyal', name: 'Jubin Nautiyal', genre: 'Romantic' },
+  ];
+
   // Recently played item component
   const RecentPlayItem = ({ song }: { song: Song }) => (
     <div className="flex flex-col">
-      <div 
+      <div
         className="relative aspect-square bg-zinc-800 rounded-lg mb-2 overflow-hidden cursor-pointer"
         onClick={() => {
           setCurrentSong(song);
           setIsPlaying(true);
         }}
       >
-        <img src={song.image.replace('150x150' ,'500x500').replace('http:' , 'https:')} alt={song.name.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
-        
+        <img src={song.image.replace('150x150', '500x500').replace('http:', 'https:')} alt={song.name.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
+
         {/* Add to playlist button */}
-        <button 
+        <button
           className="absolute bottom-2 right-2 p-2 rounded-full bg-black/60 text-white"
           onClick={(e) => {
             e.stopPropagation();
@@ -423,7 +436,7 @@ const MobileMain = () => {
   // Add to playlist modal
   const AddToPlaylistModal = () => {
     if (!showAddToPlaylistModal) return null;
-    
+
     return (
       <div className="fixed inset-0 bg-black/80 z-100 flex items-end">
         <div className="w-full bg-zinc-900 rounded-t-xl max-h-[70vh] overflow-y-auto">
@@ -433,7 +446,7 @@ const MobileMain = () => {
               <X size={24} />
             </button>
           </div>
-          
+
           <div className="p-2 pb-safe">
             {isLoadingPlaylists ? (
               <div className="flex justify-center py-8">
@@ -465,7 +478,7 @@ const MobileMain = () => {
             ) : (
               <div className="py-8 text-center">
                 <p className="text-zinc-400">You don't have any playlists yet.</p>
-                <button 
+                <button
                   className="mt-4 px-4 py-2 bg-purple-600 rounded-full text-white font-medium"
                   onClick={() => {
                     setShowAddToPlaylistModal(null);
@@ -503,7 +516,7 @@ const MobileMain = () => {
               <div className="p-3">
                 <h3 className="text-sm font-semibold mb-2 flex items-center justify-between">
                   <span>Search Results</span>
-                  <button 
+                  <button
                     onClick={() => setShowSuggestions(false)}
                     className="p-1 rounded-full hover:bg-zinc-700"
                   >
@@ -529,12 +542,12 @@ const MobileMain = () => {
                       key={item.id}
                       className="flex items-center justify-between gap-3 p-2 hover:bg-zinc-700/50 rounded"
                     >
-                      <div 
+                      <div
                         className="flex items-center gap-3 flex-grow cursor-pointer"
                         onClick={() => handleSongSelect(item)}
                       >
                         <div className="w-10 h-10 bg-zinc-700 rounded overflow-hidden flex-shrink-0">
-                          <img src={item.image.replace("150x150" , "500x500")} alt={item.title.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
+                          <img src={item.image.replace("150x150", "500x500")} alt={item.title.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
                         </div>
                         <div className="flex-1">
                           <p className="font-medium text-sm truncate">{item.title.replaceAll("&quot;", `"`)}</p>
@@ -543,7 +556,7 @@ const MobileMain = () => {
                           </p>
                         </div>
                       </div>
-                      
+
                       {loadingSong === item.id ? (
                         <Loader2 className="w-4 h-4 text-purple-500 animate-spin mr-2" />
                       ) : (
@@ -579,85 +592,85 @@ const MobileMain = () => {
 
       {/* Content Area */}
       <div className="flex-1 p-4 overflow-y-auto pb-20">
-      <div className="py-4 pb-10">
-        <h2 className="text-xl font-bold mb-4">Recommendations</h2>
-        {isTrendingLoading ? (
-          <div className="grid grid-cols-4 gap-4">
-            {[...Array(12)].map((_, index) => (
-              <div key={`skeleton-${index}`} className="flex flex-col">
-                <div className="aspect-square bg-zinc-800 rounded-lg mb-2 animate-pulse"></div>
-                <div className="h-4 bg-zinc-800 rounded w-3/4 mb-2 animate-pulse"></div>
-                <div className="h-3 bg-zinc-800 rounded w-1/2 animate-pulse"></div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-4 gap-4">
-            {trendingTracks.slice(0, 12).map((track) => (
-              <div
-                key={track.id}
-                className="flex flex-col"
-              >
-                <div 
-                  className="relative aspect-square bg-zinc-800 rounded-lg mb-2 overflow-hidden cursor-pointer"
-                  onClick={() => handleSongSelect({
-                    id: track.id,
-                    title: track.title,
-                    subtitle: track.artist,
-                    type: 'song',
-                    image: track.coverUrl,
-                    perma_url: '',
-                    more_info: {
-                      duration: '',
-                      album_id: '',
-                      album: '',
-                      label: '',
-                      encrypted_media_url: '',
-                      artistMap: {
-                        primary_artists: [{
-                          id: '',
-                          name: '',
-                          image: '',
-                          perma_url: ''
-                        }]
-                      }
-                    }
-                  })}
-                >
-                  <img
-                    src={track.coverUrl}
-                    alt={track.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <button 
-                    className="absolute bottom-2 right-2 p-2 rounded-full bg-black/60 text-white"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToPlaylist({
-                        id: track.id,
-                        name: track.title,
-                        artist: track.artist,
-                        image: track.coverUrl,
-                        url: '',
-                        duration: 0
-                      });
-                    }}
-                  >
-                    <Plus size={18} />
-                  </button>
+        <div className="py-4 pb-10">
+          <h2 className="text-xl font-bold mb-4">Recommendations</h2>
+          {isTrendingLoading ? (
+            <div className="grid grid-cols-4 gap-4">
+              {[...Array(12)].map((_, index) => (
+                <div key={`skeleton-${index}`} className="flex flex-col">
+                  <div className="aspect-square bg-zinc-800 rounded-lg mb-2 animate-pulse"></div>
+                  <div className="h-4 bg-zinc-800 rounded w-3/4 mb-2 animate-pulse"></div>
+                  <div className="h-3 bg-zinc-800 rounded w-1/2 animate-pulse"></div>
                 </div>
-                <h3 className="font-medium text-sm truncate">{track.title.replaceAll("&quot;", `"`)}</h3>
-                <p className="text-xs text-zinc-400 truncate">{track.artist.replaceAll("&quot;", `"`)}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-4">
+              {trendingTracks.slice(0, 12).map((track) => (
+                <div
+                  key={track.id}
+                  className="flex flex-col"
+                >
+                  <div
+                    className="relative aspect-square bg-zinc-800 rounded-lg mb-2 overflow-hidden cursor-pointer"
+                    onClick={() => handleSongSelect({
+                      id: track.id,
+                      title: track.title,
+                      subtitle: track.artist,
+                      type: 'song',
+                      image: track.coverUrl,
+                      perma_url: '',
+                      more_info: {
+                        duration: '',
+                        album_id: '',
+                        album: '',
+                        label: '',
+                        encrypted_media_url: '',
+                        artistMap: {
+                          primary_artists: [{
+                            id: '',
+                            name: '',
+                            image: '',
+                            perma_url: ''
+                          }]
+                        }
+                      }
+                    })}
+                  >
+                    <img
+                      src={track.coverUrl}
+                      alt={track.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      className="absolute bottom-2 right-2 p-2 rounded-full bg-black/60 text-white"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToPlaylist({
+                          id: track.id,
+                          name: track.title,
+                          artist: track.artist,
+                          image: track.coverUrl,
+                          url: '',
+                          duration: 0
+                        });
+                      }}
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
+                  <h3 className="font-medium text-sm truncate">{track.title.replaceAll("&quot;", `"`)}</h3>
+                  <p className="text-xs text-zinc-400 truncate">{track.artist.replaceAll("&quot;", `"`)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Recently Played Section */}
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4">Recently Played</h2>
-          
+
           {recentlyPlayed.length > 0 ? (
             <div className="grid grid-cols-4 gap-4">
               {recentlyPlayed.slice(0, 6).map((song) => (
@@ -674,51 +687,52 @@ const MobileMain = () => {
 
         {/* Artists Section */}
         <div className="mb-8">
-        <h2 className="text-xl font-bold mb-4">Top Artists</h2>
-        <div className="grid grid-cols-3 gap-4">
-          {[1, 2, 3, 4 , 5, 6].map((item) => (
-            <div key={item} className="flex flex-col">
-              <div className="aspect-square bg-zinc-800 rounded-full mb-2"></div>
-              <h3 className="font-medium text-sm">Artist Name {item}</h3>
-              <p className="text-xs text-zinc-400">Genre</p>
-            </div>
-          ))}
+          <h2 className="text-xl font-bold mb-4">Top Artists</h2>
+          <div className="grid grid-cols-3 gap-4">
+            {topArtists.map((artist) => (
+              <Link key={artist.id} href={`/artist/${artist.id}`} className="flex flex-col">
+                <div className="aspect-square bg-zinc-800 rounded-full mb-4">
 
-        </div>
-
-        </div>
-
-
-
-
-
-
-        {/* Made For You Section */}
-        <div>
-          <h2 className="text-xl font-bold mb-4">Made For You</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((item) => (
-              <div key={item} className="flex flex-col">
-                <div className="aspect-square bg-zinc-800 rounded-lg mb-2"></div>
-                <h3 className="font-medium text-sm">Album Title {item}</h3>
-                <p className="text-xs text-zinc-400">Artist Name</p>
-              </div>
+                </div>
+                <h3 className="font-medium text-sm text-center mb-1">{artist.name}</h3>
+                <p className="text-xs text-zinc-400 text-center">{artist.genre}</p>
+              </Link>
             ))}
           </div>
         </div>
 
+
+
+
+
+
+
+      {/* Made For You Section */}
+      <div>
+        <h2 className="text-xl font-bold mb-4">Made For You</h2>
+        <div className="grid grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((item) => (
+            <div key={item} className="flex flex-col">
+              <div className="aspect-square bg-zinc-800 rounded-lg mb-2"></div>
+              <h3 className="font-medium text-sm">Album Title {item}</h3>
+              <p className="text-xs text-zinc-400">Artist Name</p>
+            </div>
+          ))}
+        </div>
       </div>
-      
-      {/* Add to Playlist Modal */}
-      <AddToPlaylistModal />
-      
-      {/* Add Playlist Popup */}
-      <MobileAddPlaylistPopup 
-        isOpen={showAddPlaylistPopup} 
-        onClose={() => setShowAddPlaylistPopup(false)} 
-        onSuccess={handlePlaylistCreated}
-      />
+
     </div>
+      
+      {/* Add to Playlist Modal */ }
+  <AddToPlaylistModal />
+
+  {/* Add Playlist Popup */ }
+  <MobileAddPlaylistPopup
+    isOpen={showAddPlaylistPopup}
+    onClose={() => setShowAddPlaylistPopup(false)}
+    onSuccess={handlePlaylistCreated}
+  />
+    </div >
   );
 };
 
