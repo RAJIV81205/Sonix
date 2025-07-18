@@ -6,6 +6,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { usePlayer } from '@/context/PlayerContext';
 import { toast } from 'react-hot-toast';
 import AddPlaylistPopup from './AddPlaylistPopup';
+import Link from "next/link"
 
 
 interface SearchResultItem {
@@ -445,6 +446,17 @@ const Main = () => {
     ];
     return colors[index % colors.length];
   };
+
+
+  /// Top Artists
+  const topArtists = [
+    { id: '468245', name: 'Diljit Dosanjh', genre: 'Punjabi Pop', img: "https://c.saavncdn.com/artists/Diljit_Dosanjh_005_20231025073054_500x500.jpg" },
+    { id: '459320', name: 'Arijit Singh', genre: 'Bollywood', img: "https://c.saavncdn.com/artists/Arijit_Singh_004_20241118063717_500x500.jpg" },
+    { id: '464932', name: 'Neha Kakkar', genre: 'Pop', img: "https://c.saavncdn.com/artists/Neha_Kakkar_007_20241212115832_500x500.jpg" },
+    { id: '456863', name: 'Badshah', genre: 'Hip-Hop', img: "https://c.saavncdn.com/artists/Badshah_006_20241118064015_500x500.jpg" },
+    { id: '455130', name: 'Shreya Ghoshal', genre: 'Classical/Bollywood', img: "https://c.saavncdn.com/artists/Shreya_Ghoshal_007_20241101074144_500x500.jpg" },
+    { id: '881158', name: 'Jubin Nautiyal', genre: 'Romantic', img: "https://c.saavncdn.com/artists/Jubin_Nautiyal_003_20231130204020_500x500.jpg" },
+  ];
 
   // Search result item component with updated styling
   const SearchResultItem = ({ item }: { item: SearchResultItem }) => {
@@ -919,6 +931,22 @@ const Main = () => {
           </div>
         )}
       </div>
+
+      {/* Artists Section */}
+      <div className="p-4">
+          <h2 className="text-xl font-bold mb-4">Top Artists</h2>
+          <div className="grid grid-cols-6 gap-5">
+            {topArtists.map((artist) => (
+              <Link key={artist.id} href={`dashboard/artist/${artist.id}`} className="flex flex-col">
+                <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40 hover:border-gray-400/60 transition-colors">
+                <img src={artist.img} alt={artist.name} loading="lazy" />
+                </div>
+                <h3 className="font-medium text-sm text-center mb-1 truncate">{artist.name}</h3>
+                <p className="text-xs text-zinc-400 text-center truncate">{artist.genre}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
 
       {/* Your Playlists Section */}
       <div className="p-6">
