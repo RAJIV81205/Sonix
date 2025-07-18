@@ -7,6 +7,7 @@ import { usePlayer } from '@/context/PlayerContext';
 import { toast } from 'react-hot-toast';
 import MobileAddPlaylistPopup from './MobileAddPlaylistPopup';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface SearchResultItem {
   id: string;
@@ -688,14 +689,14 @@ const MobileMain = () => {
         {/* Artists Section */}
         <div className="mb-8">
           <h2 className="text-xl font-bold mb-4">Top Artists</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-5">
             {topArtists.map((artist) => (
-              <Link key={artist.id} href={`/artist/${artist.id}`} className="flex flex-col">
-                <div className="aspect-square bg-zinc-800 rounded-full mb-4">
-
+              <Link key={artist.id} href={`dashboard/artist/${artist.id}`} className="flex flex-col">
+                <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40">
+                <img src={artist.img} alt={artist.name} loading="lazy" />
                 </div>
-                <h3 className="font-medium text-sm text-center mb-1">{artist.name}</h3>
-                <p className="text-xs text-zinc-400 text-center">{artist.genre}</p>
+                <h3 className="font-medium text-sm text-center mb-1 truncate">{artist.name}</h3>
+                <p className="text-xs text-zinc-400 text-center truncate">{artist.genre}</p>
               </Link>
             ))}
           </div>
