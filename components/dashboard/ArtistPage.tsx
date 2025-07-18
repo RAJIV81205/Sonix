@@ -78,6 +78,7 @@ interface Song {
         primary?: SongArtist[];
     };
     year?: string;
+    url:string;
 }
 
 const ArtistPage = () => {
