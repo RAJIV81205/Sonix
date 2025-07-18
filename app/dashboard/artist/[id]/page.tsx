@@ -1,10 +1,10 @@
 import React from 'react'
+import ArtistPage from '@/components/dashboard/ArtistPage'
 
-const Artistpage = () => {
-
+const page = () => {
   return (
-    <div>Artist Page</div>
+    <ArtistPage />
   )
 }
 
-export default Artistpage
+export default page
