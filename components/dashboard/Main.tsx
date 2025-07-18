@@ -7,6 +7,8 @@ import { usePlayer } from '@/context/PlayerContext';
 import { toast } from 'react-hot-toast';
 import AddPlaylistPopup from './AddPlaylistPopup';
 import Link from "next/link"
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 
 
 interface SearchResultItem {
@@ -582,6 +584,17 @@ const Main = () => {
     );
   };
 
+  // Animation variants
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 40 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } },
+  };
+
+  const { ref: recRef, inView: recInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: recentRef, inView: recentInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: artistRef, inView: artistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: playlistRef, inView: playlistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+
   return (
     <div className="h-full overflow-y-auto pb-24 text-white relative">
       {/* Dashboard Header */}
@@ -650,7 +663,13 @@ const Main = () => {
 
 
       {/* Recommendation Section */}
-      <div className="p-4">
+      <motion.div
+        ref={recRef}
+        variants={fadeInUp}
+        initial="hidden"
+        animate={recInView ? 'visible' : 'hidden'}
+        className="p-4"
+      >
         <h2 className="text-xl font-bold mb-4">Recommendations</h2>
         {isTrendingLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-8 gap-3">
@@ -703,12 +722,18 @@ const Main = () => {
             ))}
           </div>
         )}
-      </div>
+      </motion.div>
 
 
 
       {/* Recently Played Section */}
-      <div className="p-4">
+      <motion.div
+        ref={recentRef}
+        variants={fadeInUp}
+        initial="hidden"
+        animate={recentInView ? 'visible' : 'hidden'}
+        className="p-4"
+      >
         <h2 className="text-xl font-bold mb-4">Recently Played</h2>
         {recentlyPlayed.length === 0 ? (
           <div className="text-center py-10 bg-zinc-900 rounded-xl">
@@ -930,10 +955,16 @@ const Main = () => {
             ))}
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Artists Section */}
-      <div className="p-4">
+      <motion.div
+        ref={artistRef}
+        variants={fadeInUp}
+        initial="hidden"
+        animate={artistInView ? 'visible' : 'hidden'}
+        className="p-4"
+      >
           <h2 className="text-xl font-bold mb-4">Top Artists</h2>
           <div className="grid grid-cols-6 gap-5">
             {topArtists.map((artist) => (
@@ -946,10 +977,16 @@ const Main = () => {
               </Link>
             ))}
           </div>
-        </div>
+        </motion.div>
 
       {/* Your Playlists Section */}
-      <div className="p-6">
+      <motion.div
+        ref={playlistRef}
+        variants={fadeInUp}
+        initial="hidden"
+        animate={playlistInView ? 'visible' : 'hidden'}
+        className="p-6"
+      >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold">Your Playlists</h2>
           <button
@@ -989,7 +1026,6 @@ const Main = () => {
                   ) : (
                     <Music className="w-8 h-8 text-white" />
                   )}
-                  <img src={playlist.cover} alt={playlist.name} />
                 </div>
                 <h3 className="font-medium truncate">{playlist.name}</h3>
                 <p className="text-xs text-zinc-400 mt-1">{playlist.songCount} songs</p>
@@ -997,7 +1033,7 @@ const Main = () => {
             ))}
           </div>
         )}
-      </div>
+      </motion.div>
 
       {/* Add Playlist Popup */}
       {
