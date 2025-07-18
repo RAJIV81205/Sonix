@@ -8,6 +8,8 @@ import { toast } from 'react-hot-toast';
 import MobileAddPlaylistPopup from './MobileAddPlaylistPopup';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 
 interface SearchResultItem {
   id: string;
@@ -77,6 +79,17 @@ const MobileMain = () => {
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState<boolean>(true);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
+
+  // Animation variants
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 40 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } },
+  };
+
+  const { ref: recRef, inView: recInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: recentRef, inView: recentInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: artistRef, inView: artistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: madeRef, inView: madeInView } = useInView({ triggerOnce: true, threshold: 0.15 });
 
   useEffect(() => {
     if (!token) {
@@ -593,7 +606,13 @@ const MobileMain = () => {
 
       {/* Content Area */}
       <div className="flex-1 p-4 overflow-y-auto pb-20">
-        <div className="py-4 pb-10">
+        <motion.div
+          ref={recRef}
+          variants={fadeInUp}
+          initial="hidden"
+          animate={recInView ? 'visible' : 'hidden'}
+          className="py-4 pb-10"
+        >
           <h2 className="text-xl font-bold mb-4">Recommendations</h2>
           {isTrendingLoading ? (
             <div className="grid grid-cols-4 gap-4">
@@ -666,10 +685,16 @@ const MobileMain = () => {
               ))}
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Recently Played Section */}
-        <div className="mb-8">
+        <motion.div
+          ref={recentRef}
+          variants={fadeInUp}
+          initial="hidden"
+          animate={recentInView ? 'visible' : 'hidden'}
+          className="mb-8"
+        >
           <h2 className="text-xl font-bold mb-4">Recently Played</h2>
 
           {recentlyPlayed.length > 0 ? (
@@ -684,10 +709,16 @@ const MobileMain = () => {
               <p className="text-xs text-zinc-500 mt-1">Your recently played tracks will appear here</p>
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Artists Section */}
-        <div className="mb-8">
+        <motion.div
+          ref={artistRef}
+          variants={fadeInUp}
+          initial="hidden"
+          animate={artistInView ? 'visible' : 'hidden'}
+          className="mb-8"
+        >
           <h2 className="text-xl font-bold mb-4">Top Artists</h2>
           <div className="grid grid-cols-3 gap-5">
             {topArtists.map((artist) => (
@@ -700,7 +731,7 @@ const MobileMain = () => {
               </Link>
             ))}
           </div>
-        </div>
+        </motion.div>
 
 
 
@@ -709,7 +740,12 @@ const MobileMain = () => {
 
 
         {/* Made For You Section */}
-        <div>
+        <motion.div
+          ref={madeRef}
+          variants={fadeInUp}
+          initial="hidden"
+          animate={madeInView ? 'visible' : 'hidden'}
+        >
           <h2 className="text-xl font-bold mb-4">Made For You</h2>
           <div className="grid grid-cols-2 gap-4">
             {[1, 2, 3, 4].map((item) => (
@@ -720,7 +756,7 @@ const MobileMain = () => {
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
       </div>
 
