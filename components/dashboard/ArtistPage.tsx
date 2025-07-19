@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { Play, Pause, Heart, Share2, ExternalLink, Calendar, Users, Music } from 'lucide-react'
+import { usePlayer } from '@/context/PlayerContext'
 
 // Skeleton Components
 const SkeletonLoader = () => (
@@ -132,8 +133,8 @@ const ArtistPage = () => {
     const [artistData, setArtistData] = useState<ApiResponse | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [currentPlaying, setCurrentPlaying] = useState<string | null>(null)
-    const [isPlaying, setIsPlaying] = useState<boolean>(false)
     const param = useParams().id
+    const { setCurrentSong , setIsPlaying } = usePlayer()
 
     useEffect(() => {
         const fetchArtist = async () => {
@@ -186,13 +187,79 @@ const ArtistPage = () => {
         return `${minutes}:${seconds.toString().padStart(2, '0')}`
     }
 
-    const handlePlayPause = (track: SpotifyTrack) => {
-        if (currentPlaying === track.id) {
-            setIsPlaying(!isPlaying)
-        } else {
-            setCurrentPlaying(track.id)
-            setIsPlaying(true)
+
+    const getSongId = async (name: string) => {
+        try {
+            const response = await fetch(`/api/dashboard/search`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "Authorization": `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ query: name })
+            })
+
+            if (!response.ok) {
+                throw new Error("Failed to get song ID")
+            }
+
+            const data = await response.json()
+            return data.songs[0].id
+
+        } catch (error: unknown) {
+            const errMsg = error instanceof Error ? error.message : String(error)
+            console.error("Error getting song ID:", errMsg)
+            toast.error("Error getting song ID: " + errMsg)
         }
+    }
+
+
+    const getSong = async (id: string) => {
+        try {
+            const response = await fetch(`/api/dashboard/getSongUrl`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "Authorization": `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ id })
+            })
+
+            if (!response.ok) {
+                throw new Error("Failed to get song data")
+            }
+
+            const data = await response.json()
+            return data.data[0]
+
+        } catch (error: unknown) {
+            const errMsg = error instanceof Error ? error.message : String(error)
+            console.error("Error getting song:", errMsg)
+            toast.error("Error getting song: " + errMsg)
+        }
+    }
+
+
+
+    const PlaySong = async (track: SpotifyTrack) => {
+        const name = `${track.name} - ${artist.name}`
+        const id = await getSongId(name)
+        const songData = await getSong(id)
+        const song = {
+            id: songData.id,
+            name: songData.name,
+            artist: songData.artists?.primary[0]?.name || 'Unknown Artist',
+            image: songData.image[2]?.url ? (songData.image[2].url).replace(/^http:/, 'https:') : '',
+            url: songData.downloadUrl[4]?.url ? (songData.downloadUrl[4].url).replace(/^http:/, 'https:') : '',
+            duration: songData.duration || 0,
+
+        }
+        console.log(song)
+        setCurrentSong(song);
+        setIsPlaying(true);
+
+
+
     }
 
     if (isLoading) {
@@ -288,7 +355,7 @@ const ArtistPage = () => {
                                 <div
                                     key={track.id}
                                     className="flex items-center gap-4 p-4 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer"
-                                    onClick={() => handlePlayPause(track)}
+                                    onClick={() => PlaySong(track)}
                                 >
                                     <div className="flex items-center gap-4 flex-1">
                                         <div className="relative">
