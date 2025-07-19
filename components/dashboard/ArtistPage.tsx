@@ -134,7 +134,7 @@ const ArtistPage = () => {
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [currentPlaying, setCurrentPlaying] = useState<string | null>(null)
     const param = useParams().id
-    const { setCurrentSong , setIsPlaying } = usePlayer()
+    const { setCurrentSong, setIsPlaying, isPlaying } = usePlayer()
 
     useEffect(() => {
         const fetchArtist = async () => {
