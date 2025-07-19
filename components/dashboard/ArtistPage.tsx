@@ -79,7 +79,7 @@ interface Song {
         primary?: SongArtist[];
     };
     year?: string;
-    url:string;
+    url: string;
 }
 
 const ArtistPage = () => {
@@ -88,20 +88,29 @@ const ArtistPage = () => {
     const [currentPlaying, setCurrentPlaying] = useState<string | null>(null)
     const [isPlaying, setIsPlaying] = useState<boolean>(false)
     const param = useParams().id
-    const { setCurrentSong } = usePlayer()
+ 
 
     useEffect(() => {
         const fetchArtist = async () => {
             try {
                 setIsLoading(true)
-                const response = await fetch(`https://saavn.dev/api/artists/${param}?songCount=100`)
+                const token = localStorage.getItem('token')
+                const response = await fetch(`/api/spotify/artist`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ artistId: param })
+                })
 
                 if (!response.ok) {
                     throw new Error("Failed to fetch artist data")
                 }
 
                 const data = await response.json()
-                setArtist(data.data)
+                console.log("Fetched artist data:", data)
+                setArtist(data)
 
             } catch (error: unknown) {
                 const errMsg = error instanceof Error ? error.message : String(error)
