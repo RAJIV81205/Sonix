@@ -1,8 +1,21 @@
 "use client"
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
-import { Play, Pause, Heart, Share2, ExternalLink, Calendar, Users, Music } from 'lucide-react'
+import { 
+  Play, 
+  Pause, 
+  Heart, 
+  Share2, 
+  ExternalLink, 
+  Users, 
+  Music, 
+  MoreVertical,
+  PlayCircle,
+  Shuffle,
+  ListPlus,
+  ArrowUp
+} from 'lucide-react'
 import { usePlayer } from '@/context/PlayerContext'
 
 // Skeleton Components
@@ -133,8 +146,32 @@ const ArtistPage = () => {
     const [artistData, setArtistData] = useState<ApiResponse | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [currentPlaying, setCurrentPlaying] = useState<string | null>(null)
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+    const menuRef = useRef<HTMLDivElement>(null)
+    
     const param = useParams().id
-    const { setCurrentSong, setIsPlaying, isPlaying } = usePlayer()
+    const { 
+      setCurrentSong, 
+      setIsPlaying, 
+      isPlaying, 
+      currentSong,
+      addToQueue,
+      playNextInQueue,
+      shufflePlay,
+      playFromPlaylist
+    } = usePlayer()
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setOpenMenuId(null)
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     useEffect(() => {
         const fetchArtist = async () => {
@@ -187,7 +224,6 @@ const ArtistPage = () => {
         return `${minutes}:${seconds.toString().padStart(2, '0')}`
     }
 
-
     const getSongId = async (name: string) => {
         try {
             const response = await fetch(`/api/dashboard/search`, {
@@ -212,7 +248,6 @@ const ArtistPage = () => {
             toast.error("Error getting song ID: " + errMsg)
         }
     }
-
 
     const getSong = async (id: string) => {
         try {
@@ -239,27 +274,154 @@ const ArtistPage = () => {
         }
     }
 
-
-
-    const PlaySong = async (track: SpotifyTrack) => {
+    const convertTrackToSong = async (track: SpotifyTrack) => {
         const name = `${track.name} - ${artist.name}`
         const id = await getSongId(name)
         const songData = await getSong(id)
-        const song = {
+        
+        return {
             id: songData.id,
             name: songData.name,
             artist: songData.artists?.primary[0]?.name || 'Unknown Artist',
             image: songData.image[2]?.url ? (songData.image[2].url).replace(/^http:/, 'https:') : '',
             url: songData.downloadUrl[4]?.url ? (songData.downloadUrl[4].url).replace(/^http:/, 'https:') : '',
             duration: songData.duration || 0,
-
         }
-        console.log(song)
-        setCurrentSong(song);
-        setIsPlaying(true);
+    }
 
+    const PlaySong = async (track: SpotifyTrack, index?: number) => {
+        try {
+            const song = await convertTrackToSong(track)
+            console.log(song)
+            setCurrentSong(song)
+            setIsPlaying(true)
+            setCurrentPlaying(track.id)
+        } catch (error) {
+            toast.error("Failed to play song")
+        }
+    }
 
+    const handleAddToQueue = async (track: SpotifyTrack) => {
+        try {
+            const song = await convertTrackToSong(track)
+            addToQueue(song)
+            toast.success(`Added "${track.name}" to queue`)
+            setOpenMenuId(null)
+        } catch (error) {
+            toast.error("Failed to add to queue")
+        }
+    }
 
+    const handlePlayNext = async (track: SpotifyTrack) => {
+        try {
+            const song = await convertTrackToSong(track)
+            playNextInQueue(song)
+            toast.success(`"${track.name}" will play next`)
+            setOpenMenuId(null)
+        } catch (error) {
+            toast.error("Failed to add to play next")
+        }
+    }
+
+    const handlePlayAll = async () => {
+        if (!topTracks || topTracks.length === 0) return
+        
+        try {
+            toast.loading("Converting tracks...")
+            const songs = await Promise.all(
+                topTracks.map(track => convertTrackToSong(track))
+            )
+            toast.dismiss()
+            
+            playFromPlaylist(songs, 0)
+            setCurrentPlaying(topTracks[0].id)
+        } catch (error) {
+            toast.dismiss()
+            toast.error("Failed to play all songs")
+        }
+    }
+
+    const handleShufflePlay = async () => {
+        if (!topTracks || topTracks.length === 0) return
+        
+        try {
+            toast.loading("Converting tracks...")
+            const songs = await Promise.all(
+                topTracks.map(track => convertTrackToSong(track))
+            )
+            toast.dismiss()
+            
+            shufflePlay(songs)
+            // Since it's shuffled, we can't predict which will be first
+            setCurrentPlaying(null)
+        } catch (error) {
+            toast.dismiss()
+            toast.error("Failed to shuffle play")
+        }
+    }
+
+    // Context Menu Component
+    const ContextMenu = ({ track, isOpen }: { track: SpotifyTrack, isOpen: boolean }) => {
+        if (!isOpen) return null
+
+        return (
+            <div 
+                ref={menuRef}
+                className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50 min-w-[200px]"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="py-2">
+                    <button
+                        onClick={() => PlaySong(track)}
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-white hover:bg-gray-700 transition-colors"
+                    >
+                        <Play className="w-4 h-4" />
+                        Play Now
+                    </button>
+                    <button
+                        onClick={() => handlePlayNext(track)}
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-white hover:bg-gray-700 transition-colors"
+                    >
+                        <ArrowUp className="w-4 h-4" />
+                        Play Next
+                    </button>
+                    <button
+                        onClick={() => handleAddToQueue(track)}
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-white hover:bg-gray-700 transition-colors"
+                    >
+                        <ListPlus className="w-4 h-4" />
+                        Add to Queue
+                    </button>
+                    <div className="border-t border-gray-700 my-1"></div>
+                    <button
+                        onClick={() => {
+                            // Add to favorites logic here
+                            toast.success("Added to favorites")
+                            setOpenMenuId(null)
+                        }}
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-white hover:bg-gray-700 transition-colors"
+                    >
+                        <Heart className="w-4 h-4" />
+                        Add to Favorites
+                    </button>
+                    <button
+                        onClick={() => {
+                            navigator.share?.({
+                                title: track.name,
+                                text: `Check out "${track.name}" by ${track.artists[0].name}`,
+                                url: track.external_urls.spotify
+                            }) || navigator.clipboard.writeText(track.external_urls.spotify)
+                            toast.success("Link copied to clipboard")
+                            setOpenMenuId(null)
+                        }}
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-white hover:bg-gray-700 transition-colors"
+                    >
+                        <Share2 className="w-4 h-4" />
+                        Share
+                    </button>
+                </div>
+            </div>
+        )
     }
 
     if (isLoading) {
@@ -320,9 +482,19 @@ const ArtistPage = () => {
                         </div>
 
                         <div className="flex gap-4 items-center">
-                            <button className="flex items-center gap-2 bg-green-600 hover:bg-green-700 px-8 py-3 rounded-full font-semibold transition-colors">
+                            <button 
+                                onClick={handlePlayAll}
+                                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 px-8 py-3 rounded-full font-semibold transition-colors"
+                            >
                                 <Play className="w-5 h-5" />
                                 Play
+                            </button>
+                            <button 
+                                onClick={handleShufflePlay}
+                                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-full font-semibold transition-colors"
+                            >
+                                <Shuffle className="w-5 h-5" />
+                                Shuffle
                             </button>
                             <button className="p-3 border border-gray-600 hover:border-gray-400 rounded-full transition-colors">
                                 <Heart className="w-5 h-5" />
@@ -354,10 +526,12 @@ const ArtistPage = () => {
                             {topTracks.map((track: SpotifyTrack, index: number) => (
                                 <div
                                     key={track.id}
-                                    className="flex items-center gap-4 p-4 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer"
-                                    onClick={() => PlaySong(track)}
+                                    className="flex items-center gap-4 p-4 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer relative"
                                 >
-                                    <div className="flex items-center gap-4 flex-1">
+                                    <div 
+                                        className="flex items-center gap-4 flex-1"
+                                        onClick={() => PlaySong(track)}
+                                    >
                                         <div className="relative">
                                             <img
                                                 src={track.album.images[2]?.url || track.album.images[1]?.url || track.album.images[0]?.url || '/placeholder-song.jpg'}
@@ -383,8 +557,27 @@ const ArtistPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="text-sm text-gray-400">
-                                        {formatDuration(track.duration_ms)}
+                                    <div className="flex items-center gap-4">
+                                        <div className="text-sm text-gray-400">
+                                            {formatDuration(track.duration_ms)}
+                                        </div>
+                                        
+                                        <div className="relative">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    setOpenMenuId(openMenuId === track.id ? null : track.id)
+                                                }}
+                                                className="p-2 opacity-0 group-hover:opacity-100 hover:bg-gray-700 rounded-full transition-all"
+                                            >
+                                                <MoreVertical className="w-4 h-4" />
+                                            </button>
+                                            
+                                            <ContextMenu 
+                                                track={track} 
+                                                isOpen={openMenuId === track.id} 
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             ))}

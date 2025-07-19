@@ -28,6 +28,8 @@ interface PlayerContextType {
   removeFromQueue: (songId: string) => void;
   clearQueue: () => void;
   playNextInQueue: (song: Song) => void;
+  shufflePlay: (songs: Song[]) => void;
+  playFromPlaylist: (songs: Song[], index: number) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -425,6 +427,53 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Shuffle play function
+  const shufflePlay = (songs: Song[]) => {
+    if (songs.length === 0) return;
+    
+    // Create shuffled array
+    const shuffled = [...songs].sort(() => Math.random() - 0.5);
+    
+    // Set the shuffled playlist
+    setPlaylistState(shuffled);
+    setQueue([...shuffled]);
+    setCurrentQueueIndex(0);
+    setCurrentSongState(shuffled[0]);
+    setCurrentSongIndex(0);
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('playlist', JSON.stringify(shuffled));
+      localStorage.setItem('queue', JSON.stringify(shuffled));
+      localStorage.setItem('currentSong', JSON.stringify(shuffled[0]));
+      localStorage.setItem('currentSongIndex', '0');
+      localStorage.setItem('currentQueueIndex', '0');
+    }
+    
+    setIsPlaying(true);
+  };
+
+  // Play from playlist function
+  const playFromPlaylist = (songs: Song[], index: number) => {
+    setPlaylistState(songs);
+    
+    // Create queue starting from the selected index
+    const queueFromIndex = songs.slice(index);
+    setQueue(queueFromIndex);
+    setCurrentQueueIndex(0);
+    setCurrentSongIndex(index);
+    setCurrentSongState(songs[index]);
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('playlist', JSON.stringify(songs));
+      localStorage.setItem('queue', JSON.stringify(queueFromIndex));
+      localStorage.setItem('currentSong', JSON.stringify(songs[index]));
+      localStorage.setItem('currentSongIndex', index.toString());
+      localStorage.setItem('currentQueueIndex', '0');
+    }
+    
+    setIsPlaying(true);
+  };
+
   // Handle play/pause when isPlaying changes
   useEffect(() => {
     if (!audioRef.current || !currentSong || isLoading) return;
@@ -562,6 +611,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setQueue(prevQueue => {
       // Remove if already in queue
       const filteredQueue = prevQueue.filter(s => s.id !== song.id);
+      
+      // If there's a currently playing song, insert after it
+      if (currentQueueIndex >= 0) {
+        const newQueue = [...filteredQueue];
+        newQueue.splice(currentQueueIndex + 1, 0, song);
+        return newQueue;
+      }
+      
+      // Otherwise add to front
       return [song, ...filteredQueue];
     });
   };
@@ -602,7 +660,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       addToQueue,
       removeFromQueue,
       clearQueue,
-      playNextInQueue
+      playNextInQueue,
+      shufflePlay,
+      playFromPlaylist
     }}>
       {children}
       <audio ref={audioRef} />
