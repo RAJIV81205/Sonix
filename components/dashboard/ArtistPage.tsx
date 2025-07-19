@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { Play, Pause, Heart, Share2, ExternalLink, Calendar, Users, Music } from 'lucide-react'
-import { usePlayer } from '@/context/PlayerContext'
 
 // Skeleton Components
 const SkeletonLoader = () => (
@@ -45,50 +44,96 @@ const SkeletonLoader = () => (
     </div>
 )
 
-// Interfaces for Artist and Song
-interface ArtistImage {
-    url: string;
+// Interfaces matching the actual Spotify API response
+interface SpotifyImage {
+    url: string
+    height: number
+    width: number
 }
 
-interface Artist {
-    image: ArtistImage[];
-    name: string;
-    isVerified: boolean;
-    dominantType: string;
-    dominantLanguage: string;
-    followerCount: number;
-    fanCount: number;
-    dob?: string;
-    wiki?: string;
-    topSongs?: Song[];
-    availableLanguages?: string[];
-    fb?: string;
-    twitter?: string;
+interface SpotifyArtist {
+    external_urls: {
+        spotify: string
+    }
+    followers: {
+        href: string | null
+        total: number
+    }
+    genres: string[]
+    href: string
+    id: string
+    images: SpotifyImage[]
+    name: string
+    popularity: number
+    type: string
+    uri: string
 }
 
-interface SongArtist {
-    name: string;
+interface SpotifyTrackArtist {
+    external_urls: {
+        spotify: string
+    }
+    href: string
+    id: string
+    name: string
+    type: string
+    uri: string
 }
 
-interface Song {
-    id: string;
-    name: string;
-    image: ArtistImage[];
-    duration: number;
-    artists?: {
-        primary?: SongArtist[];
-    };
-    year?: string;
-    url: string;
+interface SpotifyAlbum {
+    album_type: string
+    artists: SpotifyTrackArtist[]
+    available_markets: string[]
+    external_urls: {
+        spotify: string
+    }
+    href: string
+    id: string
+    images: SpotifyImage[]
+    name: string
+    release_date: string
+    release_date_precision: string
+    total_tracks: number
+    type: string
+    uri: string
+}
+
+interface SpotifyTrack {
+    album: SpotifyAlbum
+    artists: SpotifyTrackArtist[]
+    available_markets: string[]
+    disc_number: number
+    duration_ms: number
+    explicit: boolean
+    external_ids: {
+        isrc: string
+    }
+    external_urls: {
+        spotify: string
+    }
+    href: string
+    id: string
+    is_local: boolean
+    is_playable: boolean
+    name: string
+    popularity: number
+    preview_url: string | null
+    track_number: number
+    type: string
+    uri: string
+}
+
+interface ApiResponse {
+    artist: SpotifyArtist
+    topTracks: SpotifyTrack[]
 }
 
 const ArtistPage = () => {
-    const [artist, setArtist] = useState<Artist | null>(null)
+    const [artistData, setArtistData] = useState<ApiResponse | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [currentPlaying, setCurrentPlaying] = useState<string | null>(null)
     const [isPlaying, setIsPlaying] = useState<boolean>(false)
     const param = useParams().id
- 
 
     useEffect(() => {
         const fetchArtist = async () => {
@@ -110,7 +155,7 @@ const ArtistPage = () => {
 
                 const data = await response.json()
                 console.log("Fetched artist data:", data)
-                setArtist(data)
+                setArtistData(data)
 
             } catch (error: unknown) {
                 const errMsg = error instanceof Error ? error.message : String(error)
@@ -134,17 +179,18 @@ const ArtistPage = () => {
         return count?.toString()
     }
 
-    const formatDuration = (seconds: number) => {
-        const minutes = Math.floor(seconds / 60)
-        const remainingSeconds = seconds % 60
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
+    const formatDuration = (durationMs: number) => {
+        const totalSeconds = Math.floor(durationMs / 1000)
+        const minutes = Math.floor(totalSeconds / 60)
+        const seconds = totalSeconds % 60
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`
     }
 
-    const handlePlayPause = (song: Song) => {
-        if (currentPlaying === song.id) {
+    const handlePlayPause = (track: SpotifyTrack) => {
+        if (currentPlaying === track.id) {
             setIsPlaying(!isPlaying)
         } else {
-            setCurrentPlaying(song.id)
+            setCurrentPlaying(track.id)
             setIsPlaying(true)
         }
     }
@@ -153,7 +199,7 @@ const ArtistPage = () => {
         return <SkeletonLoader />
     }
 
-    if (!artist) {
+    if (!artistData || !artistData.artist) {
         return (
             <div className="min-h-screen bg-black text-white flex items-center justify-center">
                 <div className="text-center">
@@ -164,6 +210,8 @@ const ArtistPage = () => {
         )
     }
 
+    const { artist, topTracks } = artistData
+
     return (
         <div className="min-h-screen bg-black/50 text-white">
             <div className="container mx-auto px-4 py-8">
@@ -171,7 +219,7 @@ const ArtistPage = () => {
                 <div className="flex flex-col lg:flex-row items-start lg:items-end gap-8 mb-12">
                     <div className="relative group">
                         <img
-                            src={artist.image[2]?.url || artist.image[1]?.url}
+                            src={artist.images[0]?.url || artist.images[1]?.url || '/placeholder-artist.jpg'}
                             alt={artist.name}
                             className="w-72 h-72 rounded-2xl shadow-2xl object-cover transition-transform duration-300 group-hover:scale-105"
                         />
@@ -181,31 +229,27 @@ const ArtistPage = () => {
                     <div className="flex-1">
                         <div className="mb-4">
                             <span className="inline-block px-3 py-1 bg-purple-600 rounded-full text-sm font-medium mb-4">
-                                {artist.isVerified ? 'Verified Artist' : 'Artist'}
+                                Verified Artist
                             </span>
                             <h1 className="text-4xl lg:text-6xl font-bold mb-2 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
                                 {artist.name}
                             </h1>
-                            <p className="text-xl text-gray-300 capitalize mb-4">
-                                {artist.dominantType} • {artist.dominantLanguage}
-                            </p>
+                            {artist.genres.length > 0 && (
+                                <p className="text-xl text-gray-300 capitalize mb-4">
+                                    {artist.genres.slice(0, 3).join(' • ')}
+                                </p>
+                            )}
                         </div>
 
                         <div className="flex flex-wrap gap-6 text-sm text-gray-300 mb-6">
                             <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4" />
-                                <span>{formatFollowers(artist.followerCount)} followers</span>
+                                <span>{formatFollowers(artist.followers.total)} followers</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Heart className="w-4 h-4" />
-                                <span>{formatFollowers(artist.fanCount)} fans</span>
+                                <Music className="w-4 h-4" />
+                                <span>Popularity: {artist.popularity}/100</span>
                             </div>
-                            {artist.dob && (
-                                <div className="flex items-center gap-2">
-                                    <Calendar className="w-4 h-4" />
-                                    <span>Born {artist.dob}</span>
-                                </div>
-                            )}
                         </div>
 
                         <div className="flex gap-4 items-center">
@@ -219,117 +263,95 @@ const ArtistPage = () => {
                             <button className="p-3 border border-gray-600 hover:border-gray-400 rounded-full transition-colors">
                                 <Share2 className="w-5 h-5" />
                             </button>
-                            {artist.wiki && (
-                                <a
-                                    href={artist.wiki}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-3 border border-gray-600 hover:border-gray-400 rounded-full transition-colors"
-                                >
-                                    <ExternalLink className="w-5 h-5" />
-                                </a>
-                            )}
+                            <a
+                                href={artist.external_urls.spotify}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-3 border border-gray-600 hover:border-gray-400 rounded-full transition-colors"
+                            >
+                                <ExternalLink className="w-5 h-5" />
+                            </a>
                         </div>
                     </div>
                 </div>
 
                 {/* Top Songs Section */}
-                <div className="mb-12">
-                    <div className="flex items-center gap-3 mb-6">
-                        <Music className="w-6 h-6 text-purple-400" />
-                        <h2 className="text-2xl font-bold">Top Songs</h2>
-                    </div>
+                {topTracks && topTracks.length > 0 && (
+                    <div className="mb-12">
+                        <div className="flex items-center gap-3 mb-6">
+                            <Music className="w-6 h-6 text-purple-400" />
+                            <h2 className="text-2xl font-bold">Top Songs</h2>
+                        </div>
 
-                    <div className="space-y-2">
-                        {artist.topSongs?.map((song: Song, index: number) => (
-                            <div
-                                key={song.id}
-                                className="flex items-center gap-4 p-4 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer"
-                                onClick={() => handlePlayPause(song)}
-                            >
-                                <div className="flex items-center gap-4 flex-1">
-                                    <div className="relative">
-                                        <img
-                                            src={song.image[1]?.url || song.image[0]?.url}
-                                            alt={song.name}
-                                            className="w-16 h-16 rounded-lg"
-                                        />
-                                        <div className="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            {currentPlaying === song.id && isPlaying ? (
-                                                <Pause className="w-6 h-6 text-white" />
-                                            ) : (
-                                                <Play className="w-6 h-6 text-white" />
-                                            )}
+                        <div className="space-y-2">
+                            {topTracks.map((track: SpotifyTrack, index: number) => (
+                                <div
+                                    key={track.id}
+                                    className="flex items-center gap-4 p-4 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer"
+                                    onClick={() => handlePlayPause(track)}
+                                >
+                                    <div className="flex items-center gap-4 flex-1">
+                                        <div className="relative">
+                                            <img
+                                                src={track.album.images[2]?.url || track.album.images[1]?.url || track.album.images[0]?.url || '/placeholder-song.jpg'}
+                                                alt={track.name}
+                                                className="w-16 h-16 rounded-lg"
+                                            />
+                                            <div className="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                {currentPlaying === track.id && isPlaying ? (
+                                                    <Pause className="w-6 h-6 text-white" />
+                                                ) : (
+                                                    <Play className="w-6 h-6 text-white" />
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1">
+                                            <h3 className="font-semibold text-white group-hover:text-purple-300 transition-colors">
+                                                {track.name}
+                                            </h3>
+                                            <p className="text-sm text-gray-400">
+                                                {track.artists.map((artist: SpotifyTrackArtist) => artist.name).join(', ')} • {track.album.name}
+                                            </p>
                                         </div>
                                     </div>
 
-                                    <div className="flex-1">
-                                        <h3 className="font-semibold text-white group-hover:text-purple-300 transition-colors">
-                                            {song.name}
-                                        </h3>
-                                        <p className="text-sm text-gray-400">
-                                            {song.artists?.primary?.map((artist: SongArtist) => artist.name).join(', ')} • {song.year}
-                                        </p>
+                                    <div className="text-sm text-gray-400">
+                                        {formatDuration(track.duration_ms)}
                                     </div>
                                 </div>
-
-                                <div className="text-sm text-gray-400">
-                                    {formatDuration(song.duration)}
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
+                )}
 
-                {/* Available Languages */}
-                {artist.availableLanguages && artist.availableLanguages.length > 0 && (
+                {/* Genres */}
+                {artist.genres && artist.genres.length > 0 && (
                     <div className="mb-8">
-                        <h3 className="text-xl font-bold mb-4">Available Languages</h3>
+                        <h3 className="text-xl font-bold mb-4">Genres</h3>
                         <div className="flex flex-wrap gap-2">
-                            {artist.availableLanguages.map((lang: string) => (
+                            {artist.genres.map((genre: string) => (
                                 <span
-                                    key={lang}
+                                    key={genre}
                                     className="px-3 py-1 bg-gray-800 rounded-full text-sm capitalize"
                                 >
-                                    {lang}
+                                    {genre}
                                 </span>
                             ))}
                         </div>
                     </div>
                 )}
 
-                {/* Social Links */}
+                {/* External Links */}
                 <div className="flex gap-4 justify-center pt-8 border-t border-gray-800">
-                    {artist.fb && (
-                        <a
-                            href={artist.fb}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-gray-400 hover:text-white transition-colors"
-                        >
-                            Facebook
-                        </a>
-                    )}
-                    {artist.twitter && (
-                        <a
-                            href={artist.twitter}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-gray-400 hover:text-white transition-colors"
-                        >
-                            Twitter
-                        </a>
-                    )}
-                    {artist.wiki && (
-                        <a
-                            href={artist.wiki}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-gray-400 hover:text-white transition-colors"
-                        >
-                            Wikipedia
-                        </a>
-                    )}
+                    <a
+                        href={artist.external_urls.spotify}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-white transition-colors"
+                    >
+                        Open in Spotify
+                    </a>
                 </div>
             </div>
         </div>
