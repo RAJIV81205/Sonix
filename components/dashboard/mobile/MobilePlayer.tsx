@@ -15,7 +15,9 @@ import {
   X,
   Loader2,
   List,
-  Trash2
+  Trash2,
+  Timer,
+  Clock
 } from "lucide-react"
 import React, { useState, useEffect, useRef } from "react"
 import { usePlayer } from "@/context/PlayerContext"
@@ -52,12 +54,25 @@ const MobilePlayer = () => {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showPlaylistModal, setShowPlaylistModal] = useState(false)
   const [showQueue, setShowQueue] = useState(false)
+  const [showSleepTimer, setShowSleepTimer] = useState(false)
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false)
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null)
+  const [sleepTimer, setSleepTimer] = useState<number | null>(null)
+  const [remainingTime, setRemainingTime] = useState<number | null>(null)
   const progressBarRef = useRef<HTMLDivElement>(null)
   const queueRef = useRef<HTMLDivElement>(null)
-  const [isLiked, setIsLiked] = useState(false)
+  const sleepTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const countdownRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Sleep timer options in minutes
+  const timerOptions = [
+    { label: "5 min", value: 5 },
+    { label: "10 min", value: 10 },
+    { label: "15 min", value: 15 },
+    { label: "30 min", value: 30 },
+    { label: "60 min", value: 60 }
+  ]
 
   // Format time in MM:SS
   const formatTime = (time: number) => {
@@ -66,9 +81,56 @@ const MobilePlayer = () => {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`
   }
 
+  // Format remaining timer time
+  const formatTimerTime = (time: number) => {
+    const hours = Math.floor(time / 3600)
+    const minutes = Math.floor((time % 3600) / 60)
+    const seconds = time % 60
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+    }
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`
+  }
+
+  // Prevent body scroll when modals are open
+  useEffect(() => {
+    if (isExpanded || showQueue || showPlaylistModal || showSleepTimer) {
+      // Prevent scrolling on the body
+      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
+      document.body.style.height = '100%'
+      
+      // For iOS Safari
+      document.documentElement.style.overflow = 'hidden'
+      
+      // Prevent touch events on the body from scrolling
+      const preventScroll = (e: TouchEvent) => {
+        if (e.target !== e.currentTarget) return
+        e.preventDefault()
+      }
+      
+      document.body.addEventListener('touchmove', preventScroll, { passive: false })
+      
+      return () => {
+        document.body.removeEventListener('touchmove', preventScroll)
+      }
+    } else {
+      // Restore scrolling
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+      document.body.style.height = ''
+      document.documentElement.style.overflow = ''
+    }
+  }, [isExpanded, showQueue, showPlaylistModal, showSleepTimer])
+
   useEffect(() => {
     const handlePopState = () => {
-      if (showPlaylistModal) {
+      if (showSleepTimer) {
+        setShowSleepTimer(false);
+      } else if (showPlaylistModal) {
         setShowPlaylistModal(false);
       } else if (showQueue) {
         setShowQueue(false);
@@ -79,7 +141,7 @@ const MobilePlayer = () => {
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [showPlaylistModal, showQueue, isExpanded]);
+  }, [showSleepTimer, showPlaylistModal, showQueue, isExpanded]);
 
   // Add history state when expanding player
   useEffect(() => {
@@ -102,13 +164,19 @@ const MobilePlayer = () => {
     }
   }, [showPlaylistModal]);
 
+  // Add history state when showing sleep timer
+  useEffect(() => {
+    if (showSleepTimer) {
+      window.history.pushState({ playerModal: "sleepTimer" }, "");
+    }
+  }, [showSleepTimer]);
+
   // Handle time updates
   useEffect(() => {
     const audio = audioRef.current
     if (!audio) return
 
     const updateTime = () => {
-      // Only update time if not currently dragging the slider
       if (!isDragging) {
         setCurrentTime(audio.currentTime)
       }
@@ -131,6 +199,49 @@ const MobilePlayer = () => {
     }
   }, [volume, audioRef])
 
+  // Sleep timer countdown effect
+  useEffect(() => {
+    if (remainingTime !== null && remainingTime > 0) {
+      countdownRef.current = setTimeout(() => {
+        setRemainingTime(prev => prev ? prev - 1 : null)
+      }, 1000)
+    } else if (remainingTime === 0) {
+      // Timer finished - stop music
+      setIsPlaying(false)
+      setSleepTimer(null)
+      setRemainingTime(null)
+      toast.success("Sleep timer finished - music stopped")
+    }
+
+    return () => {
+      if (countdownRef.current) {
+        clearTimeout(countdownRef.current)
+      }
+    }
+  }, [remainingTime, setIsPlaying])
+
+  // Set sleep timer
+  const setSleepTimerMinutes = (minutes: number) => {
+    const seconds = minutes * 60
+    setSleepTimer(minutes)
+    setRemainingTime(seconds)
+    setShowSleepTimer(false)
+    toast.success(`Sleep timer set for ${minutes} minutes`)
+  }
+
+  // Cancel sleep timer
+  const cancelSleepTimer = () => {
+    setSleepTimer(null)
+    setRemainingTime(null)
+    if (sleepTimerRef.current) {
+      clearTimeout(sleepTimerRef.current)
+    }
+    if (countdownRef.current) {
+      clearTimeout(countdownRef.current)
+    }
+    toast.success("Sleep timer cancelled")
+  }
+
   // Handle seeking in the timeline
   const handleSeek = (e: React.TouchEvent | React.MouseEvent) => {
     if (!progressBarRef.current || !audioRef.current || !duration) return;
@@ -138,7 +249,6 @@ const MobilePlayer = () => {
     const progressBar = progressBarRef.current;
     const rect = progressBar.getBoundingClientRect();
 
-    // Get the x position based on whether it's a touch or mouse event
     let clientX: number;
     if ('touches' in e) {
       clientX = e.touches[0].clientX;
@@ -169,7 +279,7 @@ const MobilePlayer = () => {
     setIsDragging(false);
   };
 
-  // Mouse event handlers (for completeness)
+  // Mouse event handlers
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
     handleSeek(e);
@@ -212,7 +322,6 @@ const MobilePlayer = () => {
     }
   };
 
-  // Call fetch playlists when modal opens
   useEffect(() => {
     if (showPlaylistModal) {
       fetchPlaylists();
@@ -238,7 +347,7 @@ const MobilePlayer = () => {
     };
   }, [isDragging]);
 
-  // Add current song to playlist
+  // Add song to playlist
   const addSongToPlaylist = async (playlistId: string) => {
     if (!currentSong) return;
 
@@ -267,14 +376,12 @@ const MobilePlayer = () => {
 
       const data = await response.json();
 
-      // Check if song already exists in playlist
       if (data.alreadyExists) {
         toast.error(`"${currentSong.name.replaceAll("&quot;", `"`)}" is already in this playlist`);
       } else {
         toast.success(`Added "${currentSong.name.replaceAll("&quot;", `"`)}" to playlist`);
       }
 
-      // Close modal
       setShowPlaylistModal(false);
     } catch (error) {
       console.error('Error adding song to playlist:', error);
@@ -284,10 +391,8 @@ const MobilePlayer = () => {
     }
   };
 
-  // Calculate progress bar %
   const progress = duration ? (currentTime / duration) * 100 : 0
 
-  // Function to get playlist color based on index
   const getPlaylistColor = (index: number) => {
     const colors = [
       "from-teal-500 to-emerald-500",
@@ -316,14 +421,7 @@ const MobilePlayer = () => {
     }
   }, [showQueue])
 
-  const toggleLike = () => {
-    setIsLiked(!isLiked);
-    if (!isLiked) {
-      toast.success("Added to favorites");
-    }
-  };
-
-  // Prevent propagation of click events from buttons to parent div
+  // Prevent propagation of click events
   const handlePlayClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsPlaying(!isPlaying);
@@ -342,7 +440,6 @@ const MobilePlayer = () => {
             animate={{ y: 0 }}
             exit={{ y: 100 }}
             transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-
           >
             <motion.div
               className="h-1 w-full bg-zinc-800"
@@ -356,19 +453,15 @@ const MobilePlayer = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
-              ></motion.div>
+              />
             </motion.div>
             <div
               className="flex items-center justify-between p-3 pr-4"
               onClick={() => setIsExpanded(true)}
             >
-              {/* Album art with animated glow effect when playing */}
-
               <div className="flex items-center gap-3 flex-1 min-w-0">
-
                 <motion.div
-                  className={`w-12 h-12 rounded-md overflow-hidden flex-shrink-0 ${isPlaying ? 'shadow-glow' : ''
-                    }`}
+                  className={`w-12 h-12 rounded-md overflow-hidden flex-shrink-0 ${isPlaying ? 'shadow-glow' : ''}`}
                   animate={isPlaying ? { scale: [1, 1.02, 1], opacity: [0.9, 1, 0.9] } : {}}
                   transition={isPlaying ? {
                     repeat: Infinity,
@@ -404,7 +497,6 @@ const MobilePlayer = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {/* Progress bar in mini player */}
                 <motion.div
                   className="w-12 h-1 bg-zinc-800 rounded-full overflow-hidden hidden sm:block"
                   initial={{ opacity: 0, width: 0 }}
@@ -414,7 +506,7 @@ const MobilePlayer = () => {
                   <div
                     className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full"
                     style={{ width: `${progress}%` }}
-                  ></div>
+                  />
                 </motion.div>
                 <motion.button
                   onClick={handlePlayClick}
@@ -430,20 +522,18 @@ const MobilePlayer = () => {
                 </motion.button>
               </div>
             </div>
-
-            {/* Mini progress bar for mobile */}
-
           </motion.div>
         )}
 
         {/* Expanded Player */}
         {isExpanded && (
           <motion.div
-            className="fixed inset-0 bg-gradient-to-b from-zinc-900 to-black flex flex-col overflow-hidden"
+            className="fixed inset-0 bg-gradient-to-b from-zinc-900 to-black flex flex-col overflow-hidden touch-none"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 120 }}
+            onTouchMove={(e) => e.preventDefault()} // Prevent scrolling
           >
             {/* Header */}
             <motion.div
@@ -549,7 +639,7 @@ const MobilePlayer = () => {
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: 1 }}
                       transition={{ delay: 0.8 }}
-                    ></motion.div>
+                    />
                   </div>
                   <div className="flex justify-between text-xs text-zinc-400">
                     <span>{formatTime(currentTime)}</span>
@@ -627,13 +717,15 @@ const MobilePlayer = () => {
                     <span className="text-xs">Playlist</span>
                   </motion.button>
                   <motion.button
-                    onClick={toggleLike}
-                    className={`${isLiked ? 'text-pink-500' : 'text-zinc-400 hover:text-white'} transition-colors flex flex-col items-center`}
+                    onClick={() => setShowSleepTimer(true)}
+                    className={`${sleepTimer ? 'text-violet-400' : 'text-zinc-400 hover:text-white'} transition-colors flex flex-col items-center`}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Heart className={`w-5 h-5 mb-1 ${isLiked ? 'fill-pink-500' : ''}`} />
-                    <span className="text-xs">Favorite</span>
+                    <Timer className="w-5 h-5 mb-1" />
+                    <span className="text-xs">
+                      {sleepTimer ? `${formatTimerTime(remainingTime || 0)}` : 'Timer'}
+                    </span>
                   </motion.button>
                 </motion.div>
               </motion.div>
@@ -645,11 +737,12 @@ const MobilePlayer = () => {
         {showQueue && (
           <motion.div
             ref={queueRef}
-            className="fixed inset-0 bg-gradient-to-b from-zinc-900 to-black z-50 flex flex-col"
+            className="fixed inset-0 bg-gradient-to-b from-zinc-900 to-black z-50 flex flex-col touch-none"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 150 }}
+            onTouchMove={(e) => e.preventDefault()} // Prevent background scrolling
           >
             <motion.div
               className="p-4 border-b border-zinc-800 flex items-center justify-between"
@@ -737,13 +830,103 @@ const MobilePlayer = () => {
           </motion.div>
         )}
 
-        {/* Playlist Modal */}
-        {showPlaylistModal && (
+        {/* Sleep Timer Modal */}
+        {showSleepTimer && (
           <motion.div
-            className="fixed inset-0 bg-black/95 backdrop-blur-md z-50 p-4 flex flex-col"
+            className="fixed inset-0 bg-black/95 backdrop-blur-md z-50 p-4 flex flex-col touch-none"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            onTouchMove={(e) => e.preventDefault()} // Prevent background scrolling
+          >
+            <motion.div
+              className="flex items-center justify-between mb-6 border-b border-zinc-800 pb-3"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <h2 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-fuchsia-400 text-transparent bg-clip-text">
+                Sleep Timer
+              </h2>
+              <motion.button
+                onClick={() => setShowSleepTimer(false)}
+                className="p-1.5 rounded-full hover:bg-zinc-800 transition-colors"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <X className="w-5 h-5" />
+              </motion.button>
+            </motion.div>
+
+            {sleepTimer && (
+              <motion.div
+                className="mb-6 p-4 bg-zinc-800/50 rounded-lg border border-zinc-700"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-zinc-400 mb-1">Active Timer</p>
+                    <p className="text-lg font-medium text-violet-400">
+                      {formatTimerTime(remainingTime || 0)} remaining
+                    </p>
+                  </div>
+                  <motion.button
+                    onClick={cancelSleepTimer}
+                    className="px-3 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Cancel
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+
+            <motion.div
+              className="grid grid-cols-2 gap-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              {timerOptions.map((option, index) => (
+                <motion.button
+                  key={option.value}
+                  onClick={() => setSleepTimerMinutes(option.value)}
+                  className="p-4 bg-gradient-to-r from-zinc-800 to-zinc-700 rounded-lg flex flex-col items-center justify-center hover:from-zinc-700 hover:to-zinc-600 transition-all duration-200 border border-zinc-600"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 * index }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Clock className="w-6 h-6 text-violet-400 mb-2" />
+                  <span className="text-lg font-medium">{option.label}</span>
+                </motion.button>
+              ))}
+            </motion.div>
+
+            <motion.div
+              className="mt-6 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              <p className="text-sm text-zinc-500">
+                Music will automatically stop when the timer expires
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Playlist Modal */}
+        {showPlaylistModal && (
+          <motion.div
+            className="fixed inset-0 bg-black/95 backdrop-blur-md z-50 p-4 flex flex-col touch-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onTouchMove={(e) => e.preventDefault()} // Prevent background scrolling
           >
             <motion.div
               className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-3"
@@ -793,8 +976,7 @@ const MobilePlayer = () => {
                     <motion.button
                       onClick={() => addSongToPlaylist(playlist.id)}
                       disabled={!!addingToPlaylist}
-                      className={`w-full p-4 rounded-lg flex items-center gap-4 overflow-hidden bg-gradient-to-r ${getPlaylistColor(index)
-                        } disabled:opacity-70`}
+                      className={`w-full p-4 rounded-lg flex items-center gap-4 overflow-hidden bg-gradient-to-r ${getPlaylistColor(index)} disabled:opacity-70`}
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.99 }}
                     >
