@@ -9,6 +9,7 @@ import AddPlaylistPopup from './AddPlaylistPopup';
 import Link from "next/link"
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { topArtists } from '@/lib/constant';
 
 
 interface SearchResultItem {
@@ -450,15 +451,7 @@ const Main = () => {
   };
 
 
-  /// Top Artists
-  const topArtists = [
-    { id: '2FKWNmZWDBZR4dE5KX4plR', name: 'Diljit Dosanjh', genre: 'Punjabi Pop', img: "https://c.saavncdn.com/artists/Diljit_Dosanjh_005_20231025073054_500x500.jpg" },
-    { id: '4YRxDV8wJFPHPTeXepOstw', name: 'Arijit Singh', genre: 'Bollywood', img: "https://c.saavncdn.com/artists/Arijit_Singh_004_20241118063717_500x500.jpg" },
-    { id: '5f4QpKfy7ptCHwTqspnSJI', name: 'Neha Kakkar', genre: 'Pop', img: "https://c.saavncdn.com/artists/Neha_Kakkar_007_20241212115832_500x500.jpg" },
-    { id: '0y59o4v8uw5crbN9M3JiL1', name: 'Badshah', genre: 'Hip-Hop', img: "https://c.saavncdn.com/artists/Badshah_006_20241118064015_500x500.jpg" },
-    { id: '0oOet2f43PA68X5RxKobEy', name: 'Shreya Ghoshal', genre: 'Classical/Bollywood', img: "https://c.saavncdn.com/artists/Shreya_Ghoshal_007_20241101074144_500x500.jpg" },
-    { id: '1tqysapcCh1lWEAc9dIFpa', name: 'Jubin Nautiyal', genre: 'Romantic', img: "https://c.saavncdn.com/artists/Jubin_Nautiyal_003_20231130204020_500x500.jpg" },
-  ];
+
 
   // Search result item component with updated styling
   const SearchResultItem = ({ item }: { item: SearchResultItem }) => {
@@ -967,7 +960,7 @@ const Main = () => {
       >
           <h2 className="text-xl font-bold mb-4">Top Artists</h2>
           <div className="grid grid-cols-6 gap-5">
-            {topArtists.map((artist) => (
+            {topArtists.slice(0,6).map((artist) => (
               <Link key={artist.id} href={`dashboard/artist/${artist.id}`} className="flex flex-col">
                 <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40 hover:border-gray-400/60 transition-colors">
                 <img src={artist.img} alt={artist.name} loading="lazy" />
