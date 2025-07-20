@@ -30,6 +30,9 @@ interface PlayerContextType {
   playNextInQueue: (song: Song) => void;
   shufflePlay: (songs: Song[]) => void;
   playFromPlaylist: (songs: Song[], index: number) => void;
+  // NEW METHODS FOR PROGRESSIVE LOADING
+  updatePlaylist: (songs: Song[], isShuffled?: boolean) => void;
+  addSongsToQueue: (newSongs: Song[]) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -427,6 +430,35 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // **NEW METHOD: Update playlist progressively for background loading**
+  const updatePlaylist = (songs: Song[], isShuffled: boolean = false) => {
+    setPlaylistState(songs);
+    
+    // Update queue with remaining songs (excluding the first one that's already playing)
+    const remainingSongs = songs.slice(1);
+    setQueue(prevQueue => {
+      // Keep the current song at the beginning if it exists
+      const currentInQueue = prevQueue[0];
+      if (currentInQueue && songs.find(s => s.id === currentInQueue.id)) {
+        return [currentInQueue, ...remainingSongs];
+      }
+      return remainingSongs;
+    });
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('playlist', JSON.stringify(songs));
+    }
+  };
+
+  // **NEW METHOD: Add multiple songs to queue at once**
+  const addSongsToQueue = (newSongs: Song[]) => {
+    setQueue(prevQueue => [...prevQueue, ...newSongs]);
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('queue', JSON.stringify([...queue, ...newSongs]));
+    }
+  };
+
   // Shuffle play function
   const shufflePlay = (songs: Song[]) => {
     if (songs.length === 0) return;
@@ -662,7 +694,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       clearQueue,
       playNextInQueue,
       shufflePlay,
-      playFromPlaylist
+      playFromPlaylist,
+      updatePlaylist,
+      addSongsToQueue
     }}>
       {children}
       <audio ref={audioRef} />
