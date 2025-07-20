@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Bell, User, Loader2, Plus, Music, X } from 'lucide-react';
+import { Search, Bell, User, Loader2, Plus, Music, X, MoreVertical, Play, SkipForward, ListPlus, Heart, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, useRef } from 'react';
 import { usePlayer } from '@/context/PlayerContext';
@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast';
 import MobileAddPlaylistPopup from './MobileAddPlaylistPopup';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 
 interface SearchResultItem {
@@ -60,9 +60,22 @@ interface Track {
   type?: string;
 }
 
+interface MenuPosition {
+  x: number;
+  y: number;
+}
+
 const MobileMain = () => {
   const router = useRouter();
-  const { setCurrentSong, setIsPlaying } = usePlayer();
+  const { 
+    setCurrentSong, 
+    setIsPlaying, 
+    addToQueue, 
+    playNextInQueue, 
+    queue = [], 
+    currentSong 
+  } = usePlayer();
+  
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [searching, setSearching] = useState<boolean>(false);
@@ -74,8 +87,14 @@ const MobileMain = () => {
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState<Song | null>(null);
   const [isLoadingPlaylists, setIsLoadingPlaylists] = useState(false);
   const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState(false);
+  const [showSongMenu, setShowSongMenu] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition>({ x: 0, y: 0 });
+  const [selectedSong, setSelectedSong] = useState<Song | null>(null);
+  
   const suggestionBoxRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState<boolean>(true);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
@@ -84,6 +103,22 @@ const MobileMain = () => {
   const fadeInUp = {
     hidden: { opacity: 0, y: 40 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } },
+  };
+
+  const menuVariants = {
+    hidden: { opacity: 0, scale: 0.8, y: -10 },
+    visible: { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0,
+      transition: { duration: 0.2, ease: 'easeOut' }
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.8, 
+      y: -10,
+      transition: { duration: 0.15 }
+    }
   };
 
   const { ref: recRef, inView: recInView } = useInView({ triggerOnce: true, threshold: 0.15 });
@@ -121,9 +156,13 @@ const MobileMain = () => {
     }
   }, []);
 
-  // Add event listener to close suggestions when clicking outside
+  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowSongMenu(null);
+      }
+      
       if (
         suggestionBoxRef.current &&
         !suggestionBoxRef.current.contains(event.target as Node) &&
@@ -134,13 +173,88 @@ const MobileMain = () => {
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-
     };
-  }, [showSuggestions]);
+  }, [showSuggestions, showSongMenu]);
+
+  // Handle menu button click
+  const handleMenuClick = (event: React.MouseEvent, song: Song) => {
+    event.stopPropagation();
+    
+    const rect = event.currentTarget.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const menuWidth = 200; // Approximate menu width
+    
+    // Position menu to the left if it would overflow on the right
+    const x = rect.left + menuWidth > viewportWidth ? rect.left - menuWidth : rect.left;
+    const y = rect.bottom + 5;
+    
+    setMenuPosition({ x: Math.max(10, x), y });
+    setSelectedSong(song);
+    setShowSongMenu(song.id);
+  };
+
+  const handleMenuAction = async (action: string) => {
+    if (!selectedSong) return;
+    
+    try {
+      switch (action) {
+        case 'play':
+          const songDetails = await getSongDetails(selectedSong.id);
+          if (songDetails) {
+            updateRecentlyPlayed(songDetails);
+            setCurrentSong(songDetails);
+            setIsPlaying(true);
+            toast.success(`Now playing: ${songDetails.name}`);
+          }
+          break;
+          
+        case 'playNext':
+          const nextSongDetails = await getSongDetails(selectedSong.id);
+          if (nextSongDetails && playNextInQueue) {
+            playNextInQueue(nextSongDetails);
+            toast.success(`Added to play next: ${nextSongDetails.name}`);
+          } else {
+            toast.error('Play next feature not available');
+          }
+          break;
+          
+        case 'addToQueue':
+          const queueSongDetails = await getSongDetails(selectedSong.id);
+          if (queueSongDetails && addToQueue) {
+            addToQueue(queueSongDetails);
+            toast.success(`Added to queue: ${queueSongDetails.name}`);
+          } else {
+            toast.error('Queue feature not available');
+          }
+          break;
+          
+        case 'addToPlaylist':
+          await handleAddToPlaylist(selectedSong);
+          break;
+          
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error('Error handling menu action:', error);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setShowSongMenu(null);
+      setSelectedSong(null);
+    }
+  };
+
+  const updateRecentlyPlayed = (song: Song) => {
+    const stored = localStorage.getItem('recentlyPlayed');
+    const recentSongs: Song[] = stored ? JSON.parse(stored) : [];
+    const filtered = recentSongs.filter((s) => s.id !== song.id);
+    filtered.unshift(song);
+    const limited = filtered.slice(0, 20);
+    localStorage.setItem('recentlyPlayed', JSON.stringify(limited));
+    setRecentlyPlayed(limited);
+  };
 
   // Fetch playlists when needed
   const fetchPlaylists = async () => {
@@ -195,7 +309,6 @@ const MobileMain = () => {
     }
   };
 
-
   const getSongDetails = async (id: string): Promise<Song | null> => {
     try {
       const response = await fetch('/api/dashboard/getSongUrl', {
@@ -249,19 +362,11 @@ const MobileMain = () => {
         return;
       }
 
-      // Update recentlyPlayed list in localStorage
-      const stored = localStorage.getItem('recentlyPlayed');
-      const recentSongs: Song[] = stored ? JSON.parse(stored) : [];
-      const filtered = recentSongs.filter((s) => s.id !== song.id);
-      filtered.unshift(song);
-      const limited = filtered.slice(0, 20);
-      localStorage.setItem('recentlyPlayed', JSON.stringify(limited));
-      setRecentlyPlayed(limited);
-
+      updateRecentlyPlayed(song);
       setCurrentSong(song);
       setIsPlaying(true);
       setShowSuggestions(false);
-      setSearchQuery(""); // Clear the input box after playing a song
+      setSearchQuery("");
       toast.success(`Now playing: ${item.title.replaceAll("&quot;", `"`)}`);
     } catch (error) {
       console.error('Error playing song:', error);
@@ -294,14 +399,12 @@ const MobileMain = () => {
 
       const data = await response.json();
 
-      // Check if song already exists in playlist
       if (data.alreadyExists) {
         toast.error(`"${song.name}" is already in this playlist`);
       } else {
         toast.success(`Added "${song.name}" to playlist`);
       }
 
-      // Close modal
       setShowAddToPlaylistModal(null);
     } catch (error) {
       console.error('Error adding song to playlist:', error);
@@ -313,7 +416,6 @@ const MobileMain = () => {
 
   const handleAddToPlaylist = async (song: Song) => {
     try {
-      // Get full song details first
       const songDetails = await getSongDetails(song.id);
       if (!songDetails) {
         toast.error('Failed to get song details');
@@ -338,7 +440,6 @@ const MobileMain = () => {
     return colors[index % colors.length];
   };
 
-
   const getTrendingTracks = async () => {
     setIsTrendingLoading(true);
     function formatNumber(num: number) {
@@ -351,7 +452,6 @@ const MobileMain = () => {
       }
     }
 
-
     try {
       const response = await fetch('/api/dashboard/getNewReleases', {
         method: 'POST',
@@ -362,7 +462,6 @@ const MobileMain = () => {
       })
 
       const data = await response.json()
-
       const newArray = [];
 
       for (let i = 0; i < data.data.count; i++) {
@@ -379,11 +478,9 @@ const MobileMain = () => {
           }
           newArray.push(realData);
         }
-
       }
 
       setTrendingTracks(newArray);
-
     } catch (error) {
       console.error('Error fetching trending tracks:', error);
       toast.error('Failed to fetch trending tracks. Please try again later.');
@@ -396,63 +493,122 @@ const MobileMain = () => {
     getTrendingTracks()
   }, []);
 
-  // Handle new playlist creation
   const handlePlaylistCreated = (playlistId: string, playlistName: string) => {
-    // Add the new playlist to the state
     setPlaylists(prev => [
       { id: playlistId, name: playlistName, songCount: 0 },
       ...prev
     ]);
-    // Close the popup
     setShowAddPlaylistPopup(false);
   };
 
+  // Top Artists
+  const topArtists = [
+    { id: '2FKWNmZWDBZR4dE5KX4plR', name: 'Diljit Dosanjh', genre: 'Punjabi Pop', img: "https://c.saavncdn.com/artists/Diljit_Dosanjh_005_20231025073054_500x500.jpg" },
+    { id: '4YRxDV8wJFPHPTeXepOstw', name: 'Arijit Singh', genre: 'Bollywood', img: "https://c.saavncdn.com/artists/Arijit_Singh_004_20241118063717_500x500.jpg" },
+    { id: '5f4QpKfy7ptCHwTqspnSJI', name: 'Neha Kakkar', genre: 'Pop', img: "https://c.saavncdn.com/artists/Neha_Kakkar_007_20241212115832_500x500.jpg" },
+    { id: '0y59o4v8uw5crbN9M3JiL1', name: 'Badshah', genre: 'Hip-Hop', img: "https://c.saavncdn.com/artists/Badshah_006_20241118064015_500x500.jpg" },
+    { id: '0oOet2f43PA68X5RxKobEy', name: 'Shreya Ghoshal', genre: 'Classical/Bollywood', img: "https://c.saavncdn.com/artists/Shreya_Ghoshal_007_20241101074144_500x500.jpg" },
+    { id: '1tqysapcCh1lWEAc9dIFpa', name: 'Jubin Nautiyal', genre: 'Romantic', img: "https://c.saavncdn.com/artists/Jubin_Nautiyal_003_20231130204020_500x500.jpg" },
+  ];
 
-
-    /// Top Artists
-    const topArtists = [
-      { id: '2FKWNmZWDBZR4dE5KX4plR', name: 'Diljit Dosanjh', genre: 'Punjabi Pop', img: "https://c.saavncdn.com/artists/Diljit_Dosanjh_005_20231025073054_500x500.jpg" },
-      { id: '4YRxDV8wJFPHPTeXepOstw', name: 'Arijit Singh', genre: 'Bollywood', img: "https://c.saavncdn.com/artists/Arijit_Singh_004_20241118063717_500x500.jpg" },
-      { id: '5f4QpKfy7ptCHwTqspnSJI', name: 'Neha Kakkar', genre: 'Pop', img: "https://c.saavncdn.com/artists/Neha_Kakkar_007_20241212115832_500x500.jpg" },
-      { id: '0y59o4v8uw5crbN9M3JiL1', name: 'Badshah', genre: 'Hip-Hop', img: "https://c.saavncdn.com/artists/Badshah_006_20241118064015_500x500.jpg" },
-      { id: '0oOet2f43PA68X5RxKobEy', name: 'Shreya Ghoshal', genre: 'Classical/Bollywood', img: "https://c.saavncdn.com/artists/Shreya_Ghoshal_007_20241101074144_500x500.jpg" },
-      { id: '1tqysapcCh1lWEAc9dIFpa', name: 'Jubin Nautiyal', genre: 'Romantic', img: "https://c.saavncdn.com/artists/Jubin_Nautiyal_003_20231130204020_500x500.jpg" },
-    ];
-
-  // Recently played item component
+  // Recently played item component with menu
   const RecentPlayItem = ({ song }: { song: Song }) => (
     <div className="flex flex-col">
       <div
-        className="relative aspect-square bg-zinc-800 rounded-lg mb-2 overflow-hidden cursor-pointer"
+        className="relative aspect-square bg-zinc-800 rounded-lg mb-2 overflow-hidden cursor-pointer group"
         onClick={() => {
           setCurrentSong(song);
           setIsPlaying(true);
         }}
       >
         <img src={song.image.replace('150x150', '500x500').replace('http:', 'https:')} alt={song.name.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
-
-        {/* Add to playlist button */}
+        
+        {/* Menu button */}
         <button
-          className="absolute bottom-2 right-2 p-2 rounded-full bg-black/60 text-white"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAddToPlaylist(song);
-          }}
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+          onClick={(e) => handleMenuClick(e, song)}
         >
-          <Plus size={18} />
+          <MoreVertical size={16} />
         </button>
+        
+        {/* Play button overlay */}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+          <div className="p-3 rounded-full bg-purple-600 text-white">
+            <Play size={20} fill="currentColor" />
+          </div>
+        </div>
       </div>
       <h3 className="font-medium text-sm truncate">{song.name.replaceAll("&quot;", `"`)}</h3>
       <p className="text-xs text-zinc-400 truncate">{song.artist}</p>
     </div>
   );
 
+  // Song menu component
+  const SongMenu = () => {
+    if (!showSongMenu || !selectedSong) return null;
+
+    return (
+      <div 
+        className="fixed inset-0 z-50"
+        style={{ pointerEvents: 'none' }}
+      >
+        <AnimatePresence>
+          <motion.div
+            ref={menuRef}
+            variants={menuVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="absolute bg-zinc-800 rounded-lg shadow-xl py-2 min-w-[180px] border border-zinc-700"
+            style={{ 
+              left: menuPosition.x, 
+              top: menuPosition.y,
+              pointerEvents: 'auto'
+            }}
+          >
+            <button
+              className="w-full px-4 py-2 text-left hover:bg-zinc-700 flex items-center gap-3 text-white"
+              onClick={() => handleMenuAction('play')}
+            >
+              <Play size={18} />
+              Play
+            </button>
+            
+            <button
+              className="w-full px-4 py-2 text-left hover:bg-zinc-700 flex items-center gap-3 text-white"
+              onClick={() => handleMenuAction('playNext')}
+            >
+              <SkipForward size={18} />
+              Play next
+            </button>
+            
+            <button
+              className="w-full px-4 py-2 text-left hover:bg-zinc-700 flex items-center gap-3 text-white"
+              onClick={() => handleMenuAction('addToQueue')}
+            >
+              <Clock size={18} />
+              Add to queue
+            </button>
+            
+            <button
+              className="w-full px-4 py-2 text-left hover:bg-zinc-700 flex items-center gap-3 text-white"
+              onClick={() => handleMenuAction('addToPlaylist')}
+            >
+              <ListPlus size={18} />
+              Add to playlist
+            </button>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    );
+  };
+
   // Add to playlist modal
   const AddToPlaylistModal = () => {
     if (!showAddToPlaylistModal) return null;
 
     return (
-      <div className="fixed inset-0 bg-black/80 z-100 flex items-end">
+      <div className="fixed inset-0 bg-black/80 z-50 flex items-end">
         <div className="w-full bg-zinc-900 rounded-t-xl max-h-[70vh] overflow-y-auto">
           <div className="flex items-center justify-between p-4 border-b border-zinc-800 sticky top-0 bg-zinc-900">
             <h2 className="text-lg font-bold">Add to Playlist</h2>
@@ -526,7 +682,7 @@ const MobileMain = () => {
           />
 
           {showSuggestions && (
-            <div className="absolute w-full mt-2 bg-zinc-800 rounded-md shadow-lg max-h-[50vh] overflow-y-auto z-50">
+            <div className="absolute w-full mt-2 bg-zinc-800 rounded-md shadow-lg max-h-[50vh] overflow-y-auto z-40">
               <div className="p-3">
                 <h3 className="text-sm font-semibold mb-2 flex items-center justify-between">
                   <span>Search Results</span>
@@ -581,15 +737,15 @@ const MobileMain = () => {
                             try {
                               const songDetails = await getSongDetails(item.id);
                               if (songDetails) {
-                                handleAddToPlaylist(songDetails);
+                                handleMenuClick(e, songDetails);
                               }
                             } catch (error) {
-                              console.error("Error adding song to playlist:", error);
-                              toast.error("Failed to add song to playlist");
+                              console.error("Error handling song menu:", error);
+                              toast.error("Failed to open menu");
                             }
                           }}
                         >
-                          <Plus size={20} />
+                          <MoreVertical size={18} />
                         </button>
                       )}
                     </div>
@@ -597,7 +753,6 @@ const MobileMain = () => {
                 ) : (
                   <p className="text-zinc-400 text-sm p-2">No results found</p>
                 )}
-
               </div>
             </div>
           )}
@@ -615,7 +770,7 @@ const MobileMain = () => {
         >
           <h2 className="text-xl font-bold mb-4">Recommendations</h2>
           {isTrendingLoading ? (
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               {[...Array(12)].map((_, index) => (
                 <div key={`skeleton-${index}`} className="flex flex-col">
                   <div className="aspect-square bg-zinc-800 rounded-lg mb-2 animate-pulse"></div>
@@ -625,14 +780,11 @@ const MobileMain = () => {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               {trendingTracks.slice(0, 12).map((track) => (
-                <div
-                  key={track.id}
-                  className="flex flex-col"
-                >
+                <div key={track.id} className="flex flex-col">
                   <div
-                    className="relative aspect-square bg-zinc-800 rounded-lg mb-2 overflow-hidden cursor-pointer"
+                    className="relative aspect-square bg-zinc-800 rounded-lg mb-2 overflow-hidden cursor-pointer group"
                     onClick={() => handleSongSelect({
                       id: track.id,
                       title: track.title,
@@ -649,7 +801,7 @@ const MobileMain = () => {
                         artistMap: {
                           primary_artists: [{
                             id: '',
-                            name: '',
+                            name: track.artist,
                             image: '',
                             perma_url: ''
                           }]
@@ -662,11 +814,13 @@ const MobileMain = () => {
                       alt={track.title}
                       className="w-full h-full object-cover"
                     />
+                    
+                    {/* Menu button */}
                     <button
-                      className="absolute bottom-2 right-2 p-2 rounded-full bg-black/60 text-white"
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleAddToPlaylist({
+                        handleMenuClick(e, {
                           id: track.id,
                           name: track.title,
                           artist: track.artist,
@@ -676,8 +830,15 @@ const MobileMain = () => {
                         });
                       }}
                     >
-                      <Plus size={18} />
+                      <MoreVertical size={16} />
                     </button>
+                    
+                    {/* Play button overlay */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                      <div className="p-3 rounded-full bg-purple-600 text-white">
+                        <Play size={20} fill="currentColor" />
+                      </div>
+                    </div>
                   </div>
                   <h3 className="font-medium text-sm truncate">{track.title.replaceAll("&quot;", `"`)}</h3>
                   <p className="text-xs text-zinc-400 truncate">{track.artist.replaceAll("&quot;", `"`)}</p>
@@ -698,7 +859,7 @@ const MobileMain = () => {
           <h2 className="text-xl font-bold mb-4">Recently Played</h2>
 
           {recentlyPlayed.length > 0 ? (
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               {recentlyPlayed.slice(0, 6).map((song) => (
                 <RecentPlayItem key={song.id} song={song} />
               ))}
@@ -724,7 +885,7 @@ const MobileMain = () => {
             {topArtists.map((artist) => (
               <Link key={artist.id} href={`dashboard/artist/${artist.id}`} className="flex flex-col">
                 <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40">
-                <img src={artist.img} alt={artist.name} loading="lazy" />
+                  <img src={artist.img} alt={artist.name} loading="lazy" />
                 </div>
                 <h3 className="font-medium text-sm text-center mb-1 truncate">{artist.name}</h3>
                 <p className="text-xs text-zinc-400 text-center truncate">{artist.genre}</p>
@@ -732,12 +893,6 @@ const MobileMain = () => {
             ))}
           </div>
         </motion.div>
-
-
-
-
-
-
 
         {/* Made For You Section */}
         <motion.div
@@ -757,8 +912,10 @@ const MobileMain = () => {
             ))}
           </div>
         </motion.div>
-
       </div>
+
+      {/* Song Menu */}
+      <SongMenu />
 
       {/* Add to Playlist Modal */}
       <AddToPlaylistModal />
@@ -769,7 +926,7 @@ const MobileMain = () => {
         onClose={() => setShowAddPlaylistPopup(false)}
         onSuccess={handlePlaylistCreated}
       />
-    </div >
+    </div>
   );
 };
 
