@@ -844,12 +844,12 @@ const ArtistPage = () => {
 
     return (
         <motion.div 
-            className="min-h-screen bg-black lg:py-0 py-20 text-white"
+            className="min-h-screen bg-black py-20 lg:py-0 text-white overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
         >
-            <div className="container mx-auto px-4 py-6 sm:py-8">
+            <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
                 {/* Artist Header */}
                 <motion.div 
                     className="flex flex-col lg:flex-row items-start lg:items-end gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12"
