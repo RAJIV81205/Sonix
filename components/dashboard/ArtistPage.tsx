@@ -1003,7 +1003,7 @@ const ArtistPage = () => {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 1.5, duration: 0.6 }}
                         >
-                            <Music className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
+                           
                             <h2 className="text-xl sm:text-2xl font-bold">Top Songs</h2>
                         </motion.div>
 
