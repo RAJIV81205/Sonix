@@ -167,7 +167,7 @@ export default function MobileSidebar() {
                 
               </div>
               
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0">  
                 <h1 className="text-xl font-black bg-gradient-to-r from-white via-purple-200 to-indigo-300 bg-clip-text text-transparent tracking-tight">
                   Sonix
                 </h1>
@@ -235,7 +235,7 @@ export default function MobileSidebar() {
         </div>
 
         {/* Menu Content */}
-        <div className="p-6 overflow-y-auto h-full pb-40">
+        <div className="p-6 overflow-y-auto h-full pb-50">
           {/* Main Navigation */}
           <div className="mb-8">
             <h2 className="text-xs uppercase tracking-widest text-zinc-500 font-bold mb-4 px-2">Discover</h2>
@@ -266,6 +266,20 @@ export default function MobileSidebar() {
                 <Search className={`w-6 h-6 ${isActiveRoute('/dashboard/search') ? 'text-purple-400' : ''}`} />
                 <span className="font-semibold text-lg">Search</span>
                 {isActiveRoute('/dashboard/search') && <div className="w-2 h-2 bg-purple-400 rounded-full ml-auto animate-pulse"></div>}
+              </Link>
+
+              <Link 
+                href="/dashboard/artist"
+                className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 ${
+                  isActiveRoute('/dashboard/artist')
+                    ? 'bg-gradient-to-r from-purple-600/20 via-indigo-600/20 to-purple-600/20 text-white ring-1 ring-purple-500/30' 
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50 active:scale-95'
+                }`}
+                onClick={handleLinkClick}
+              >
+                <Mic className={`w-6 h-6 ${isActiveRoute('/dashboard/artist') ? 'text-purple-400' : ''}`} />
+                <span className="font-semibold text-lg">Artists</span>
+                {isActiveRoute('/dashboard/artist') && <div className="w-2 h-2 bg-purple-400 rounded-full ml-auto animate-pulse"></div>}
               </Link>
               
               <Link 
@@ -316,19 +330,7 @@ export default function MobileSidebar() {
                 {isActiveRoute('/dashboard/recent') && <div className="w-2 h-2 bg-purple-400 rounded-full ml-auto animate-pulse"></div>}
               </Link>
               
-              <Link 
-                href="/dashboard/artists"
-                className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 ${
-                  isActiveRoute('/dashboard/artists')
-                    ? 'bg-gradient-to-r from-purple-600/20 via-indigo-600/20 to-purple-600/20 text-white ring-1 ring-purple-500/30' 
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50 active:scale-95'
-                }`}
-                onClick={handleLinkClick}
-              >
-                <Mic className={`w-6 h-6 ${isActiveRoute('/dashboard/artists') ? 'text-purple-400' : ''}`} />
-                <span className="font-semibold text-lg">Artists</span>
-                {isActiveRoute('/dashboard/artists') && <div className="w-2 h-2 bg-purple-400 rounded-full ml-auto animate-pulse"></div>}
-              </Link>
+              
             </nav>
           </div>
 
