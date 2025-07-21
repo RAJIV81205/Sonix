@@ -1,4 +1,5 @@
-// Top Artists - Expanded Collection
+
+
 export const topArtists = [
     // Original Artists
     { id: '2FKWNmZWDBZR4dE5KX4plR', name: 'Diljit Dosanjh', genre: 'Punjabi Pop', img: "https://c.saavncdn.com/artists/Diljit_Dosanjh_005_20231025073054_500x500.jpg" },

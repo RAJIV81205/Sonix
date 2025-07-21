@@ -10,7 +10,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import {topArtists} from '@/lib/constant.js'
+import {topArtists} from '@/lib/constant'
 
 interface SearchResultItem {
   id: string;
