@@ -15,9 +15,9 @@ interface Artist {
 
 const Artist = () => {
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-900 via-blue-900 to-indigo-900 px-6 py-12">
+      <div className="bg-gradient-to-b from-purple-950 to-gray-950 px-6 py-12">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center gap-4 mb-4">
             <div className="p-3 bg-white/10 rounded-full backdrop-blur-sm">
@@ -35,67 +35,37 @@ const Artist = () => {
       </div>
 
       {/* Artists Grid */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {topArtists.map((artist: Artist) => (
-            <Link key={artist.id} href={`/artist/${artist.id}`} className="no-underline">
-              <div
-                className="group relative bg-gray-800 rounded-xl overflow-hidden hover:bg-gray-750 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20 cursor-pointer"
-              >
-                {/* Artist Image */}
-                <div className="relative aspect-square overflow-hidden">
-                  <img
-                    src={artist.img}
-                    alt={artist.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                  {/* Play Button Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
-                      <div className="w-0 h-0 border-l-[12px] border-l-white border-y-[8px] border-y-transparent ml-1" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Artist Info */}
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-white mb-1 group-hover:text-purple-300 transition-colors duration-200">
-                    {artist.name}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs font-medium rounded-full border border-purple-500/30">
-                      {artist.genre}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Subtle Border Glow */}
-                <div className="absolute inset-0 rounded-xl border border-transparent group-hover:border-purple-500/30 transition-colors duration-300 pointer-events-none" />
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* Stats Footer */}
-        <div className="mt-16 text-center">
-          <div className="inline-flex items-center gap-6 px-8 py-4 bg-gray-800/50 rounded-full backdrop-blur-sm border border-gray-700">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-300">{topArtists.length}</div>
-              <div className="text-sm text-gray-400">Artists</div>
+      
+      <div className="grid grid-cols-6 gap-5 p-4 my-5">
+        {topArtists.map((artist) => (
+          <Link key={artist.id} href={`/dashboard/artist/${artist.id}`} className="flex flex-col">
+            <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40 hover:border-gray-400/60 transition-colors">
+              <img src={artist.img} alt={artist.name} loading="lazy" />
             </div>
-            <div className="w-px h-8 bg-gray-600" />
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-300">
-                {[...new Set(topArtists.map(artist => artist.genre))].length}
-              </div>
-              <div className="text-sm text-gray-400">Genres</div>
+            <h3 className="font-medium text-sm text-center mb-1 truncate">{artist.name}</h3>
+            <p className="text-xs text-zinc-400 text-center truncate">{artist.genre}</p>
+          </Link>
+        ))}
+      </div>
+
+      {/* Stats Footer */}
+      <div className="mt-16 text-center">
+        <div className="inline-flex items-center gap-6 px-8 py-4 bg-gray-800/50 rounded-full backdrop-blur-sm border border-gray-700">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-300">{topArtists.length}</div>
+            <div className="text-sm text-gray-400">Artists</div>
+          </div>
+          <div className="w-px h-8 bg-gray-600" />
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-300">
+              {[...new Set(topArtists.map(artist => artist.genre))].length}
             </div>
+            <div className="text-sm text-gray-400">Genres</div>
           </div>
         </div>
       </div>
     </div>
+   
   );
 };
 
