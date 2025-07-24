@@ -109,12 +109,6 @@ export const topArtists = [
   },
   {
     "id": "4ITkqBlf5eoVCOFwsJCnqo",
-    "name": "Hardy Sandhu",
-    "genre": "Punjabi Pop",
-    "img": "https://i.scdn.co/image/ab6761610000e5eb0f91fa8766ef8adb10fe3b4e"
-  },
-  {
-    "id": "4ITkqBlf5eoVCOFwsJCnqo",
     "name": "Harrdy Sandhu",
     "genre": "Punjabi/Bollywood",
     "img": "https://i.scdn.co/image/ab6761610000e5eb0f91fa8766ef8adb10fe3b4e"
