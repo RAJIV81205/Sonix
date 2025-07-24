@@ -3,245 +3,246 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Play, 
-  Pause, 
-  Heart, 
-  Share2, 
-  ExternalLink, 
-  Users, 
-  Music, 
-  MoreVertical,
-  PlayCircle,
-  Shuffle,
-  ListPlus,
-  ArrowUp
+import {
+    Play,
+    Pause,
+    Heart,
+    Share2,
+    ExternalLink,
+    Users,
+    Music,
+    MoreVertical,
+    PlayCircle,
+    Shuffle,
+    ListPlus,
+    ArrowUp,
+    Download
 } from 'lucide-react'
 import { usePlayer } from '@/context/PlayerContext'
 
 // Animation variants
 const fadeInUp = {
-  initial: { opacity: 0, y: 60 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6 }
+    initial: { opacity: 0, y: 60 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.6 }
 }
 
 const fadeInLeft = {
-  initial: { opacity: 0, x: -50 },
-  animate: { opacity: 1, x: 0 },
-  transition: { duration: 0.6 }
+    initial: { opacity: 0, x: -50 },
+    animate: { opacity: 1, x: 0 },
+    transition: { duration: 0.6 }
 }
 
 const fadeInRight = {
-  initial: { opacity: 0, x: 50 },
-  animate: { opacity: 1, x: 0 },
-  transition: { duration: 0.6 }
+    initial: { opacity: 0, x: 50 },
+    animate: { opacity: 1, x: 0 },
+    transition: { duration: 0.6 }
 }
 
 const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1
+    animate: {
+        transition: {
+            staggerChildren: 0.1
+        }
     }
-  }
 }
 
 const scaleIn = {
-  initial: { scale: 0.8, opacity: 0 },
-  animate: { scale: 1, opacity: 1 },
-  transition: { duration: 0.5 }
+    initial: { scale: 0.8, opacity: 0 },
+    animate: { scale: 1, opacity: 1 },
+    transition: { duration: 0.5 }
 }
 
 // Enhanced Skeleton Components with mobile optimization
 const SkeletonLoader = () => (
-  <motion.div 
-    className="min-h-screen bg-black py-20 lg:py-0 text-white overflow-hidden"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ duration: 0.5 }}
-  >
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
-      {/* Header Skeleton - Mobile Optimized */}
-      <div className="flex flex-col items-center lg:flex-row lg:items-start  gap-3 sm:gap-4 md:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12">
-        {/* Artist Image Skeleton */}
-        <motion.div 
-          className="w-40 h-40 xs:w-40 xs:h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-72 lg:h-72 bg-gray-700 rounded-2xl animate-pulse mx-auto lg:mx-0 flex-shrink-0"
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        />
-        
-        {/* Artist Info Skeleton */}
-        <div className="flex-1 space-y-3 sm:space-y-4 w-full text-center lg:text-left">
-          {/* Verified Badge */}
-          <motion.div 
-            className="h-6 sm:h-7 bg-gray-700 rounded-full animate-pulse w-20 sm:w-24 mx-auto lg:mx-0"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          />
-          
-          {/* Artist Name */}
-          <motion.div 
-            className="space-y-2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
-            <div className="h-6 xs:h-7 sm:h-8 md:h-10 lg:h-12 bg-gray-700 rounded-lg animate-pulse w-full max-w-xs mx-auto lg:mx-0" />
-            <div className="h-4 xs:h-5 sm:h-6 bg-gray-700 rounded animate-pulse w-3/4 max-w-sm mx-auto lg:mx-0" />
-          </motion.div>
-          
-          {/* Stats */}
-          <motion.div 
-            className="flex flex-col xs:flex-row gap-2 xs:gap-3 sm:gap-4 md:gap-6 justify-center lg:justify-start"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <div className="flex items-center gap-2 justify-center lg:justify-start">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-600 rounded animate-pulse" />
-              <div className="h-3 sm:h-4 bg-gray-700 rounded animate-pulse w-16 sm:w-20" />
-            </div>
-            <div className="flex items-center gap-2 justify-center lg:justify-start">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-600 rounded animate-pulse" />
-              <div className="h-3 sm:h-4 bg-gray-700 rounded animate-pulse w-16 sm:w-20" />
-            </div>
-          </motion.div>
-          
-          {/* Action Buttons */}
-          <motion.div 
-            className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 items-center justify-center lg:justify-start pt-2 sm:pt-4"
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
-          >
-            {/* Play Button */}
-            <motion.div 
-              className="h-9 sm:h-10 md:h-12 bg-gray-700 rounded-full animate-pulse w-20 xs:w-24 sm:w-28 md:w-32"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.8 }}
-            />
-            {/* Shuffle Button */}
-            <motion.div 
-              className="h-9 sm:h-10 md:h-12 bg-gray-700 rounded-full animate-pulse w-16 xs:w-18 sm:w-20 md:w-24"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.9 }}
-            />
-            {/* Icon Buttons */}
-            {[1, 2, 3].map((_, index) => (
-              <motion.div 
-                key={index}
-                className="h-9 sm:h-10 md:h-12 w-9 sm:w-10 md:w-12 bg-gray-700 rounded-full animate-pulse"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 1 + (index * 0.1) }}
-              />
-            ))}
-          </motion.div>
-        </div>
-      </div>
+    <motion.div
+        className="min-h-screen bg-black py-20 lg:py-0 text-white overflow-hidden"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+    >
+        <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
+            {/* Header Skeleton - Mobile Optimized */}
+            <div className="flex flex-col items-center lg:flex-row lg:items-start  gap-3 sm:gap-4 md:gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-12">
+                {/* Artist Image Skeleton */}
+                <motion.div
+                    className="w-40 h-40 xs:w-40 xs:h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-72 lg:h-72 bg-gray-700 rounded-2xl animate-pulse mx-auto lg:mx-0 flex-shrink-0"
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.6, delay: 0.2 }}
+                />
 
-      {/* Songs Section Skeleton - Mobile Optimized */}
-      <motion.div 
-        className="space-y-3 sm:space-y-4"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.8 }}
-      >
-        {/* Section Title */}
-        <motion.div 
-          className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 1 }}
-        >
-          <div className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 bg-gray-600 rounded animate-pulse" />
-          <div className="h-5 sm:h-6 md:h-8 bg-gray-700 rounded animate-pulse w-24 sm:w-32 md:w-48" />
-        </motion.div>
+                {/* Artist Info Skeleton */}
+                <div className="flex-1 space-y-3 sm:space-y-4 w-full text-center lg:text-left">
+                    {/* Verified Badge */}
+                    <motion.div
+                        className="h-6 sm:h-7 bg-gray-700 rounded-full animate-pulse w-20 sm:w-24 mx-auto lg:mx-0"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 0.3 }}
+                    />
 
-        {/* Song Items */}
-        {[...Array(8)].map((_, i) => (
-          <motion.div 
-            key={i} 
-            className="flex items-center gap-2 xs:gap-3 sm:gap-4 p-2 xs:p-3 sm:p-4 bg-gray-800/30 hover:bg-gray-800/50 rounded-lg animate-pulse transition-colors"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4, delay: 1.2 + (i * 0.1) }}
-          >
-            {/* Song Image */}
-            <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gray-700 rounded-lg flex-shrink-0" />
-            
-            {/* Song Info */}
-            <div className="flex-1 space-y-1 xs:space-y-1.5 sm:space-y-2 min-w-0">
-              <div className="h-3 xs:h-3.5 sm:h-4 bg-gray-700 rounded w-full max-w-[200px] sm:max-w-[300px]" />
-              <div className="h-2 xs:h-2.5 sm:h-3 bg-gray-700 rounded w-3/4 max-w-[150px] sm:max-w-[200px]" />
-            </div>
-            
-            {/* Duration & Menu */}
-            <div className="flex items-center gap-1 xs:gap-2 sm:gap-3 flex-shrink-0">
-              {/* Duration (hidden on very small screens) */}
-              <div className="h-2.5 xs:h-3 sm:h-3.5 bg-gray-700 rounded w-8 xs:w-10 sm:w-12 hidden xs:block" />
-              {/* Menu Button */}
-              <div className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 bg-gray-700 rounded-full" />
-            </div>
-          </motion.div>
-        ))}
-      </motion.div>
+                    {/* Artist Name */}
+                    <motion.div
+                        className="space-y-2"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.4 }}
+                    >
+                        <div className="h-6 xs:h-7 sm:h-8 md:h-10 lg:h-12 bg-gray-700 rounded-lg animate-pulse w-full max-w-xs mx-auto lg:mx-0" />
+                        <div className="h-4 xs:h-5 sm:h-6 bg-gray-700 rounded animate-pulse w-3/4 max-w-sm mx-auto lg:mx-0" />
+                    </motion.div>
 
-      {/* Genres Skeleton - Mobile Optimized */}
-      <motion.div 
-        className="mt-6 sm:mt-8 lg:mt-12 space-y-3 sm:space-y-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2, duration: 0.6 }}
-      >
-        {/* Genres Title */}
-        <motion.div 
-          className="h-4 sm:h-5 md:h-6 bg-gray-700 rounded animate-pulse w-16 sm:w-20 md:w-24 mx-auto sm:mx-0"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 2.2 }}
-        />
-        
-        {/* Genre Tags */}
-        <motion.div 
-          className="flex flex-wrap gap-1.5 xs:gap-2 sm:gap-3 justify-center sm:justify-start"
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
-        >
-          {[1, 2, 3, 4, 5].map((_, index) => (
+                    {/* Stats */}
+                    <motion.div
+                        className="flex flex-col xs:flex-row gap-2 xs:gap-3 sm:gap-4 md:gap-6 justify-center lg:justify-start"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                    >
+                        <div className="flex items-center gap-2 justify-center lg:justify-start">
+                            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-600 rounded animate-pulse" />
+                            <div className="h-3 sm:h-4 bg-gray-700 rounded animate-pulse w-16 sm:w-20" />
+                        </div>
+                        <div className="flex items-center gap-2 justify-center lg:justify-start">
+                            <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gray-600 rounded animate-pulse" />
+                            <div className="h-3 sm:h-4 bg-gray-700 rounded animate-pulse w-16 sm:w-20" />
+                        </div>
+                    </motion.div>
+
+                    {/* Action Buttons */}
+                    <motion.div
+                        className="flex flex-wrap gap-2 sm:gap-3 md:gap-4 items-center justify-center lg:justify-start pt-2 sm:pt-4"
+                        variants={staggerContainer}
+                        initial="initial"
+                        animate="animate"
+                    >
+                        {/* Play Button */}
+                        <motion.div
+                            className="h-9 sm:h-10 md:h-12 bg-gray-700 rounded-full animate-pulse w-20 xs:w-24 sm:w-28 md:w-32"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.8 }}
+                        />
+                        {/* Shuffle Button */}
+                        <motion.div
+                            className="h-9 sm:h-10 md:h-12 bg-gray-700 rounded-full animate-pulse w-16 xs:w-18 sm:w-20 md:w-24"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.9 }}
+                        />
+                        {/* Icon Buttons */}
+                        {[1, 2, 3].map((_, index) => (
+                            <motion.div
+                                key={index}
+                                className="h-9 sm:h-10 md:h-12 w-9 sm:w-10 md:w-12 bg-gray-700 rounded-full animate-pulse"
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: 1 + (index * 0.1) }}
+                            />
+                        ))}
+                    </motion.div>
+                </div>
+            </div>
+
+            {/* Songs Section Skeleton - Mobile Optimized */}
             <motion.div
-              key={index}
-              className="h-6 xs:h-7 sm:h-8 bg-gray-700 rounded-full animate-pulse"
-              style={{ 
-                width: `${60 + Math.random() * 40}px` // Random widths for variety
-              }}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 2.4 + (index * 0.1) }}
-            />
-          ))}
-        </motion.div>
-      </motion.div>
+                className="space-y-3 sm:space-y-4"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+            >
+                {/* Section Title */}
+                <motion.div
+                    className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 md:mb-6"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1 }}
+                >
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 bg-gray-600 rounded animate-pulse" />
+                    <div className="h-5 sm:h-6 md:h-8 bg-gray-700 rounded animate-pulse w-24 sm:w-32 md:w-48" />
+                </motion.div>
 
-      {/* External Link Skeleton - Mobile Optimized */}
-      <motion.div 
-        className="flex gap-3 sm:gap-4 justify-center pt-4 sm:pt-6 lg:pt-8 mt-4 sm:mt-6 lg:mt-8 border-t border-gray-800"
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2.8, duration: 0.6 }}
-      >
-        <div className="h-3 sm:h-4 bg-gray-700 rounded animate-pulse w-20 sm:w-24 md:w-32" />
-      </motion.div>
+                {/* Song Items */}
+                {[...Array(8)].map((_, i) => (
+                    <motion.div
+                        key={i}
+                        className="flex items-center gap-2 xs:gap-3 sm:gap-4 p-2 xs:p-3 sm:p-4 bg-gray-800/30 hover:bg-gray-800/50 rounded-lg animate-pulse transition-colors"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 1.2 + (i * 0.1) }}
+                    >
+                        {/* Song Image */}
+                        <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gray-700 rounded-lg flex-shrink-0" />
 
-      {/* Mobile Bottom Spacing */}
-      <div className="h-20 sm:h-0" /> {/* Extra space for mobile navigation */}
-    </div>
-  </motion.div>
+                        {/* Song Info */}
+                        <div className="flex-1 space-y-1 xs:space-y-1.5 sm:space-y-2 min-w-0">
+                            <div className="h-3 xs:h-3.5 sm:h-4 bg-gray-700 rounded w-full max-w-[200px] sm:max-w-[300px]" />
+                            <div className="h-2 xs:h-2.5 sm:h-3 bg-gray-700 rounded w-3/4 max-w-[150px] sm:max-w-[200px]" />
+                        </div>
+
+                        {/* Duration & Menu */}
+                        <div className="flex items-center gap-1 xs:gap-2 sm:gap-3 flex-shrink-0">
+                            {/* Duration (hidden on very small screens) */}
+                            <div className="h-2.5 xs:h-3 sm:h-3.5 bg-gray-700 rounded w-8 xs:w-10 sm:w-12 hidden xs:block" />
+                            {/* Menu Button */}
+                            <div className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 bg-gray-700 rounded-full" />
+                        </div>
+                    </motion.div>
+                ))}
+            </motion.div>
+
+            {/* Genres Skeleton - Mobile Optimized */}
+            <motion.div
+                className="mt-6 sm:mt-8 lg:mt-12 space-y-3 sm:space-y-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 2, duration: 0.6 }}
+            >
+                {/* Genres Title */}
+                <motion.div
+                    className="h-4 sm:h-5 md:h-6 bg-gray-700 rounded animate-pulse w-16 sm:w-20 md:w-24 mx-auto sm:mx-0"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 2.2 }}
+                />
+
+                {/* Genre Tags */}
+                <motion.div
+                    className="flex flex-wrap gap-1.5 xs:gap-2 sm:gap-3 justify-center sm:justify-start"
+                    variants={staggerContainer}
+                    initial="initial"
+                    animate="animate"
+                >
+                    {[1, 2, 3, 4, 5].map((_, index) => (
+                        <motion.div
+                            key={index}
+                            className="h-6 xs:h-7 sm:h-8 bg-gray-700 rounded-full animate-pulse"
+                            style={{
+                                width: `${60 + Math.random() * 40}px` // Random widths for variety
+                            }}
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 2.4 + (index * 0.1) }}
+                        />
+                    ))}
+                </motion.div>
+            </motion.div>
+
+            {/* External Link Skeleton - Mobile Optimized */}
+            <motion.div
+                className="flex gap-3 sm:gap-4 justify-center pt-4 sm:pt-6 lg:pt-8 mt-4 sm:mt-6 lg:mt-8 border-t border-gray-800"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 2.8, duration: 0.6 }}
+            >
+                <div className="h-3 sm:h-4 bg-gray-700 rounded animate-pulse w-20 sm:w-24 md:w-32" />
+            </motion.div>
+
+            {/* Mobile Bottom Spacing */}
+            <div className="h-20 sm:h-0" /> {/* Extra space for mobile navigation */}
+        </div>
+    </motion.div>
 )
 
 // Interfaces
@@ -336,26 +337,26 @@ const ArtistPage = () => {
     const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
     const [backgroundLoadingToast, setBackgroundLoadingToast] = useState<string | null>(null)
     const menuRef = useRef<HTMLDivElement>(null)
-    
+
     const param = useParams().id
-    const { 
-      setCurrentSong, 
-      setIsPlaying, 
-      isPlaying, 
-      currentSong,
-      addToQueue,
-      playNextInQueue,
-      shufflePlay,
-      playFromPlaylist,
-      updatePlaylist,
-      addSongsToQueue
+    const {
+        setCurrentSong,
+        setIsPlaying,
+        isPlaying,
+        currentSong,
+        addToQueue,
+        playNextInQueue,
+        shufflePlay,
+        playFromPlaylist,
+        updatePlaylist,
+        addSongsToQueue
     } = usePlayer()
 
     // Close menu when clicking outside - FIXED
     useEffect(() => {
         const handleClickOutside = (event: Event) => {
             if (
-                menuRef.current && 
+                menuRef.current &&
                 !menuRef.current.contains(event.target as Node) &&
                 openMenuId !== null
             ) {
@@ -429,11 +430,11 @@ const ArtistPage = () => {
     // Enhanced conversion functions with caching and retries
     const convertTrackToSongWithCache = async (track: SpotifyTrack, cache: Map<string, any> = new Map()) => {
         const cacheKey = `${track.name}-${track.artists[0].name}`
-        
+
         if (cache.has(cacheKey)) {
             return cache.get(cacheKey)
         }
-        
+
         try {
             const song = await convertTrackToSong(track)
             cache.set(cacheKey, song)
@@ -511,11 +512,11 @@ const ArtistPage = () => {
 
     const convertTrackToSong = async (track: SpotifyTrack) => {
         if (!artistData?.artist) throw new Error("Artist data not available")
-        
+
         const name = `${track.name} - ${artistData.artist.name}`
         const id = await getSongId(name)
         const songData = await getSong(id)
-        
+
         return {
             id: songData.id,
             name: songData.name,
@@ -531,9 +532,9 @@ const ArtistPage = () => {
         const cache = new Map()
         const batchSize = 3 // Process 3 songs at a time
         const allSongs = [...initialSongs]
-        
+
         // Show subtle progress indicator
-        const progressToast = toast.loading("Loading playlist in background...", { 
+        const progressToast = toast.loading("Loading playlist in background...", {
             duration: Infinity,
             style: {
                 background: '#1f2937',
@@ -541,20 +542,20 @@ const ArtistPage = () => {
                 fontSize: '12px'
             }
         })
-        
+
         setBackgroundLoadingToast(progressToast)
-        
+
         try {
             for (let i = 0; i < remainingTracks.length; i += batchSize) {
                 const batch = remainingTracks.slice(i, i + batchSize)
-                
+
                 // Process batch in parallel
-                const batchPromises = batch.map(track => 
+                const batchPromises = batch.map(track =>
                     convertTrackToSongWithCache(track, cache)
                 )
-                
+
                 const batchResults = await Promise.allSettled(batchPromises)
-                
+
                 // Add successful conversions to the playlist
                 batchResults.forEach((result, index) => {
                     if (result.status === 'fulfilled' && result.value) {
@@ -563,21 +564,21 @@ const ArtistPage = () => {
                         console.warn(`Failed to convert track: ${batch[index].name}`)
                     }
                 })
-                
+
                 // Update the player context with new songs progressively
                 if (typeof updatePlaylist === 'function') {
                     updatePlaylist(allSongs, isShuffled)
                 }
-                
+
                 // Small delay between batches to prevent API rate limiting
                 if (i + batchSize < remainingTracks.length) {
                     await new Promise(resolve => setTimeout(resolve, 500))
                 }
             }
-            
+
             toast.dismiss(progressToast)
             toast.success(`Loaded ${allSongs.length} songs`, { duration: 2000 })
-            
+
         } catch (error) {
             toast.dismiss(progressToast)
             console.error("Background conversion error:", error)
@@ -632,25 +633,25 @@ const ArtistPage = () => {
     // OPTIMIZED Play All function with instant playback
     const handlePlayAll = async () => {
         if (!topTracks || topTracks.length === 0) return
-        
+
         try {
             // Show loading for first song only
             const loadingToast = toast.loading("Loading first song...", { duration: 1000 })
-            
+
             // Convert and play first song immediately
             const firstSong = await convertTrackToSong(topTracks[0])
             toast.dismiss(loadingToast)
-            
+
             // Start playing immediately
             setCurrentSong(firstSong)
             setIsPlaying(true)
             setCurrentPlaying(topTracks[0].id)
-            
+
             // Background conversion of remaining songs
             if (topTracks.length > 1) {
                 convertRemainingTracksInBackground(topTracks.slice(1), [firstSong], false)
             }
-            
+
         } catch (error) {
             toast.error("Failed to play song")
             console.error("Play all error:", error)
@@ -660,41 +661,102 @@ const ArtistPage = () => {
     // OPTIMIZED Shuffle Play function with instant playback
     const handleShufflePlay = async () => {
         if (!topTracks || topTracks.length === 0) return
-        
+
         try {
             // Shuffle the tracks first
             const shuffledTracks = [...topTracks].sort(() => Math.random() - 0.5)
-            
+
             const loadingToast = toast.loading("Loading first song...", { duration: 1000 })
-            
+
             // Convert and play first shuffled song immediately
             const firstSong = await convertTrackToSong(shuffledTracks[0])
             toast.dismiss(loadingToast)
-            
+
             // Start playing immediately
             setCurrentSong(firstSong)
             setIsPlaying(true)
             setCurrentPlaying(shuffledTracks[0].id)
-            
+
             // Background conversion of remaining shuffled songs
             if (shuffledTracks.length > 1) {
                 convertRemainingTracksInBackground(shuffledTracks.slice(1), [firstSong], true)
             }
-            
+
         } catch (error) {
             toast.error("Failed to shuffle play")
             console.error("Shuffle play error:", error)
         }
     }
 
+    const downloadSong = async (track:SpotifyTrack) => {
+        if (!track) {
+          toast.error("No song selected to download")
+          return
+        }
+    
+        try {
+         
+          toast.loading("Starting download...")
+
+        const song = await convertTrackToSong(track)
+    
+          // Get the download URL from the song object
+          const downloadUrl = song.url
+    
+          if (!downloadUrl) {
+            toast.error("Download URL not available for this song")
+            return
+          }
+    
+          // Fetch the audio file as blob
+          const response = await fetch(downloadUrl)
+          if (!response.ok) {
+            throw new Error('Failed to fetch audio file')
+          }
+    
+          const blob = await response.blob()
+          
+          // Create object URL from blob
+          const blobUrl = window.URL.createObjectURL(blob)
+          
+          // Create filename
+          const filename = `${song.name.replaceAll("&quot;", "").replace(/[^\w\s-]/g, "").trim()} - ${song.artist.replace(/[^\w\s-]/g, "").trim()}.mp3`
+          
+          // Create temporary anchor element to trigger download
+          const link = document.createElement('a')
+          link.href = blobUrl
+          link.download = filename
+          link.style.display = 'none'
+          
+          // Append to body, click, and remove
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          
+          // Clean up the blob URL after a short delay
+          setTimeout(() => {
+            window.URL.revokeObjectURL(blobUrl)
+          }, 1000)
+    
+          toast.dismiss()
+          toast.success(`"${song.name.replaceAll("&quot;", `"`)}" downloaded successfully`)
+        } catch (error) {
+          console.error('Download error:', error)
+          toast.dismiss()
+          toast.error("Failed to download song")
+        } finally{
+            setOpenMenuId(null)
+        }
+      }
+
     // Enhanced Context Menu Component with loading states
     const ContextMenu = ({ track, isOpen }: { track: SpotifyTrack, isOpen: boolean }) => {
         const isTrackLoading = loadingStates.has(track.id)
-        
+
         return (
             <AnimatePresence>
                 {isOpen && (
-                    <motion.div 
+                    <motion.div
                         ref={menuRef}
                         className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl min-w-[180px] sm:min-w-[200px] overflow-hidden"
                         onClick={(e) => {
@@ -707,16 +769,16 @@ const ArtistPage = () => {
                         transition={{ duration: 0.2 }}
                         style={{ zIndex: 9999 }}
                     >
-                        <motion.div 
+                        <motion.div
                             className="py-2"
                             variants={staggerContainer}
                             initial="initial"
                             animate="animate"
                         >
                             {[
-                                { 
-                                    icon: Play, 
-                                    label: isTrackLoading ? "Loading..." : "Play Now", 
+                                {
+                                    icon: Play,
+                                    label: isTrackLoading ? "Loading..." : "Play Now",
                                     action: () => {
                                         if (!isTrackLoading) {
                                             PlaySong(track)
@@ -726,7 +788,17 @@ const ArtistPage = () => {
                                     disabled: isTrackLoading
                                 },
                                 { icon: ArrowUp, label: "Play Next", action: () => handlePlayNext(track), disabled: false },
-                                { icon: ListPlus, label: "Add to Queue", action: () => handleAddToQueue(track), disabled: false },
+                                {
+                                    icon: ListPlus, label: "Add to Queue", action: () => handleAddToQueue(track),
+                                    disabled: false
+                                },
+                                {
+                                    icon: Download , label: "Download", 
+                                    action: () =>{
+                                        downloadSong(track)
+                                    }
+
+                                }
                             ].map((item, index) => (
                                 <motion.button
                                     key={item.label}
@@ -738,11 +810,10 @@ const ArtistPage = () => {
                                         }
                                     }}
                                     disabled={item.disabled}
-                                    className={`flex items-center gap-3 w-full px-4 py-3 text-sm text-white transition-colors focus:outline-none ${
-                                        item.disabled 
-                                            ? 'opacity-50 cursor-not-allowed' 
+                                    className={`flex items-center gap-3 w-full px-4 py-3 text-sm text-white transition-colors focus:outline-none ${item.disabled
+                                            ? 'opacity-50 cursor-not-allowed'
                                             : 'hover:bg-gray-700 focus:bg-gray-700'
-                                    }`}
+                                        }`}
                                     variants={fadeInLeft}
                                     custom={index}
                                     whileHover={item.disabled ? {} : { x: 4 }}
@@ -756,26 +827,26 @@ const ArtistPage = () => {
                                     {item.label}
                                 </motion.button>
                             ))}
-                            
-                            <motion.div 
+
+                            <motion.div
                                 className="border-t border-gray-700 my-1"
                                 initial={{ scaleX: 0 }}
                                 animate={{ scaleX: 1 }}
                                 transition={{ delay: 0.3 }}
                             />
-                            
+
                             {[
-                                { 
-                                    icon: Heart, 
-                                    label: "Add to Favorites", 
+                                {
+                                    icon: Heart,
+                                    label: "Add to Favorites",
                                     action: () => {
                                         toast.success("Added to favorites")
                                         setOpenMenuId(null)
                                     }
                                 },
-                                { 
-                                    icon: Share2, 
-                                    label: "Share", 
+                                {
+                                    icon: Share2,
+                                    label: "Share",
                                     action: () => {
                                         if (navigator.share) {
                                             navigator.share({
@@ -821,13 +892,13 @@ const ArtistPage = () => {
 
     if (!artistData || !artistData.artist) {
         return (
-            <motion.div 
+            <motion.div
                 className="min-h-screen bg-black text-white flex items-center justify-center px-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
             >
-                <motion.div 
+                <motion.div
                     className="text-center"
                     variants={fadeInUp}
                     initial="initial"
@@ -843,7 +914,7 @@ const ArtistPage = () => {
     const { artist, topTracks } = artistData
 
     return (
-        <motion.div 
+        <motion.div
             className="min-h-screen bg-black py-20 lg:py-0 text-white overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -851,13 +922,13 @@ const ArtistPage = () => {
         >
             <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
                 {/* Artist Header */}
-                <motion.div 
+                <motion.div
                     className="flex flex-col lg:flex-row items-start lg:items-end gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12"
                     variants={staggerContainer}
                     initial="initial"
                     animate="animate"
                 >
-                    <motion.div 
+                    <motion.div
                         className="relative group mx-auto lg:mx-0"
                         variants={scaleIn}
                     >
@@ -871,12 +942,12 @@ const ArtistPage = () => {
                         <div className="absolute inset-0 bg-black/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </motion.div>
 
-                    <motion.div 
+                    <motion.div
                         className="flex-1 w-full text-center lg:text-left"
                         variants={fadeInRight}
                     >
                         <div className="mb-4">
-                            <motion.span 
+                            <motion.span
                                 className="inline-block px-3 py-1 bg-purple-600 rounded-full text-xs sm:text-sm font-medium mb-4"
                                 initial={{ scale: 0, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
@@ -884,7 +955,7 @@ const ArtistPage = () => {
                             >
                                 Verified Artist
                             </motion.span>
-                            <motion.h1 
+                            <motion.h1
                                 className="text-2xl sm:text-4xl lg:text-6xl font-bold mb-2 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent leading-tight"
                                 initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -893,7 +964,7 @@ const ArtistPage = () => {
                                 {artist.name}
                             </motion.h1>
                             {artist.genres.length > 0 && (
-                                <motion.p 
+                                <motion.p
                                     className="text-base sm:text-xl text-gray-300 capitalize mb-4"
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -904,7 +975,7 @@ const ArtistPage = () => {
                             )}
                         </div>
 
-                        <motion.div 
+                        <motion.div
                             className="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-6 text-sm text-gray-300 mb-6 justify-center lg:justify-start"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -920,24 +991,24 @@ const ArtistPage = () => {
                             </div>
                         </motion.div>
 
-                        <motion.div 
+                        <motion.div
                             className="flex flex-wrap gap-2 sm:gap-4 items-center justify-center lg:justify-start"
                             variants={staggerContainer}
                             initial="initial"
                             animate="animate"
                         >
                             {[
-                                { 
-                                    icon: Play, 
-                                    label: "Play", 
-                                    action: handlePlayAll, 
+                                {
+                                    icon: Play,
+                                    label: "Play",
+                                    action: handlePlayAll,
                                     variant: "primary",
                                     className: "bg-green-600 hover:bg-green-700 px-6 sm:px-8"
                                 },
-                                { 
-                                    icon: Shuffle, 
-                                    label: "Shuffle", 
-                                    action: handleShufflePlay, 
+                                {
+                                    icon: Shuffle,
+                                    label: "Shuffle",
+                                    action: handleShufflePlay,
                                     variant: "secondary",
                                     className: "bg-purple-600 hover:bg-purple-700 px-4 sm:px-6"
                                 }
@@ -955,10 +1026,10 @@ const ArtistPage = () => {
                                     <span className="hidden sm:inline">{button.label}</span>
                                 </motion.button>
                             ))}
-                            
+
                             {[
-                                { icon: Heart, action: () => {} },
-                                { icon: Share2, action: () => {} },
+                                { icon: Heart, action: () => { } },
+                                { icon: Share2, action: () => { } },
                                 { icon: ExternalLink, href: artist.external_urls.spotify }
                             ].map((item, index) => (
                                 <motion.div key={index} variants={scaleIn} custom={index + 2}>
@@ -991,23 +1062,23 @@ const ArtistPage = () => {
 
                 {/* Top Songs Section - Enhanced with loading states */}
                 {topTracks && topTracks.length > 0 && (
-                    <motion.div 
+                    <motion.div
                         className="mb-8 sm:mb-12"
                         initial={{ opacity: 0, y: 50 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 1.3, duration: 0.8 }}
                     >
-                        <motion.div 
+                        <motion.div
                             className="flex items-center gap-3 mb-4 sm:mb-6"
                             initial={{ opacity: 0, x: -30 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 1.5, duration: 0.6 }}
                         >
-                           
+
                             <h2 className="text-xl sm:text-2xl font-bold">Top Songs</h2>
                         </motion.div>
 
-                        <motion.div 
+                        <motion.div
                             className="space-y-2"
                             variants={staggerContainer}
                             initial="initial"
@@ -1015,23 +1086,22 @@ const ArtistPage = () => {
                         >
                             {topTracks.map((track: SpotifyTrack, index: number) => {
                                 const isTrackLoading = loadingStates.has(track.id)
-                                
+
                                 return (
                                     <motion.div
                                         key={track.id}
-                                        className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg transition-colors group cursor-pointer relative ${
-                                            openMenuId === track.id ? 'bg-white/5' : 'hover:bg-white/5'
-                                        } ${isTrackLoading ? 'opacity-75' : ''}`}
+                                        className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg transition-colors group cursor-pointer relative ${openMenuId === track.id ? 'bg-white/5' : 'hover:bg-white/5'
+                                            } ${isTrackLoading ? 'opacity-75' : ''}`}
                                         variants={fadeInUp}
                                         custom={index}
                                         whileHover={{ x: openMenuId === track.id ? 0 : 4 }}
                                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
                                     >
-                                        <div 
+                                        <div
                                             className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0"
                                             onClick={() => !isTrackLoading && PlaySong(track)}
                                         >
-                                            <motion.div 
+                                            <motion.div
                                                 className="relative shrink-0"
                                                 whileHover={{ scale: isTrackLoading ? 1 : 1.05 }}
                                                 whileTap={{ scale: isTrackLoading ? 1 : 0.95 }}
@@ -1041,11 +1111,10 @@ const ArtistPage = () => {
                                                     alt={track.name}
                                                     className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg"
                                                 />
-                                                <motion.div 
-                                                    className={`absolute inset-0 bg-black/50 rounded-lg transition-opacity flex items-center justify-center ${
-                                                        isTrackLoading ? 'opacity-100' : 
-                                                        openMenuId === track.id ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'
-                                                    }`}
+                                                <motion.div
+                                                    className={`absolute inset-0 bg-black/50 rounded-lg transition-opacity flex items-center justify-center ${isTrackLoading ? 'opacity-100' :
+                                                            openMenuId === track.id ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'
+                                                        }`}
                                                 >
                                                     {isTrackLoading ? (
                                                         <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -1071,7 +1140,7 @@ const ArtistPage = () => {
                                             <div className="text-xs sm:text-sm text-gray-400 hidden xs:block">
                                                 {formatDuration(track.duration_ms)}
                                             </div>
-                                            
+
                                             <div className="relative">
                                                 <motion.button
                                                     onClick={(e) => {
@@ -1085,10 +1154,10 @@ const ArtistPage = () => {
                                                 >
                                                     <MoreVertical className="w-3 h-3 sm:w-4 sm:h-4" />
                                                 </motion.button>
-                                                
-                                                <ContextMenu 
-                                                    track={track} 
-                                                    isOpen={openMenuId === track.id} 
+
+                                                <ContextMenu
+                                                    track={track}
+                                                    isOpen={openMenuId === track.id}
                                                 />
                                             </div>
                                         </div>
@@ -1101,13 +1170,13 @@ const ArtistPage = () => {
 
                 {/* Genres */}
                 {artist.genres && artist.genres.length > 0 && (
-                    <motion.div 
+                    <motion.div
                         className="mb-6 sm:mb-8"
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 1.8, duration: 0.6 }}
                     >
-                        <motion.h3 
+                        <motion.h3
                             className="text-lg sm:text-xl font-bold mb-4 text-center sm:text-left"
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -1115,7 +1184,7 @@ const ArtistPage = () => {
                         >
                             Genres
                         </motion.h3>
-                        <motion.div 
+                        <motion.div
                             className="flex flex-wrap gap-2 justify-center sm:justify-start"
                             variants={staggerContainer}
                             initial="initial"
@@ -1138,7 +1207,7 @@ const ArtistPage = () => {
                 )}
 
                 {/* External Links */}
-                <motion.div 
+                <motion.div
                     className="flex gap-4 justify-center pt-6 sm:pt-8 border-t border-gray-800"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
