@@ -17,12 +17,14 @@ import {
   List,
   Trash2,
   Timer,
-  Clock
+  Clock,
+  Download
 } from "lucide-react"
 import React, { useState, useEffect, useRef } from "react"
 import { usePlayer } from "@/context/PlayerContext"
 import { toast } from "react-hot-toast"
 import { motion, AnimatePresence } from "framer-motion"
+
 
 interface Playlist {
   id: string;
@@ -45,8 +47,13 @@ const MobilePlayer = () => {
     removeFromQueue,
     clearQueue,
     setCurrentSong,
-    currentQueueIndex
+    currentQueueIndex,
+    toggleShuffle,
+    toggleRepeat,
+    isShuffled,
+    repeatMode
   } = usePlayer()
+  
   const [volume, setVolume] = useState(80)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -60,6 +67,7 @@ const MobilePlayer = () => {
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null)
   const [sleepTimer, setSleepTimer] = useState<number | null>(null)
   const [remainingTime, setRemainingTime] = useState<number | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
   const progressBarRef = useRef<HTMLDivElement>(null)
   const queueRef = useRef<HTMLDivElement>(null)
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -93,19 +101,77 @@ const MobilePlayer = () => {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`
   }
 
+
+
+  const downloadSong = async () => {
+    if (!currentSong) {
+      toast.error("No song selected to download")
+      return
+    }
+
+    try {
+      setIsDownloading(true)
+      toast.loading("Starting download...")
+
+      // Get the download URL from the song object
+      const downloadUrl = currentSong.url
+
+      if (!downloadUrl) {
+        toast.error("Download URL not available for this song")
+        return
+      }
+
+      // Fetch the audio file as blob
+      const response = await fetch(downloadUrl)
+      if (!response.ok) {
+        throw new Error('Failed to fetch audio file')
+      }
+
+      const blob = await response.blob()
+      
+      // Create object URL from blob
+      const blobUrl = window.URL.createObjectURL(blob)
+      
+      // Create filename
+      const filename = `${currentSong.name.replaceAll("&quot;", "").replace(/[^\w\s-]/g, "").trim()} - ${currentSong.artist.replace(/[^\w\s-]/g, "").trim()}.mp3`
+      
+      // Create temporary anchor element to trigger download
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = filename
+      link.style.display = 'none'
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      // Clean up the blob URL after a short delay
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl)
+      }, 1000)
+
+      toast.dismiss()
+      toast.success(`"${currentSong.name.replaceAll("&quot;", `"`)}" downloaded successfully`)
+    } catch (error) {
+      console.error('Download error:', error)
+      toast.dismiss()
+      toast.error("Failed to download song")
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+
   // Prevent body scroll when modals are open
   useEffect(() => {
     if (isExpanded || showQueue || showPlaylistModal || showSleepTimer) {
-      // Prevent scrolling on the body
       document.body.style.overflow = 'hidden'
       document.body.style.position = 'fixed'
       document.body.style.width = '100%'
       document.body.style.height = '100%'
-      
-      // For iOS Safari
       document.documentElement.style.overflow = 'hidden'
       
-      // Prevent touch events on the body from scrolling
       const preventScroll = (e: TouchEvent) => {
         if (e.target !== e.currentTarget) return
         e.preventDefault()
@@ -117,7 +183,6 @@ const MobilePlayer = () => {
         document.body.removeEventListener('touchmove', preventScroll)
       }
     } else {
-      // Restore scrolling
       document.body.style.overflow = ''
       document.body.style.position = ''
       document.body.style.width = ''
@@ -126,6 +191,7 @@ const MobilePlayer = () => {
     }
   }, [isExpanded, showQueue, showPlaylistModal, showSleepTimer])
 
+  // Handle back button navigation
   useEffect(() => {
     const handlePopState = () => {
       if (showSleepTimer) {
@@ -143,28 +209,25 @@ const MobilePlayer = () => {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [showSleepTimer, showPlaylistModal, showQueue, isExpanded]);
 
-  // Add history state when expanding player
+  // Add history states
   useEffect(() => {
     if (isExpanded) {
       window.history.pushState({ playerModal: "expanded" }, "");
     }
   }, [isExpanded]);
 
-  // Add history state when showing queue
   useEffect(() => {
     if (showQueue) {
       window.history.pushState({ playerModal: "queue" }, "");
     }
   }, [showQueue]);
 
-  // Add history state when showing playlist modal
   useEffect(() => {
     if (showPlaylistModal) {
       window.history.pushState({ playerModal: "playlist" }, "");
     }
   }, [showPlaylistModal]);
 
-  // Add history state when showing sleep timer
   useEffect(() => {
     if (showSleepTimer) {
       window.history.pushState({ playerModal: "sleepTimer" }, "");
@@ -206,7 +269,6 @@ const MobilePlayer = () => {
         setRemainingTime(prev => prev ? prev - 1 : null)
       }, 1000)
     } else if (remainingTime === 0) {
-      // Timer finished - stop music
       setIsPlaying(false)
       setSleepTimer(null)
       setRemainingTime(null)
@@ -421,9 +483,17 @@ const MobilePlayer = () => {
     }
   }, [showQueue])
 
-  // Prevent propagation of click events
-  const handlePlayClick = (e: React.MouseEvent) => {
+  // FIXED: Play/Pause button handler
+  const handlePlayPause = (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
+    
+    if (!currentSong) {
+      toast.error("No song selected");
+      return;
+    }
+    
+    console.log("Play/Pause clicked. Current state:", isPlaying);
     setIsPlaying(!isPlaying);
   };
 
@@ -509,7 +579,7 @@ const MobilePlayer = () => {
                   />
                 </motion.div>
                 <motion.button
-                  onClick={handlePlayClick}
+                  onClick={handlePlayPause}
                   className="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-full p-2.5 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!currentSong}
                   whileTap={{ scale: 0.95 }}
@@ -533,7 +603,7 @@ const MobilePlayer = () => {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 120 }}
-            onTouchMove={(e) => e.preventDefault()} // Prevent scrolling
+            onTouchMove={(e) => e.preventDefault()}
           >
             {/* Header */}
             <motion.div
@@ -655,7 +725,8 @@ const MobilePlayer = () => {
                   transition={{ delay: 0.8 }}
                 >
                   <motion.button
-                    className="text-zinc-400 hover:text-white transition-colors"
+                    className={`${isShuffled ? 'text-violet-400' : 'text-zinc-400 hover:text-white'} transition-colors`}
+                    onClick={toggleShuffle}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -670,9 +741,11 @@ const MobilePlayer = () => {
                   >
                     <SkipBack className="w-6 h-6" />
                   </motion.button>
+                  
+                  {/* FIXED: Main Play/Pause Button */}
                   <motion.button
                     className="bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white rounded-full p-4 sm:p-5 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={() => setIsPlaying(!isPlaying)}
+                    onClick={handlePlayPause}
                     disabled={!currentSong}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -682,6 +755,7 @@ const MobilePlayer = () => {
                   >
                     {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
                   </motion.button>
+                  
                   <motion.button
                     className="text-zinc-400 hover:text-white transition-colors"
                     onClick={playNext}
@@ -692,11 +766,17 @@ const MobilePlayer = () => {
                     <SkipForward className="w-6 h-6" />
                   </motion.button>
                   <motion.button
-                    className="text-zinc-400 hover:text-white transition-colors"
+                    className={`${repeatMode !== 'off' ? 'text-violet-400' : 'text-zinc-400 hover:text-white'} transition-colors relative`}
+                    onClick={toggleRepeat}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     <Repeat className="w-5 h-5" />
+                    {repeatMode === 'one' && (
+                      <span className="absolute -top-1 -right-1 text-xs bg-violet-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                        1
+                      </span>
+                    )}
                   </motion.button>
                 </motion.div>
 
@@ -716,6 +796,24 @@ const MobilePlayer = () => {
                     <Plus className="w-5 h-5 mb-1" />
                     <span className="text-xs">Playlist</span>
                   </motion.button>
+                  
+                  <motion.button
+                    onClick={downloadSong}
+                    disabled={isDownloading}
+                    className={`${isDownloading ? 'text-violet-400' : 'text-zinc-400 hover:text-white'} transition-colors flex flex-col items-center disabled:opacity-70`}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="w-5 h-5 mb-1 animate-spin" />
+                    ) : (
+                      <Download className="w-5 h-5 mb-1" />
+                    )}
+                    <span className="text-xs">
+                      {isDownloading ? 'Downloading...' : 'Download'}
+                    </span>
+                  </motion.button>
+
                   <motion.button
                     onClick={() => setShowSleepTimer(true)}
                     className={`${sleepTimer ? 'text-violet-400' : 'text-zinc-400 hover:text-white'} transition-colors flex flex-col items-center`}
@@ -742,7 +840,7 @@ const MobilePlayer = () => {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 150 }}
-            onTouchMove={(e) => e.preventDefault()} // Prevent background scrolling
+            onTouchMove={(e) => e.preventDefault()}
           >
             <motion.div
               className="p-4 border-b border-zinc-800 flex items-center justify-between"
@@ -789,7 +887,9 @@ const MobilePlayer = () => {
                 queue.map((song, index) => (
                   <motion.div
                     key={song.id}
-                    className="flex items-center gap-3 p-4 hover:bg-zinc-800/50 transition-colors group border-b border-zinc-800/50"
+                    className={`flex items-center gap-3 p-4 hover:bg-zinc-800/50 transition-colors group border-b border-zinc-800/50 ${
+                      index === currentQueueIndex ? 'bg-violet-500/10 border-violet-500/20' : ''
+                    }`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 * index }}
@@ -802,7 +902,11 @@ const MobilePlayer = () => {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{song.name.replaceAll("&quot;", `"`)}</p>
+                      <p className={`text-sm font-medium truncate ${
+                        index === currentQueueIndex ? 'text-violet-400' : ''
+                      }`}>
+                        {song.name.replaceAll("&quot;", `"`)}
+                      </p>
                       <p className="text-xs text-zinc-400 truncate">{song.artist}</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -837,7 +941,7 @@ const MobilePlayer = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onTouchMove={(e) => e.preventDefault()} // Prevent background scrolling
+            onTouchMove={(e) => e.preventDefault()}
           >
             <motion.div
               className="flex items-center justify-between mb-6 border-b border-zinc-800 pb-3"
@@ -926,7 +1030,7 @@ const MobilePlayer = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onTouchMove={(e) => e.preventDefault()} // Prevent background scrolling
+            onTouchMove={(e) => e.preventDefault()}
           >
             <motion.div
               className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-3"
