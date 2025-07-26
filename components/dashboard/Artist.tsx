@@ -104,7 +104,7 @@ const Artist = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white py-15 lg:py-0">
       {/* Header */}
       <div className="bg-gradient-to-b from-purple-950 to-gray-950 px-4 sm:px-6 py-8 sm:py-12">
         <div className="max-w-7xl mx-auto">
@@ -130,7 +130,7 @@ const Artist = () => {
       {/* Artists Grid */}
       <div className="px-4 my-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
+          <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
             {topArtists.map((artist, index) => (
               <ArtistCard key={artist.id} artist={artist} index={index} />
             ))}
