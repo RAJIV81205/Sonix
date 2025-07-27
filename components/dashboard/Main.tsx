@@ -589,7 +589,7 @@ const Main = () => {
   const { ref: playlistRef, inView: playlistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
 
   return (
-    <div className="h-full overflow-y-auto pb-24 text-white relative">
+    <div className="h-full overflow-y-auto pb-24 text-white relative ">
       {/* Dashboard Header */}
       <div className="bg-gradient-to-b from-indigo-900/20 to-black p-6">
         <div className="flex items-center justify-between mb-8">
@@ -956,21 +956,27 @@ const Main = () => {
         variants={fadeInUp}
         initial="hidden"
         animate={artistInView ? 'visible' : 'hidden'}
-        className="p-4"
+        className="p-4 px-5"
       >
-          <h2 className="text-xl font-bold mb-4">Top Artists</h2>
-          <div className="grid grid-cols-6 gap-5">
-            {topArtists.slice(0,6).map((artist) => (
-              <Link key={artist.id} href={`dashboard/artist/${artist.id}`} className="flex flex-col">
-                <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40 hover:border-gray-400/60 transition-colors">
+        <div className="flex flex-row items-center justify-between mb-4 ">
+          <h2 className="text-xl font-bold">Top Artists</h2>
+          <Link href="/dashboard/artist" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+            View All
+          </Link>
+
+        </div>
+        <div className="grid grid-cols-6 gap-5">
+          {topArtists.slice(0, 6).map((artist) => (
+            <Link key={artist.id} href={`dashboard/artist/${artist.id}`} className="flex flex-col">
+              <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40 hover:border-gray-400/60 transition-colors">
                 <img src={artist.img} alt={artist.name} loading="lazy" />
-                </div>
-                <h3 className="font-medium text-sm text-center mb-1 truncate">{artist.name}</h3>
-                <p className="text-xs text-zinc-400 text-center truncate">{artist.genre}</p>
-              </Link>
-            ))}
-          </div>
-        </motion.div>
+              </div>
+              <h3 className="font-medium text-sm text-center mb-1 truncate">{artist.name}</h3>
+              <p className="text-xs text-zinc-400 text-center truncate">{artist.genre}</p>
+            </Link>
+          ))}
+        </div>
+      </motion.div>
 
       {/* Your Playlists Section */}
       <motion.div
