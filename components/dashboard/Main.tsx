@@ -958,14 +958,14 @@ const Main = () => {
         animate={artistInView ? 'visible' : 'hidden'}
         className="p-4 px-5"
       >
-        <div className="flex flex-row items-center justify-between mb-4 ">
+        <div className="flex flex-row items-center justify-between mb-4 px-2">
           <h2 className="text-xl font-bold">Top Artists</h2>
           <Link href="/dashboard/artist" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
             View All
           </Link>
 
         </div>
-        <div className="grid grid-cols-6 gap-5">
+        <div className="grid grid-cols-6 gap-6 px-4">
           {topArtists.slice(0, 6).map((artist) => (
             <Link key={artist.id} href={`dashboard/artist/${artist.id}`} className="flex flex-col">
               <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40 hover:border-gray-400/60 transition-colors">
