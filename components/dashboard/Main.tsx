@@ -965,7 +965,7 @@ const Main = () => {
           </Link>
 
         </div>
-        <div className="grid grid-cols-6 gap-6 px-4">
+        <div className="grid grid-cols-6 gap-6 px-4 py-10">
           {topArtists.slice(0, 6).map((artist) => (
             <Link key={artist.id} href={`dashboard/artist/${artist.id}`} className="flex flex-col">
               <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40 hover:border-gray-400/60 transition-colors">
