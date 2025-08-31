@@ -45,7 +45,7 @@ export const topArtists = [
     "id": "56SjZARoEvag3RoKWIb16j",
     "name": "B Praak",
     "genre": "Punjabi/Bollywood",
-    "img": "https://i.scdn.co/image/ab6761610000e5ebfd469e9e949eab38a6169a42"
+    "img": "https://i.scdn.co/image/ab6761610000e5eb0e03d94a7d567c5d4f73d3ed"
   },
   {
     "id": "4nVa6XlBFlIkF6msW57PHp",
@@ -69,7 +69,7 @@ export const topArtists = [
     "id": "6DARBhWbfcS9E4yJzcliqQ",
     "name": "Karan Aujla",
     "genre": "Punjabi Hip-Hop",
-    "img": "https://i.scdn.co/image/ab6761610000e5eb2a354a64d9c5c602db0be2a4"
+    "img": "https://i.scdn.co/image/ab6761610000e5eb8a4c60d0eebe893f72e42979"
   },
   {
     "id": "5rQoBDKFnd1n6BkdbgVaRL",
@@ -112,6 +112,12 @@ export const topArtists = [
     "name": "Harrdy Sandhu",
     "genre": "Punjabi/Bollywood",
     "img": "https://i.scdn.co/image/ab6761610000e5eb0f91fa8766ef8adb10fe3b4e"
+  },
+  {
+    "id": "6QoCrBHsojKnOrsGNfRcTN",
+    "name": "Talwiinder",
+    "genre": "Punjabi",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb1b41d98a6831d076c45e1d88"
   },
   {
     "id": "06HL4z0CvFAxyc27GXpf02",
@@ -189,7 +195,7 @@ export const topArtists = [
     "id": "6eUKZXaKkcviH0Ku9w2n3V",
     "name": "Ed Sheeran",
     "genre": "Pop/Folk",
-    "img": "https://i.scdn.co/image/ab6761610000e5eb399444ed4eace08b549d1161"
+    "img": "https://i.scdn.co/image/ab6761610000e5ebd55c95ad400aed87da52daec"
   },
   {
     "id": "6VuMaDnrHyPL1p4EHjYLi7",
@@ -225,7 +231,7 @@ export const topArtists = [
     "id": "5pKCCKE2ajJHZ9KAiaK11H",
     "name": "Rihanna",
     "genre": "Pop/R&B",
-    "img": "https://i.scdn.co/image/ab6761610000e5eb373e1be0410d4212bf72acab"
+    "img": "https://i.scdn.co/image/ab6761610000e5ebcb565a8e684e3be458d329ac"
   },
   {
     "id": "181bsRPaVXVlUKXrxwZfHK",
