@@ -11,31 +11,6 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { topArtists } from '@/lib/constant';
 
-
-interface SearchResultItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  type: string;
-  image: string;
-  perma_url: string;
-  more_info: {
-    duration: string;
-    album_id: string;
-    album: string;
-    label: string;
-    encrypted_media_url: string;
-    artistMap: {
-      primary_artists: Array<{
-        id: string;
-        name: string;
-        image: string;
-        perma_url: string;
-      }>;
-    };
-  };
-}
-
 interface Song {
   id: string;
   name: string;
@@ -65,17 +40,12 @@ interface Track {
 const Main = () => {
   const router = useRouter();
   const { setCurrentSong, setIsPlaying, addToQueue, playNextInQueue } = usePlayer();
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
-  const [searching, setSearching] = useState<boolean>(false);
-  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [loadingSong, setLoadingSong] = useState<string | null>(null);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [addingToPlaylist, setAddingToPlaylist] = useState<string | null>(null);
   const [showPlaylistDropdown, setShowPlaylistDropdown] = useState<string | null>(null);
   const [recentSongForPlaylist, setRecentSongForPlaylist] = useState<string | null>(null);
-  const suggestionBoxRef = useRef<HTMLDivElement | null>(null);
   const playlistDropdownRef = useRef<HTMLDivElement | null>(null);
   const recentPlaylistDropdownRef = useRef<HTMLDivElement | null>(null);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
@@ -103,32 +73,6 @@ const Main = () => {
       router.push('/auth/login');
     }
   }, [token]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (suggestionBoxRef.current && !suggestionBoxRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    let debounceTimer: NodeJS.Timeout;
-
-    if (!searchQuery.trim()) {
-      setShowSuggestions(false);
-      setSearchResults([]);
-      return;
-    }
-
-    setShowSuggestions(true);
-    setSearching(true);
-
-    debounceTimer = setTimeout(() => handleSearch(searchQuery), 500);
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
 
   useEffect(() => {
     // Load recently played on mount
@@ -175,161 +119,6 @@ const Main = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const handleSearch = async (query: string) => {
-    try {
-      const response = await fetch('/api/dashboard/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ query }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error fetching search results:', errorData);
-        toast.error('Failed to search. Please try again.');
-        setSearching(false);
-        return;
-      }
-
-      const data = await response.json();
-      setSearchResults(data.songs || []);
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Something went wrong. Please try again.');
-    } finally {
-      setSearching(false);
-    }
-  };
-
-
-  const getSongDetails = async (id: string): Promise<Song | null> => {
-    try {
-      const response = await fetch('/api/dashboard/getSongUrl', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ id }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error fetching song details:', errorData);
-        toast.error('Failed to get song details. Please try again.');
-        return null;
-      }
-
-      const data = await response.json();
-
-      if (!data.data || !data.data[0]) {
-        toast.error('Song data not found');
-        return null;
-      }
-
-      const songData = data.data[0];
-
-
-      return {
-        id: songData.id,
-        name: songData.name,
-        artist: songData.artists?.primary[0]?.name || 'Unknown Artist',
-        image: songData.image[2]?.url ? (songData.image[2].url).replace(/^http:/, 'https:') : '',
-        url: songData.downloadUrl[4]?.url ? (songData.downloadUrl[4].url).replace(/^http:/, 'https:') : '',
-        duration: songData.duration || 0,
-      };
-    } catch (error) {
-      console.error('Error fetching song details:', error);
-      toast.error('Failed to get song details. Please try again.');
-      return null;
-    }
-  };
-
-  const handleSongSelect = async (item: SearchResultItem) => {
-    try {
-      setLoadingSong(item.id);
-
-      const song = await getSongDetails(item.id);
-
-      if (!song) {
-        setLoadingSong(null);
-        return;
-      }
-
-      // Update recentlyPlayed list in localStorage
-      const stored = localStorage.getItem('recentlyPlayed');
-      const recentSongs: Song[] = stored ? JSON.parse(stored) : [];
-      const filtered = recentSongs.filter((s) => s.id !== song.id);
-      filtered.unshift(song);
-      const limited = filtered.slice(0, 20);
-      localStorage.setItem('recentlyPlayed', JSON.stringify(limited));
-      setRecentlyPlayed(limited);
-
-      setCurrentSong(song);
-      setIsPlaying(true);
-      setShowSuggestions(false);
-      toast.success(`Now playing: ${item.title.replaceAll("&quot;", `"`)}`);
-    } catch (error) {
-      console.error('Error playing song:', error);
-      toast.error('Failed to play song. Please try again.');
-    } finally {
-      setLoadingSong(null);
-    }
-  };
-
-  // Function to handle adding songs to playlists
-  const handleAddToPlaylist = async (playlistId: string, songId: string, songName: string) => {
-    try {
-      setAddingToPlaylist(playlistId);
-
-      // First get the full song details including URL
-      const song = await getSongDetails(songId);
-
-      if (!song) {
-        setAddingToPlaylist(null);
-        return;
-      }
-
-      const response = await fetch('/api/dashboard/addToPlaylist', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          playlistId,
-          song,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add song to playlist');
-      }
-
-      const data = await response.json();
-
-      // Check if song already exists in playlist
-      if (data.alreadyExists) {
-        toast.error(`"${songName}" is already in this playlist`);
-      } else {
-        toast.success(`Added "${songName}" to playlist`);
-      }
-
-      // Close dropdown
-      setShowPlaylistDropdown(null);
-      setRecentSongForPlaylist(null);
-    } catch (error) {
-      console.error('Error adding song to playlist:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to add song to playlist');
-    } finally {
-      setAddingToPlaylist(null);
-    }
-  };
 
   // Function to handle adding recently played songs to playlist
   const handleAddRecentToPlaylist = async (playlistId: string, song: Song) => {
@@ -384,7 +173,6 @@ const Main = () => {
       }
     }
 
-
     try {
       const response = await fetch('/api/dashboard/getNewReleases', {
         method: 'POST',
@@ -412,7 +200,6 @@ const Main = () => {
           }
           newArray.push(realData);
         }
-
       }
 
       setTrendingTracks(newArray);
@@ -450,133 +237,6 @@ const Main = () => {
     return colors[index % colors.length];
   };
 
-
-
-
-  // Search result item component with updated styling
-  const SearchResultItem = ({ item }: { item: SearchResultItem }) => {
-    return (
-      <div
-        className="flex items-center gap-3 p-2 hover:bg-zinc-900 rounded-md cursor-pointer transition-colors"
-        onClick={() => handleSongSelect(item)}
-      >
-        <div className="relative w-10 h-10 flex-shrink-0 bg-zinc-900 rounded overflow-hidden">
-          {item.image.replace("150x150", "500x500") ? (
-            <img
-              src={item.image.replace("150x150", "500x500")}
-              alt={item.title.replaceAll("&quot;", `"`)}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
-              <Music className="w-5 h-5 text-white" />
-            </div>
-          )}
-          {loadingSong === item.id && (
-            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-              <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
-            </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white truncate">{item.title.replaceAll("&quot;", `"`)}</p>
-          <p className="text-xs text-zinc-400 truncate">{item.more_info?.artistMap?.primary_artists?.[0]?.name || item.subtitle || "Unknown artist"}</p>
-        </div>
-        <button
-          className="w-8 h-8 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center hover:from-purple-700 hover:to-indigo-700 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowPlaylistDropdown(item.id);
-          }}
-        >
-          <Plus className="w-4 h-4 text-white" />
-        </button>
-
-        {/* Dropdown for playlists */}
-        {showPlaylistDropdown === item.id && (
-          <div
-            ref={playlistDropdownRef}
-            className="absolute right-12 mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl p-3 min-w-56 z-10"
-          >
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
-              <p className="text-sm text-white font-medium">Add to playlist</p>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowPlaylistDropdown(null);
-                }}
-                className="text-zinc-400 hover:text-white transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            </div>
-            {playlists.length === 0 ? (
-              <div className="py-2">
-                <p className="text-xs text-zinc-500 mb-2">No playlists available</p>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowPlaylistDropdown(null);
-                    setShowAddPlaylistPopup(true);
-                  }}
-                  className="w-full text-center text-sm bg-purple-600 hover:bg-purple-700 text-white py-1 px-3 rounded-md transition-colors"
-                >
-                  Create Playlist
-                </button>
-              </div>
-            ) : (
-              <div className="max-h-60 overflow-y-auto">
-                {playlists.map(playlist => (
-                  <button
-                    key={playlist.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToPlaylist(playlist.id, item.id, item.title.replaceAll("&quot;", `"`));
-                    }}
-                    disabled={addingToPlaylist === playlist.id}
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2"
-                  >
-                    {addingToPlaylist === playlist.id ? (
-                      <Loader2 className="w-3 h-3 text-indigo-400 animate-spin" />
-                    ) : (
-                      playlist.cover ? (
-                        <img
-                          src={playlist.cover.replace('150x150', '500x500').replace('http:', 'https:')}
-                          alt={playlist.name}
-                          className="w-6 h-6 rounded-md object-cover"
-                        />
-                      ) : (
-                        <Music className="w-3 h-3 text-indigo-400" />
-                      )
-                    )}
-                    <span>{playlist.name}</span>
-                    <span className="text-xs text-zinc-500 ml-auto">{playlist.songCount} songs</span>
-                  </button>
-                ))}
-                <div className="mt-2 pt-2 border-t border-zinc-800">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowPlaylistDropdown(null);
-                      setShowAddPlaylistPopup(true);
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm text-indigo-400 hover:text-indigo-300 hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2"
-                  >
-                    <Plus className="w-3 h-3" />
-                    <span>Create New Playlist</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   // Animation variants
   const fadeInUp = {
     hidden: { opacity: 0, y: 40 },
@@ -597,39 +257,14 @@ const Main = () => {
           <div className="relative">
             <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-full px-4 py-2 w-80">
               <Search className="w-4 h-4 text-zinc-400 mr-2" />
-              <input
-                type="text"
-                placeholder="Search for songs, artists..."
-                className="bg-transparent border-none outline-none text-white placeholder-zinc-500 w-full text-sm"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+              <input 
+                type="text" 
+                placeholder="Search for songs, artists..." 
+                className="bg-transparent border-none outline-none text-white placeholder-zinc-500 w-full text-sm cursor-pointer" 
+                onClick={() => router.push("/dashboard/search")} 
+                readOnly
               />
             </div>
-
-            {/* Search Results */}
-            {showSuggestions && (
-              <div ref={suggestionBoxRef} className="absolute mt-2 w-full bg-black border border-zinc-800 rounded-xl shadow-xl overflow-hidden z-10">
-                <div className="p-2">
-                  {searching ? (
-                    <div className="flex justify-center items-center py-4">
-                      <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
-                    </div>
-                  ) : searchResults.length > 0 ? (
-                    <div className="max-h-80 overflow-y-auto">
-                      {searchResults.slice(0, 8).map((item) => (
-                        <SearchResultItem key={item.id} item={item} />
-                      ))}
-                    </div>
-                  ) : (
-                    searchQuery.trim() !== '' && (
-                      <div className="py-3 text-center text-zinc-400 text-sm">
-                        No results found for "{searchQuery}"
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* User Profile */}
@@ -653,7 +288,6 @@ const Main = () => {
         <h1 className="text-3xl font-bold">Welcome Back , {userName}</h1>
         <p className="text-zinc-400 mt-1">Pick up where you left off</p>
       </div>
-
 
       {/* Recommendation Section */}
       <motion.div
@@ -680,29 +314,7 @@ const Main = () => {
               <div
                 key={track.id}
                 className={`bg-zinc-900 rounded-xl p-3 hover:bg-zinc-800 transition-colors cursor-pointer ${getPlaylistColor(index)}`}
-                onClick={() => handleSongSelect({
-                  id: track.id,
-                  title: track.title,
-                  subtitle: track.artist,
-                  type: 'song',
-                  image: track.coverUrl,
-                  perma_url: '',
-                  more_info: {
-                    duration: '',
-                    album_id: '',
-                    album: '',
-                    label: '',
-                    encrypted_media_url: '',
-                    artistMap: {
-                      primary_artists: [{
-                        id: '',
-                        name: '',
-                        image: '',
-                        perma_url: ''
-                      }]
-                    }
-                  }
-                })}
+                onClick={() => router.push("/dashboard/search")}
               >
                 <img
                   src={track.coverUrl}
@@ -716,8 +328,6 @@ const Main = () => {
           </div>
         )}
       </motion.div>
-
-
 
       {/* Recently Played Section */}
       <motion.div
@@ -963,7 +573,6 @@ const Main = () => {
           <Link href="/dashboard/artist" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
             View All
           </Link>
-
         </div>
         <div className="grid grid-cols-6 gap-6 px-4 py-10">
           {topArtists.slice(0, 6).map((artist) => (

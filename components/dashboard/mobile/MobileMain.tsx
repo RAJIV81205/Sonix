@@ -11,30 +11,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import {topArtists} from '@/lib/constant'
 
-interface SearchResultItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  type: string;
-  image: string;
-  perma_url: string;
-  more_info: {
-    duration: string;
-    album_id: string;
-    album: string;
-    label: string;
-    encrypted_media_url: string;
-    artistMap: {
-      primary_artists: Array<{
-        id: string;
-        name: string;
-        image: string;
-        perma_url: string;
-      }>;
-    };
-  };
-}
-
 interface Song {
   id: string;
   name: string;
@@ -76,10 +52,6 @@ const MobileMain = () => {
     currentSong 
   } = usePlayer();
   
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
-  const [searching, setSearching] = useState<boolean>(false);
-  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [loadingSong, setLoadingSong] = useState<string | null>(null);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -91,7 +63,6 @@ const MobileMain = () => {
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({ x: 0, y: 0 });
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   
-  const suggestionBoxRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   
@@ -133,22 +104,6 @@ const MobileMain = () => {
   }, [token]);
 
   useEffect(() => {
-    let debounceTimer: NodeJS.Timeout;
-
-    if (!searchQuery.trim()) {
-      setShowSuggestions(false);
-      setSearchResults([]);
-      return;
-    }
-
-    setShowSuggestions(true);
-    setSearching(true);
-
-    debounceTimer = setTimeout(() => handleSearch(searchQuery), 500);
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
-
-  useEffect(() => {
     // Load recently played on mount
     const stored = localStorage.getItem('recentlyPlayed');
     if (stored) {
@@ -162,21 +117,13 @@ const MobileMain = () => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowSongMenu(null);
       }
-      
-      if (
-        suggestionBoxRef.current &&
-        !suggestionBoxRef.current.contains(event.target as Node) &&
-        showSuggestions
-      ) {
-        setShowSuggestions(false);
-      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showSuggestions, showSongMenu]);
+  }, [showSongMenu]);
 
   // Handle menu button click
   const handleMenuClick = (event: React.MouseEvent, song: Song) => {
@@ -280,35 +227,6 @@ const MobileMain = () => {
     }
   };
 
-  const handleSearch = async (query: string) => {
-    try {
-      const response = await fetch('/api/dashboard/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ query }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error fetching search results:', errorData);
-        toast.error('Failed to search. Please try again.');
-        setSearching(false);
-        return;
-      }
-
-      const data = await response.json();
-      setSearchResults(data.songs || []);
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Something went wrong. Please try again.');
-    } finally {
-      setSearching(false);
-    }
-  };
-
   const getSongDetails = async (id: string): Promise<Song | null> => {
     try {
       const response = await fetch('/api/dashboard/getSongUrl', {
@@ -348,31 +266,6 @@ const MobileMain = () => {
       console.error('Error fetching song details:', error);
       toast.error('Failed to get song details. Please try again.');
       return null;
-    }
-  };
-
-  const handleSongSelect = async (item: SearchResultItem) => {
-    try {
-      setLoadingSong(item.id);
-
-      const song = await getSongDetails(item.id);
-
-      if (!song) {
-        setLoadingSong(null);
-        return;
-      }
-
-      updateRecentlyPlayed(song);
-      setCurrentSong(song);
-      setIsPlaying(true);
-      setShowSuggestions(false);
-      setSearchQuery("");
-      toast.success(`Now playing: ${item.title.replaceAll("&quot;", `"`)}`);
-    } catch (error) {
-      console.error('Error playing song:', error);
-      toast.error('Failed to play song. Please try again.');
-    } finally {
-      setLoadingSong(null);
     }
   };
 
@@ -500,7 +393,6 @@ const MobileMain = () => {
     ]);
     setShowAddPlaylistPopup(false);
   };
-
 
   // Recently played item component with menu
   const RecentPlayItem = ({ song }: { song: Song }) => (
@@ -660,93 +552,15 @@ const MobileMain = () => {
     <div className="w-full h-full flex flex-col bg-gradient-to-b from-black to-zinc-900">
       {/* Top Bar */}
       <div className="flex items-center justify-between p-4 pt-20">
-        <div className="relative w-full" ref={suggestionBoxRef}>
+        <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 w-5 h-5" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="What do you want to listen to?"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
-            className="w-full bg-zinc-800/50 text-white rounded-full py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-          />
-
-          {showSuggestions && (
-            <div className="absolute w-full mt-2 bg-zinc-800 rounded-md shadow-lg max-h-[50vh] overflow-y-auto z-40">
-              <div className="p-3">
-                <h3 className="text-sm font-semibold mb-2 flex items-center justify-between">
-                  <span>Search Results</span>
-                  <button
-                    onClick={() => setShowSuggestions(false)}
-                    className="p-1 rounded-full hover:bg-zinc-700"
-                  >
-                    <X size={16} />
-                  </button>
-                </h3>
-
-                {searching ? (
-                  <>
-                    {[1, 2, 3].map((item) => (
-                      <div key={item} className="flex items-center gap-3 p-2 hover:bg-zinc-700/50 rounded">
-                        <div className="w-10 h-10 bg-zinc-700 rounded animate-pulse"></div>
-                        <div className="flex-1">
-                          <div className="h-4 bg-zinc-700 rounded w-3/4 mb-2 animate-pulse"></div>
-                          <div className="h-3 bg-zinc-700 rounded w-1/2 animate-pulse"></div>
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                ) : searchResults.length > 0 ? (
-                  searchResults.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between gap-3 p-2 hover:bg-zinc-700/50 rounded"
-                    >
-                      <div
-                        className="flex items-center gap-3 flex-grow cursor-pointer"
-                        onClick={() => handleSongSelect(item)}
-                      >
-                        <div className="w-10 h-10 bg-zinc-700 rounded overflow-hidden flex-shrink-0">
-                          <img src={item.image.replace("150x150", "500x500")} alt={item.title.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-sm truncate">{item.title.replaceAll("&quot;", `"`)}</p>
-                          <p className="text-xs text-zinc-400 truncate">
-                            {item.more_info?.artistMap?.primary_artists?.[0]?.name || 'Unknown Artist'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {loadingSong === item.id ? (
-                        <Loader2 className="w-4 h-4 text-purple-500 animate-spin mr-2" />
-                      ) : (
-                        <button
-                          className="p-2 text-zinc-400 hover:text-purple-500"
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            try {
-                              const songDetails = await getSongDetails(item.id);
-                              if (songDetails) {
-                                handleMenuClick(e, songDetails);
-                              }
-                            } catch (error) {
-                              console.error("Error handling song menu:", error);
-                              toast.error("Failed to open menu");
-                            }
-                          }}
-                        >
-                          <MoreVertical size={18} />
-                        </button>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-zinc-400 text-sm p-2">No results found</p>
-                )}
-              </div>
-            </div>
-          )}
+          <input 
+            ref={searchInputRef} 
+            type="text" 
+            placeholder="What do you want to listen to?" 
+            className="w-full bg-zinc-800/50 text-white rounded-full py-2 pl-10 pr-4 focus:outline-none cursor-pointer" 
+            onClick={() => router.push('/dashboard/search')} 
+            readOnly/>
         </div>
       </div>
 
@@ -776,29 +590,7 @@ const MobileMain = () => {
                 <div key={track.id} className="flex flex-col">
                   <div
                     className="relative aspect-square bg-zinc-800 rounded-lg mb-2 overflow-hidden cursor-pointer group"
-                    onClick={() => handleSongSelect({
-                      id: track.id,
-                      title: track.title,
-                      subtitle: track.artist,
-                      type: 'song',
-                      image: track.coverUrl,
-                      perma_url: '',
-                      more_info: {
-                        duration: '',
-                        album_id: '',
-                        album: '',
-                        label: '',
-                        encrypted_media_url: '',
-                        artistMap: {
-                          primary_artists: [{
-                            id: '',
-                            name: track.artist,
-                            image: '',
-                            perma_url: ''
-                          }]
-                        }
-                      }
-                    })}
+                    onClick={() => router.push('/dashboard/search')}
                   >
                     <img
                       src={track.coverUrl}

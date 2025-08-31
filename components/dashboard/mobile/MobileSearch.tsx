@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Music, Disc3, TrendingUp, Album, AlertTriangle } from 'lucide-react';
 import { usePlayer } from '@/context/PlayerContext';
 import { toast } from 'react-hot-toast';
@@ -31,7 +31,7 @@ interface Song {
   artist: string;
   image: string;
   url: string;
-  duration:number;
+  duration: number;
 }
 
 const MobileSearch = () => {
@@ -46,62 +46,9 @@ const MobileSearch = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastSearchTime, setLastSearchTime] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<'songs' | 'albums'>('songs');
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Mock data for trending tracks
-  useEffect(() => {
-    const mockTrendingTracks: Track[] = [
-      {
-        id: '1',
-        title: "The Nights",
-        artist: "Avicii",
-        album: "The Days / Nights",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "1.2B"
-      },
-      {
-        id: '2',
-        title: "Blinding Lights",
-        artist: "The Weeknd",
-        album: "After Hours",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "3.6B"
-      },
-      {
-        id: '3',
-        title: "As It Was",
-        artist: "Harry Styles",
-        album: "Harry's House",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "2.8B"
-      },
-      {
-        id: '4',
-        title: "Heat Waves",
-        artist: "Glass Animals",
-        album: "Dreamland",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "2.4B"
-      },
-      {
-        id: '5',
-        title: "Starboy",
-        artist: "The Weeknd ft. Daft Punk",
-        album: "Starboy",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "2.3B"
-      },
-      {
-        id: '6',
-        title: "Dance Monkey",
-        artist: "Tones and I",
-        album: "The Kids Are Coming",
-        coverUrl: "/api/placeholder/64/64",
-        plays: "2.1B"
-      }
-    ];
 
-    setTrendingTracks(mockTrendingTracks);
-  }, []);
 
   // Get auth token from localStorage
   const getAuthToken = (): string | null => {
@@ -166,7 +113,12 @@ const MobileSearch = () => {
 
 
   useEffect(() => {
-    getTrendingTracks()
+    getTrendingTracks();
+
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+
   }, []);
 
   // Debounce function
@@ -582,6 +534,7 @@ const MobileSearch = () => {
           <Search className="h-4 w-4 text-gray-400" />
         </div>
         <input
+          ref={inputRef}
           type="text"
           className="bg-gray-800 text-white w-full pl-9 pr-4 py-2.5 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
           placeholder="Search for songs, artists, or albums..."
