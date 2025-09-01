@@ -314,14 +314,8 @@ const SpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: SpotifyPopupProps) 
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-3">
-              <div className="bg-green-600 p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M8 12.5a1 1 0 1 0 0-2" />
-                  <path d="M12 12.5a1 1 0 1 0 0-2" />
-                  <path d="M16 12.5a1 1 0 1 0 0-2" />
-                </svg>
-              </div>
+              <img src="/spotify-green.png"  alt="" className='h-10 w-10' />
+            
               <h2 className="text-2xl font-bold text-white">
                 {importedPlaylist ? 'Imported Playlist' : 'Import from Spotify'}
               </h2>
@@ -362,12 +356,7 @@ const SpotifyPopup = ({ isOpen, onClose, onCreatePlaylist }: SpotifyPopupProps) 
                 {/* Left Side - Spotify Login */}
                 <div className="flex-1 border border-zinc-800 rounded-xl p-6 flex flex-col items-center hover:bg-zinc-900/50 hover:border-zinc-700 transition-colors">
                   <div className="bg-zinc-800 p-6 rounded-full mb-6">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-500">
-                      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-                      <path d="M8 12a4 4 0 1 0 8 0" />
-                      <path d="M17 12a1 1 0 1 0 2 0 1 1 0 0 0-2 0" />
-                      <path d="M5 12a1 1 0 1 0 2 0 1 1 0 0 0-2 0" />
-                    </svg>
+                  <img src="/spotify-green.png"  alt="spotify-logo" className='h-15 w-15' />
                   </div>
                   <h3 className="text-xl font-semibold text-white mb-3">Connect with Spotify</h3>
                   <p className="text-zinc-400 text-center mb-8">Use your Spotify account to import playlists directly.</p>
