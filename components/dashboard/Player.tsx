@@ -10,19 +10,22 @@ import {
   Repeat,
   List,
   X,
-  Trash2
+  Trash2,
+  Loader2,
+  Download
 } from "lucide-react"
 import React, { useState, useEffect, useRef } from "react"
 import { usePlayer } from "@/context/PlayerContext"
+import toast from "react-hot-toast"
 
 const Player = () => {
-  const { 
-    currentSong, 
-    isPlaying, 
-    setIsPlaying, 
-    audioRef, 
-    playNext, 
-    playPrevious, 
+  const {
+    currentSong,
+    isPlaying,
+    setIsPlaying,
+    audioRef,
+    playNext,
+    playPrevious,
     playlist,
     queue,
     addToQueue,
@@ -39,6 +42,7 @@ const Player = () => {
   const [showQueue, setShowQueue] = useState(false)
   const progressBarRef = useRef<HTMLDivElement>(null)
   const queueRef = useRef<HTMLDivElement>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   // Format time in MM:SS
   const formatTime = (time: number) => {
@@ -84,7 +88,7 @@ const Player = () => {
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume / 100
-      
+
       // Save volume setting to localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('playerVolume', volume.toString());
@@ -100,7 +104,7 @@ const Player = () => {
     const rect = progressBar.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const newPosition = (offsetX / rect.width) * duration;
-    
+
     setCurrentTime(newPosition);
     audioRef.current.currentTime = newPosition;
   };
@@ -160,6 +164,66 @@ const Player = () => {
     }
   }, [showQueue])
 
+
+  const downloadSong = async () => {
+    if (!currentSong) {
+      toast.error("No song selected to download")
+      return
+    }
+
+    try {
+      setIsDownloading(true)
+      toast.loading("Starting download...")
+
+      // Get the download URL from the song object
+      const downloadUrl = currentSong.url
+
+      if (!downloadUrl) {
+        toast.error("Download URL not available for this song")
+        return
+      }
+
+      // Fetch the audio file as blob
+      const response = await fetch(downloadUrl)
+      if (!response.ok) {
+        throw new Error('Failed to fetch audio file')
+      }
+
+      const blob = await response.blob()
+      
+      // Create object URL from blob
+      const blobUrl = window.URL.createObjectURL(blob)
+      
+      // Create filename
+      const filename = `${currentSong.name.replaceAll("&quot;", "").replace(/[^\w\s-]/g, "").trim()} - ${currentSong.artist.replace(/[^\w\s-]/g, "").trim()}.mp3`
+      
+      // Create temporary anchor element to trigger download
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = filename
+      link.style.display = 'none'
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      // Clean up the blob URL after a short delay
+      setTimeout(() => {
+        window.URL.revokeObjectURL(blobUrl)
+      }, 1000)
+
+      toast.dismiss()
+      toast.success(`"${currentSong.name.replaceAll("&quot;", `"`)}" downloaded successfully`)
+    } catch (error) {
+      console.error('Download error:', error)
+      toast.dismiss()
+      toast.error("Failed to download song")
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
   return (
     <div className="w-full h-16 md:h-20 bg-black border-t border-zinc-900 flex items-center px-2 md:px-4 relative">
       {/* Current Song Info */}
@@ -167,7 +231,7 @@ const Player = () => {
         <div className="w-10 h-10 md:w-14 md:h-14 bg-zinc-900 rounded overflow-hidden">
           {currentSong?.image && (
             <img
-              src={currentSong.image.replace("150x150", "500x500").replace("http:","https:")}
+              src={currentSong.image.replace("150x150", "500x500").replace("http:", "https:")}
               alt={currentSong.name.replaceAll("&quot;", `"`)}
               className="w-full h-full object-cover"
             />
@@ -185,7 +249,7 @@ const Player = () => {
           <button className="text-zinc-400 hover:text-white transition-colors">
             <Shuffle className="w-4 h-4 md:w-5 md:h-5" />
           </button>
-          <button 
+          <button
             className="text-zinc-400 hover:text-white transition-colors"
             onClick={playPrevious}
             disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
@@ -199,7 +263,7 @@ const Player = () => {
           >
             {isPlaying ? <Pause className="w-4 h-4 md:w-5 md:h-5" /> : <Play className="w-4 h-4 md:w-5 md:h-5" />}
           </button>
-          <button 
+          <button
             className="text-zinc-400 hover:text-white transition-colors"
             onClick={playNext}
             disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
@@ -212,7 +276,7 @@ const Player = () => {
         </div>
         <div className="w-full max-w-xl flex items-center gap-1 md:gap-2">
           <span className="text-xs text-zinc-400">{formatTime(currentTime)}</span>
-          <div 
+          <div
             ref={progressBarRef}
             className="flex-1 h-1 bg-zinc-800 rounded-full cursor-pointer"
             onMouseDown={handleMouseDown}
@@ -231,12 +295,25 @@ const Player = () => {
       {/* Volume and Queue Controls */}
       <div className="hidden md:flex items-center justify-end gap-3 w-1/4">
         <button
+          onClick={downloadSong}
+          disabled={isDownloading}
+          className={`${isDownloading ? 'text-violet-400' : 'text-zinc-400 hover:text-white'} transition-colors flex flex-col items-center disabled:opacity-70`}
+          title="Download Song"
+        >
+          {isDownloading ? (
+            <Loader2 className="w-5 h-5 mb-1 animate-spin" />
+          ) : (
+            <Download className="w-5 h-5 mb-1" />
+          )}
+        </button>
+        <button
           onClick={() => setShowQueue(!showQueue)}
           className="text-zinc-400 hover:text-white transition-colors"
+          title="Show Queue"
         >
           <List className="w-5 h-5" />
         </button>
-        <Volume2 className="w-5 h-5 text-zinc-400"/>
+        <Volume2 className="w-5 h-5 text-zinc-400" />
         <input
           type="range"
           min={0}
@@ -249,7 +326,7 @@ const Player = () => {
 
       {/* Queue Panel */}
       {showQueue && (
-        <div 
+        <div
           ref={queueRef}
           className="absolute bottom-full right-0 mb-2 w-80 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden"
         >
@@ -284,7 +361,7 @@ const Player = () => {
                 >
                   <div className="w-10 h-10 bg-zinc-800 rounded overflow-hidden flex-shrink-0">
                     <img
-                      src={song.image.replace("150x150", "500x500").replace("http:","https:")}
+                      src={song.image.replace("150x150", "500x500").replace("http:", "https:")}
                       alt={song.name.replaceAll("&quot;", `"`)}
                       className="w-full h-full object-cover"
                     />
