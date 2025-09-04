@@ -39,7 +39,15 @@ interface Track {
 
 const Main = () => {
   const router = useRouter();
-  const { setCurrentSong, setIsPlaying, addToQueue, playNextInQueue } = usePlayer();
+  const {
+    currentSong,
+    setQueue,
+    addToQueue,
+    addToNext,
+    playAlbum,
+    play
+  } = usePlayer();
+
   const [loadingSong, setLoadingSong] = useState<string | null>(null);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -54,7 +62,7 @@ const Main = () => {
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState<boolean>(true);
   const [showMenuOptions, setShowMenuOptions] = useState<string | null>(null);
-  const [userPopup, setUserPopup] = useState<boolean>(false)
+  const [userPopup, setUserPopup] = useState<boolean>(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -107,7 +115,7 @@ const Main = () => {
   }, [token]);
 
   useEffect(() => {
-    // Close playlist dropdown when clicking outside
+    // Close dropdowns when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
       if (playlistDropdownRef.current && !playlistDropdownRef.current.contains(event.target as Node)) {
         setShowPlaylistDropdown(null);
@@ -119,6 +127,25 @@ const Main = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Function to handle playing a song and updating recently played
+  const handlePlaySong = async (song: Song) => {
+    try {
+      // Play the song using new context
+      setQueue([song], 0);
+      await play();
+
+      // Update recently played
+      const updatedRecent = [song, ...recentlyPlayed.filter(s => s.id !== song.id)].slice(0, 20);
+      setRecentlyPlayed(updatedRecent);
+      localStorage.setItem('recentlyPlayed', JSON.stringify(updatedRecent));
+
+      toast.success(`Playing "${song.name.replace(/&quot;/g, '"')}"`);
+    } catch (error) {
+      console.error('Error playing song:', error);
+      toast.error('Failed to play song. Please try again.');
+    }
+  };
 
   // Function to handle adding recently played songs to playlist
   const handleAddRecentToPlaylist = async (playlistId: string, song: Song) => {
@@ -152,7 +179,7 @@ const Main = () => {
       }
 
       // Close dropdown
-      setRecentSongForPlaylist(null);
+      setShowPlaylistDropdown(null);
     } catch (error) {
       console.error('Error adding song to playlist:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to add song to playlist');
@@ -212,6 +239,81 @@ const Main = () => {
     }
   }
 
+  const getSongDetails = async (id: string): Promise<Song | null> => {
+    try {
+      const response = await fetch('/api/dashboard/getSongUrl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error fetching song details:', errorData);
+        toast.error('Failed to get song details. Please try again.');
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (!data.data || !data.data[0]) {
+        toast.error('Song data not found');
+        return null;
+      }
+
+      const songData = data.data[0];
+
+      return {
+        id: songData.id,
+        name: songData.name,
+        artist: songData.artists?.primary[0]?.name || 'Unknown Artist',
+        image: songData.image[2]?.url ? (songData.image[2].url).replace(/^http:/, 'https:') : '',
+        url: songData.downloadUrl[4]?.url ? (songData.downloadUrl[4].url).replace(/^http:/, 'https:') : '',
+        duration: songData.duration || 0,
+      };
+    } catch (error) {
+      console.error('Error fetching song details:', error);
+      toast.error('Failed to get song details. Please try again.');
+      return null;
+    }
+  };
+
+  const handleSongSelect = async (item: Track) => {
+    try {
+      setLoadingSong(item.id);
+
+      const song = await getSongDetails(item.id);
+
+      if (!song) {
+        setLoadingSong(null);
+        return;
+      }
+
+      // Update recentlyPlayed list in localStorage
+      const stored = localStorage.getItem('recentlyPlayed');
+      const recentSongs: Song[] = stored ? JSON.parse(stored) : [];
+      const filtered = recentSongs.filter((s) => s.id !== song.id);
+      filtered.unshift(song);
+      const limited = filtered.slice(0, 20);
+      localStorage.setItem('recentlyPlayed', JSON.stringify(limited));
+      setRecentlyPlayed(limited);
+
+      // Use new context methods
+      setQueue([song], 0);
+      await play();
+      
+      toast.success(`Now playing: ${item.title.replaceAll("&quot;", `"`)}`);
+    } catch (error) {
+      console.error('Error playing song:', error);
+      toast.error('Failed to play song. Please try again.');
+    } finally {
+      setLoadingSong(null);
+    }
+  };
+
   useEffect(() => {
     getTrendingTracks()
   }, []);
@@ -257,11 +359,11 @@ const Main = () => {
           <div className="relative">
             <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-full px-4 py-2 w-80">
               <Search className="w-4 h-4 text-zinc-400 mr-2" />
-              <input 
-                type="text" 
-                placeholder="Search for songs, artists..." 
-                className="bg-transparent border-none outline-none text-white placeholder-zinc-500 w-full text-sm cursor-pointer" 
-                onClick={() => router.push("/dashboard/search")} 
+              <input
+                type="text"
+                placeholder="Search for songs, artists..."
+                className="bg-transparent border-none outline-none text-white placeholder-zinc-500 w-full text-sm cursor-pointer"
+                onClick={() => router.push("/dashboard/search")}
                 readOnly
               />
             </div>
@@ -272,20 +374,16 @@ const Main = () => {
             <button className="w-8 h-8 bg-zinc-900 rounded-full flex items-center justify-center">
               <Bell className="w-4 h-4 text-zinc-400" />
             </button>
-            <div className="w-9 h-9 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full flex items-center justify-center cursor-pointer" onClick={() =>
-              userPopup ? (
-                setUserPopup(false)
-              ) : (
-                setUserPopup(true)
-              )
-            }
+            <div
+              className="w-9 h-9 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full flex items-center justify-center cursor-pointer"
+              onClick={() => setUserPopup(!userPopup)}
             >
               <User className="w-5 h-5 text-white" />
             </div>
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold">Welcome Back , {userName}</h1>
+        <h1 className="text-3xl font-bold">Welcome Back, {userName}</h1>
         <p className="text-zinc-400 mt-1">Pick up where you left off</p>
       </div>
 
@@ -313,16 +411,42 @@ const Main = () => {
             {trendingTracks.map((track, index) => (
               <div
                 key={track.id}
-                className={`bg-zinc-900 rounded-xl p-3 hover:bg-zinc-800 transition-colors cursor-pointer ${getPlaylistColor(index)}`}
-                onClick={() => router.push("/dashboard/search")}
+                className="bg-zinc-900 rounded-xl p-3 hover:bg-zinc-800 transition-colors cursor-pointer relative group"
               >
-                <img
-                  src={track.coverUrl}
-                  alt={track.title}
-                  className="w-full aspect-square object-cover rounded-lg mb-2"
-                />
-                <h3 className="font-medium text-sm truncate">{track.title.replaceAll("&quot;", `"`)}</h3>
-                <p className="text-xs text-zinc-400 truncate">{track.artist.replaceAll("&quot;", `"`)}</p>
+                {/* Loading overlay for trending tracks */}
+                {loadingSong === track.id && (
+                  <div className="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center z-10">
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  </div>
+                )}
+                
+                <div onClick={() => handleSongSelect(track)}>
+                  <img
+                    src={track.coverUrl}
+                    alt={track.title}
+                    className="w-full aspect-square object-cover rounded-lg mb-2"
+                  />
+                  <h3 className="font-medium text-sm truncate">{track.title.replaceAll("&quot;", `"`)}</h3>
+                  <p className="text-xs text-zinc-400 truncate">{track.artist.replaceAll("&quot;", `"`)}</p>
+                </div>
+
+                {/* Play button overlay for trending tracks */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSongSelect(track);
+                    }}
+                    disabled={loadingSong === track.id}
+                    className="bg-green-500 hover:bg-green-400 text-white rounded-full p-3 shadow-lg transition-all transform hover:scale-105 disabled:opacity-50"
+                  >
+                    {loadingSong === track.id ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Play className="w-5 h-5" fill="white" />
+                    )}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -353,11 +477,7 @@ const Main = () => {
             {recentlyPlayed.slice(0, 8).map((song, index) => (
               <div
                 key={song.id}
-                onClick={() => {
-                  setCurrentSong(song);
-                  setIsPlaying(true);
-                }}
-                className={`bg-zinc-900 rounded-xl p-3 hover:bg-zinc-800 transition-colors cursor-pointer relative group ${getPlaylistColor(index)}`}
+                className="bg-zinc-900 rounded-xl p-3 hover:bg-zinc-800 transition-colors cursor-pointer relative group"
               >
                 <img
                   src={song.image}
@@ -372,66 +492,56 @@ const Main = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setCurrentSong(song);
-                      setIsPlaying(true);
+                      handlePlaySong(song);
                     }}
-                    className="bg-transparent text-white rounded-full p-3 shadow-lg transition-colors"
+                    className="bg-green-500 hover:bg-green-400 text-white rounded-full p-3 shadow-lg transition-all transform hover:scale-105"
                   >
                     <Play className="w-5 h-5" fill="white" />
                   </button>
                 </div>
 
                 {/* Menu options */}
-                <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <div className="relative">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowMenuOptions(showMenuOptions === song.id ? null : song.id);
                       }}
-                      className="bg-black/20 bg-opacity-50 rounded-full p-1 hover:bg-opacity-70"
+                      className="bg-black/50 backdrop-blur-sm rounded-full p-1.5 hover:bg-black/70 transition-colors"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                      </svg>
+                      <MoreVertical className="w-4 h-4" />
                     </button>
 
                     {/* Dropdown menu */}
                     {showMenuOptions === song.id && (
                       <div
-                        className="absolute right-0 mt-1 w-56 bg-zinc-800 rounded-md shadow-lg z-10 border border-zinc-700 overflow-hidden"
+                        className="absolute right-0 mt-1 w-48 bg-zinc-800 rounded-md shadow-lg z-10 border border-zinc-700 overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="py-1">
                           <button
                             onClick={() => {
-                              setCurrentSong(song);
-                              setIsPlaying(true);
+                              handlePlaySong(song);
                               setShowMenuOptions(null);
                             }}
-                            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700"
+                            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700 transition-colors"
                           >
-                            <span className="mr-2">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                              </svg>
-                            </span>
-                            Play
+                            <Play className="w-4 h-4 mr-2" />
+                            Play Now
                           </button>
 
                           <button
                             onClick={() => {
-                              playNextInQueue(song);
+                              addToNext(song);
                               setShowMenuOptions(null);
+                              toast.success(`"${song.name.replace(/&quot;/g, '"')}" will play next`);
                             }}
-                            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700"
+                            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700 transition-colors"
                           >
-                            <span className="mr-2">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                                <polyline points="12 5 19 12 12 19"></polyline>
-                              </svg>
-                            </span>
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
                             Play Next
                           </button>
 
@@ -439,15 +549,11 @@ const Main = () => {
                             onClick={() => {
                               addToQueue(song);
                               setShowMenuOptions(null);
+                              toast.success(`"${song.name.replace(/&quot;/g, '"')}" added to queue`);
                             }}
-                            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700"
+                            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700 transition-colors"
                           >
-                            <span className="mr-2">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                              </svg>
-                            </span>
+                            <Plus className="w-4 h-4 mr-2" />
                             Add to Queue
                           </button>
 
@@ -456,15 +562,9 @@ const Main = () => {
                               setShowPlaylistDropdown(song.id);
                               setShowMenuOptions(null);
                             }}
-                            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700"
+                            className="flex items-center w-full text-left px-4 py-2 text-sm text-white hover:bg-zinc-700 transition-colors"
                           >
-                            <span className="mr-2">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                                <polyline points="7 3 7 8 15 8"></polyline>
-                              </svg>
-                            </span>
+                            <Music className="w-4 h-4 mr-2" />
                             Add to Playlist
                           </button>
                         </div>
@@ -477,29 +577,26 @@ const Main = () => {
                 {showPlaylistDropdown === song.id && (
                   <div
                     ref={playlistDropdownRef}
-                    className="absolute right-0 mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl p-3 min-w-100 z-10"
+                    className="absolute right-0 top-8 mt-1 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl p-3 min-w-64 z-20"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2">
                       <p className="text-sm text-white font-medium">Add to playlist</p>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowPlaylistDropdown(null);
-                        }}
+                        onClick={() => setShowPlaylistDropdown(null)}
                         className="text-zinc-400 hover:text-white transition-colors"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
                     </div>
+
                     {playlists.length === 0 ? (
                       <div className="py-2">
                         <p className="text-xs text-zinc-500 mb-2">No playlists available</p>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          onClick={() => {
                             setShowPlaylistDropdown(null);
                             setShowAddPlaylistPopup(true);
                           }}
@@ -509,44 +606,43 @@ const Main = () => {
                         </button>
                       </div>
                     ) : (
-                      <div className="max-h-60 overflow-y-auto">
+                      <div className="max-h-48 overflow-y-auto">
                         {playlists.map(playlist => (
                           <button
                             key={playlist.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAddRecentToPlaylist(playlist.id, song);
-                            }}
+                            onClick={() => handleAddRecentToPlaylist(playlist.id, song)}
                             disabled={addingToPlaylist === playlist.id}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50"
                           >
                             {addingToPlaylist === playlist.id ? (
-                              <Loader2 className="w-3 h-3 text-indigo-400 animate-spin" />
+                              <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
                             ) : (
                               playlist.cover ? (
                                 <img
                                   src={playlist.cover.replace('150x150', '500x500').replace('http:', 'https:')}
                                   alt={playlist.name}
-                                  className="w-10 h-10 rounded-md object-cover"
+                                  className="w-8 h-8 rounded object-cover"
                                 />
                               ) : (
-                                <Music className="w-3 h-3 text-indigo-400" />
+                                <Music className="w-4 h-4 text-indigo-400" />
                               )
                             )}
-                            <span className='truncate w-2/3'>{playlist.name}</span>
-                            <span className="text-xs text-zinc-500 ml-auto">{playlist.songCount} songs</span>
+                            <div className="flex-1 min-w-0">
+                              <span className="truncate block">{playlist.name}</span>
+                              <span className="text-xs text-zinc-500">{playlist.songCount} songs</span>
+                            </div>
                           </button>
                         ))}
+
                         <div className="mt-2 pt-2 border-t border-zinc-800">
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
+                            onClick={() => {
                               setShowPlaylistDropdown(null);
                               setShowAddPlaylistPopup(true);
                             }}
                             className="w-full text-left px-3 py-2 text-sm text-indigo-400 hover:text-indigo-300 hover:bg-zinc-800 rounded-md transition-colors flex items-center gap-2"
                           >
-                            <Plus className="w-3 h-3" />
+                            <Plus className="w-4 h-4" />
                             <span>Create New Playlist</span>
                           </button>
                         </div>
@@ -644,16 +740,15 @@ const Main = () => {
       </motion.div>
 
       {/* Add Playlist Popup */}
-      {
-        showAddPlaylistPopup && (
-          <AddPlaylistPopup
-            isOpen={showAddPlaylistPopup}
-            onClose={() => setShowAddPlaylistPopup(false)}
-            onSuccess={handlePlaylistCreated}
-          />
-        )
-      }
+      {showAddPlaylistPopup && (
+        <AddPlaylistPopup
+          isOpen={showAddPlaylistPopup}
+          onClose={() => setShowAddPlaylistPopup(false)}
+          onSuccess={handlePlaylistCreated}
+        />
+      )}
 
+      {/* User Popup */}
       {userPopup && (
         <div className="absolute w-64 z-50 flex flex-col bg-zinc-900 top-16 right-6 rounded-lg border border-zinc-800 shadow-lg overflow-hidden">
           {/* Profile Header */}
@@ -673,7 +768,10 @@ const Main = () => {
           <div className="p-2">
             <button
               className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-md transition-colors"
-              onClick={() => router.push('/dashboard/profile')}
+              onClick={() => {
+                router.push('/dashboard/profile');
+                setUserPopup(false);
+              }}
             >
               <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
                 <User className="w-4 h-4 text-zinc-400" />
@@ -683,7 +781,10 @@ const Main = () => {
 
             <button
               className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-md transition-colors"
-              onClick={() => router.push('/dashboard/favorites')}
+              onClick={() => {
+                router.push('/dashboard/favorites');
+                setUserPopup(false);
+              }}
             >
               <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
                 <Heart className="w-4 h-4 text-zinc-400" />
@@ -693,7 +794,10 @@ const Main = () => {
 
             <button
               className="w-full flex items-center gap-3 px-3 py-2 text-left text-sm text-white hover:bg-zinc-800 rounded-md transition-colors"
-              onClick={() => router.push('/dashboard/settings')}
+              onClick={() => {
+                router.push('/dashboard/settings');
+                setUserPopup(false);
+              }}
             >
               <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
                 <Settings className="w-4 h-4 text-zinc-400" />
@@ -708,6 +812,7 @@ const Main = () => {
               onClick={() => {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
+                localStorage.removeItem('recentlyPlayed');
                 router.push('/auth/login');
               }}
             >
@@ -724,14 +829,17 @@ const Main = () => {
             <p className="text-xs text-zinc-400 mb-3">Unlock all features and enjoy ad-free music!</p>
             <button
               className="w-full bg-white text-zinc-900 rounded-md py-2 text-sm font-medium hover:bg-zinc-100 transition-colors"
-              onClick={() => router.push('/dashboard/upgrade')}
+              onClick={() => {
+                router.push('/dashboard/upgrade');
+                setUserPopup(false);
+              }}
             >
               Upgrade Now
             </button>
           </div>
         </div>
       )}
-    </div >
+    </div>
   );
 };
 

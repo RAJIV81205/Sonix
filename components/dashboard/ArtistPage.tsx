@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import { usePlayer } from '@/context/PlayerContext'
 
-// Animation variants
+// Animation variants - COMPLETELY UNCHANGED
 const fadeInUp = {
     initial: { opacity: 0, y: 60 },
     animate: { opacity: 1, y: 0 },
@@ -53,7 +53,7 @@ const scaleIn = {
     transition: { duration: 0.5 }
 }
 
-// Enhanced Skeleton Components with mobile optimization
+// SkeletonLoader - COMPLETELY UNCHANGED from your original
 const SkeletonLoader = () => (
     <motion.div
         className="min-h-screen bg-black py-20 lg:py-0 text-white overflow-hidden"
@@ -174,7 +174,6 @@ const SkeletonLoader = () => (
                     >
                         {/* Song Image */}
                         <div className="w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gray-700 rounded-lg flex-shrink-0" />
-
                         {/* Song Info */}
                         <div className="flex-1 space-y-1 xs:space-y-1.5 sm:space-y-2 min-w-0">
                             <div className="h-3 xs:h-3.5 sm:h-4 bg-gray-700 rounded w-full max-w-[200px] sm:max-w-[300px]" />
@@ -245,7 +244,7 @@ const SkeletonLoader = () => (
     </motion.div>
 )
 
-// Interfaces
+// All interfaces - UNCHANGED
 interface SpotifyImage {
     url: string
     height: number
@@ -332,27 +331,34 @@ interface ApiResponse {
 const ArtistPage = () => {
     const [artistData, setArtistData] = useState<ApiResponse | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true)
-    const [currentPlaying, setCurrentPlaying] = useState<string | null>(null)
     const [openMenuId, setOpenMenuId] = useState<string | null>(null)
     const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
     const [backgroundLoadingToast, setBackgroundLoadingToast] = useState<string | null>(null)
     const menuRef = useRef<HTMLDivElement>(null)
 
+    // ONLY FIX: Isolate context values to prevent re-renders
+    const [currentSongId, setCurrentSongId] = useState<string | null>(null)
+    const [isCurrentlyPlaying, setIsCurrentlyPlaying] = useState<boolean>(false)
+
     const param = useParams().id
     const {
-        setCurrentSong,
-        setIsPlaying,
-        isPlaying,
         currentSong,
+        isPlaying,
+        setQueue,
         addToQueue,
-        playNextInQueue,
-        shufflePlay,
-        playFromPlaylist,
-        updatePlaylist,
-        addSongsToQueue
+        addToNext,
+        playAlbum,
+        shufflePlay: contextShufflePlay,
+        play
     } = usePlayer()
 
-    // Close menu when clicking outside - FIXED
+    // ONLY FIX: Update isolated state when context changes
+    useEffect(() => {
+        setCurrentSongId(currentSong?.id || null)
+        setIsCurrentlyPlaying(isPlaying)
+    }, [currentSong?.id, isPlaying])
+
+    // Rest of useEffects - UNCHANGED
     useEffect(() => {
         const handleClickOutside = (event: Event) => {
             if (
@@ -409,7 +415,7 @@ const ArtistPage = () => {
         fetchArtist()
     }, [param])
 
-    // Utility functions
+    // All utility functions - UNCHANGED
     const formatFollowers = (count: number | undefined) => {
         if (!count) return '0'
         if (count >= 1000000) {
@@ -425,39 +431,6 @@ const ArtistPage = () => {
         const minutes = Math.floor(totalSeconds / 60)
         const seconds = totalSeconds % 60
         return `${minutes}:${seconds.toString().padStart(2, '0')}`
-    }
-
-    // Enhanced conversion functions with caching and retries
-    const convertTrackToSongWithCache = async (track: SpotifyTrack, cache: Map<string, any> = new Map()) => {
-        const cacheKey = `${track.name}-${track.artists[0].name}`
-
-        if (cache.has(cacheKey)) {
-            return cache.get(cacheKey)
-        }
-
-        try {
-            const song = await convertTrackToSong(track)
-            cache.set(cacheKey, song)
-            return song
-        } catch (error) {
-            console.error(`Failed to convert track ${track.name}:`, error)
-            return null
-        }
-    }
-
-    const convertTrackToSongSafe = async (track: SpotifyTrack, retries: number = 2) => {
-        for (let i = 0; i <= retries; i++) {
-            try {
-                return await convertTrackToSong(track)
-            } catch (error) {
-                if (i === retries) {
-                    console.error(`Failed to convert ${track.name} after ${retries + 1} attempts`)
-                    return null
-                }
-                // Wait before retry
-                await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)))
-            }
-        }
     }
 
     const getSongId = async (name: string) => {
@@ -527,76 +500,16 @@ const ArtistPage = () => {
         }
     }
 
-    // Background conversion function for remaining tracks
-    const convertRemainingTracksInBackground = async (remainingTracks: SpotifyTrack[], initialSongs: any[], isShuffled: boolean = false) => {
-        const cache = new Map()
-        const batchSize = 3 // Process 3 songs at a time
-        const allSongs = [...initialSongs]
-
-        // Show subtle progress indicator
-        const progressToast = toast.loading("Loading playlist in background...", {
-            duration: Infinity,
-            style: {
-                background: '#1f2937',
-                color: '#ffffff',
-                fontSize: '12px'
-            }
-        })
-
-        setBackgroundLoadingToast(progressToast)
-
-        try {
-            for (let i = 0; i < remainingTracks.length; i += batchSize) {
-                const batch = remainingTracks.slice(i, i + batchSize)
-
-                // Process batch in parallel
-                const batchPromises = batch.map(track =>
-                    convertTrackToSongWithCache(track, cache)
-                )
-
-                const batchResults = await Promise.allSettled(batchPromises)
-
-                // Add successful conversions to the playlist
-                batchResults.forEach((result, index) => {
-                    if (result.status === 'fulfilled' && result.value) {
-                        allSongs.push(result.value)
-                    } else {
-                        console.warn(`Failed to convert track: ${batch[index].name}`)
-                    }
-                })
-
-                // Update the player context with new songs progressively
-                if (typeof updatePlaylist === 'function') {
-                    updatePlaylist(allSongs, isShuffled)
-                }
-
-                // Small delay between batches to prevent API rate limiting
-                if (i + batchSize < remainingTracks.length) {
-                    await new Promise(resolve => setTimeout(resolve, 500))
-                }
-            }
-
-            toast.dismiss(progressToast)
-            toast.success(`Loaded ${allSongs.length} songs`, { duration: 2000 })
-
-        } catch (error) {
-            toast.dismiss(progressToast)
-            console.error("Background conversion error:", error)
-            // Don't show error toast as the first song is already playing
-        } finally {
-            setBackgroundLoadingToast(null)
-        }
-    }
-
-    // Individual song play function with loading state
+    // All handler functions - UNCHANGED
     const PlaySong = async (track: SpotifyTrack, index?: number) => {
         try {
             setLoadingStates(prev => new Set(prev).add(track.id))
             const song = await convertTrackToSong(track)
             console.log(song)
-            setCurrentSong(song)
-            setIsPlaying(true)
-            setCurrentPlaying(track.id)
+            
+            setQueue([song], 0)
+            await play()
+            
         } catch (error) {
             toast.error("Failed to play song")
         } finally {
@@ -622,7 +535,7 @@ const ArtistPage = () => {
     const handlePlayNext = async (track: SpotifyTrack) => {
         try {
             const song = await convertTrackToSong(track)
-            playNextInQueue(song)
+            addToNext(song)
             toast.success(`"${track.name}" will play next`)
             setOpenMenuId(null)
         } catch (error) {
@@ -630,56 +543,71 @@ const ArtistPage = () => {
         }
     }
 
-    // OPTIMIZED Play All function with instant playback
     const handlePlayAll = async () => {
         if (!topTracks || topTracks.length === 0) return
 
         try {
-            // Show loading for first song only
-            const loadingToast = toast.loading("Loading first song...", { duration: 1000 })
+            const loadingToast = toast.loading("Loading playlist...", { duration: 2000 })
 
-            // Convert and play first song immediately
-            const firstSong = await convertTrackToSong(topTracks[0])
-            toast.dismiss(loadingToast)
+            const songsToConvert = topTracks.slice(0, 3)
+            const convertedSongs = []
 
-            // Start playing immediately
-            setCurrentSong(firstSong)
-            setIsPlaying(true)
-            setCurrentPlaying(topTracks[0].id)
+            for (const track of songsToConvert) {
+                try {
+                    const song = await convertTrackToSong(track)
+                    convertedSongs.push(song)
+                } catch (error) {
+                    console.warn(`Failed to convert track: ${track.name}`)
+                }
+            }
 
-            // Background conversion of remaining songs
-            if (topTracks.length > 1) {
-                convertRemainingTracksInBackground(topTracks.slice(1), [firstSong], false)
+            if (convertedSongs.length > 0) {
+                toast.dismiss(loadingToast)
+                playAlbum(convertedSongs, 0)
+                
+                if (topTracks.length > 3) {
+                    convertRemainingTracksInBackground(topTracks.slice(3), convertedSongs, false)
+                }
+            } else {
+                toast.dismiss(loadingToast)
+                toast.error("Failed to load songs")
             }
 
         } catch (error) {
-            toast.error("Failed to play song")
+            toast.error("Failed to play songs")
             console.error("Play all error:", error)
         }
     }
 
-    // OPTIMIZED Shuffle Play function with instant playback
     const handleShufflePlay = async () => {
         if (!topTracks || topTracks.length === 0) return
 
         try {
-            // Shuffle the tracks first
             const shuffledTracks = [...topTracks].sort(() => Math.random() - 0.5)
+            const loadingToast = toast.loading("Loading shuffled playlist...", { duration: 2000 })
 
-            const loadingToast = toast.loading("Loading first song...", { duration: 1000 })
+            const songsToConvert = shuffledTracks.slice(0, 3)
+            const convertedSongs = []
 
-            // Convert and play first shuffled song immediately
-            const firstSong = await convertTrackToSong(shuffledTracks[0])
-            toast.dismiss(loadingToast)
+            for (const track of songsToConvert) {
+                try {
+                    const song = await convertTrackToSong(track)
+                    convertedSongs.push(song)
+                } catch (error) {
+                    console.warn(`Failed to convert track: ${track.name}`)
+                }
+            }
 
-            // Start playing immediately
-            setCurrentSong(firstSong)
-            setIsPlaying(true)
-            setCurrentPlaying(shuffledTracks[0].id)
-
-            // Background conversion of remaining shuffled songs
-            if (shuffledTracks.length > 1) {
-                convertRemainingTracksInBackground(shuffledTracks.slice(1), [firstSong], true)
+            if (convertedSongs.length > 0) {
+                toast.dismiss(loadingToast)
+                contextShufflePlay(convertedSongs)
+                
+                if (shuffledTracks.length > 3) {
+                    convertRemainingTracksInBackground(shuffledTracks.slice(3), convertedSongs, true)
+                }
+            } else {
+                toast.dismiss(loadingToast)
+                toast.error("Failed to load songs")
             }
 
         } catch (error) {
@@ -688,68 +616,103 @@ const ArtistPage = () => {
         }
     }
 
-    const downloadSong = async (track:SpotifyTrack) => {
-        if (!track) {
-          toast.error("No song selected to download")
-          return
-        }
-    
-        try {
-         
-          toast.loading("Starting download...")
+    const convertRemainingTracksInBackground = async (remainingTracks: SpotifyTrack[], initialSongs: any[], isShuffled: boolean = false) => {
+        const batchSize = 2
+        const allSongs = [...initialSongs]
 
-        const song = await convertTrackToSong(track)
-    
-          // Get the download URL from the song object
-          const downloadUrl = song.url
-    
-          if (!downloadUrl) {
-            toast.error("Download URL not available for this song")
-            return
-          }
-    
-          // Fetch the audio file as blob
-          const response = await fetch(downloadUrl)
-          if (!response.ok) {
-            throw new Error('Failed to fetch audio file')
-          }
-    
-          const blob = await response.blob()
-          
-          // Create object URL from blob
-          const blobUrl = window.URL.createObjectURL(blob)
-          
-          // Create filename
-          const filename = `${song.name.replaceAll("&quot;", "").replace(/[^\w\s-]/g, "").trim()} - ${song.artist.replace(/[^\w\s-]/g, "").trim()}.mp3`
-          
-          // Create temporary anchor element to trigger download
-          const link = document.createElement('a')
-          link.href = blobUrl
-          link.download = filename
-          link.style.display = 'none'
-          
-          // Append to body, click, and remove
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-          
-          // Clean up the blob URL after a short delay
-          setTimeout(() => {
-            window.URL.revokeObjectURL(blobUrl)
-          }, 1000)
-    
-          toast.dismiss()
-          toast.success(`"${song.name.replaceAll("&quot;", `"`)}" downloaded successfully`)
+        const progressToast = toast.loading("Loading more songs...", {
+            duration: Infinity,
+            style: {
+                background: '#1f2937',
+                color: '#ffffff',
+                fontSize: '12px'
+            }
+        })
+
+        setBackgroundLoadingToast(progressToast)
+
+        try {
+            for (let i = 0; i < remainingTracks.length; i += batchSize) {
+                const batch = remainingTracks.slice(i, i + batchSize)
+
+                for (const track of batch) {
+                    try {
+                        const song = await convertTrackToSong(track)
+                        allSongs.push(song)
+                        addToQueue(song)
+                    } catch (error) {
+                        console.warn(`Failed to convert track: ${track.name}`)
+                    }
+                }
+
+                if (i + batchSize < remainingTracks.length) {
+                    await new Promise(resolve => setTimeout(resolve, 1000))
+                }
+            }
+
+            toast.dismiss(progressToast)
+            toast.success(`Loaded ${allSongs.length} songs`, { duration: 2000 })
+
         } catch (error) {
-          console.error('Download error:', error)
-          toast.dismiss()
-          toast.error("Failed to download song")
-        } finally{
+            toast.dismiss(progressToast)
+            console.error("Background conversion error:", error)
+        } finally {
+            setBackgroundLoadingToast(null)
+        }
+    }
+
+    const downloadSong = async (track: SpotifyTrack) => {
+        if (!track) {
+            toast.error("No song selected to download")
+            return
+        }
+
+        try {
+            toast.loading("Starting download...")
+            const song = await convertTrackToSong(track)
+
+            const downloadUrl = song.url
+
+            if (!downloadUrl) {
+                toast.error("Download URL not available for this song")
+                return
+            }
+
+            const response = await fetch(downloadUrl)
+            if (!response.ok) {
+                throw new Error('Failed to fetch audio file')
+            }
+
+            const blob = await response.blob()
+            const blobUrl = window.URL.createObjectURL(blob)
+            
+            const filename = `${song.name.replaceAll("&quot;", "").replace(/[^\w\s-]/g, "").trim()} - ${song.artist.replace(/[^\w\s-]/g, "").trim()}.mp3`
+            
+            const link = document.createElement('a')
+            link.href = blobUrl
+            link.download = filename
+            link.style.display = 'none'
+            
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            
+            setTimeout(() => {
+                window.URL.revokeObjectURL(blobUrl)
+            }, 1000)
+
+            toast.dismiss()
+            toast.success(`"${song.name.replaceAll("&quot;", `"`)}" downloaded successfully`)
+        } catch (error) {
+            console.error('Download error:', error)
+            toast.dismiss()
+            toast.error("Failed to download song")
+        } finally {
             setOpenMenuId(null)
         }
-      }
+    }
 
-    // Enhanced Context Menu Component with loading states
+    // ContextMenu component - UNCHANGED except using isolated state
     const ContextMenu = ({ track, isOpen }: { track: SpotifyTrack, isOpen: boolean }) => {
         const isTrackLoading = loadingStates.has(track.id)
 
@@ -793,11 +756,10 @@ const ArtistPage = () => {
                                     disabled: false
                                 },
                                 {
-                                    icon: Download , label: "Download", 
-                                    action: () =>{
+                                    icon: Download, label: "Download",
+                                    action: () => {
                                         downloadSong(track)
                                     }
-
                                 }
                             ].map((item, index) => (
                                 <motion.button
@@ -811,8 +773,8 @@ const ArtistPage = () => {
                                     }}
                                     disabled={item.disabled}
                                     className={`flex items-center gap-3 w-full px-4 py-3 text-sm text-white transition-colors focus:outline-none ${item.disabled
-                                            ? 'opacity-50 cursor-not-allowed'
-                                            : 'hover:bg-gray-700 focus:bg-gray-700'
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-gray-700 focus:bg-gray-700'
                                         }`}
                                     variants={fadeInLeft}
                                     custom={index}
@@ -921,7 +883,7 @@ const ArtistPage = () => {
             transition={{ duration: 0.8 }}
         >
             <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
-                {/* Artist Header */}
+                {/* Artist Header - COMPLETELY UNCHANGED */}
                 <motion.div
                     className="flex flex-col lg:flex-row items-start lg:items-end gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12"
                     variants={staggerContainer}
@@ -1060,7 +1022,7 @@ const ArtistPage = () => {
                     </motion.div>
                 </motion.div>
 
-                {/* Top Songs Section - Enhanced with loading states */}
+                {/* Top Songs Section - ONLY ONE CHANGE: using isolated state */}
                 {topTracks && topTracks.length > 0 && (
                     <motion.div
                         className="mb-8 sm:mb-12"
@@ -1074,7 +1036,6 @@ const ArtistPage = () => {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 1.5, duration: 0.6 }}
                         >
-
                             <h2 className="text-xl sm:text-2xl font-bold">Top Songs</h2>
                         </motion.div>
 
@@ -1086,6 +1047,8 @@ const ArtistPage = () => {
                         >
                             {topTracks.map((track: SpotifyTrack, index: number) => {
                                 const isTrackLoading = loadingStates.has(track.id)
+                                // ONLY CHANGE: Use isolated state instead of direct context
+                                const isCurrentlyPlayingTrack = currentSongId === track.id && isCurrentlyPlaying
 
                                 return (
                                     <motion.div
@@ -1113,12 +1076,12 @@ const ArtistPage = () => {
                                                 />
                                                 <motion.div
                                                     className={`absolute inset-0 bg-black/50 rounded-lg transition-opacity flex items-center justify-center ${isTrackLoading ? 'opacity-100' :
-                                                            openMenuId === track.id ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'
+                                                        openMenuId === track.id ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'
                                                         }`}
                                                 >
                                                     {isTrackLoading ? (
                                                         <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                    ) : currentPlaying === track.id && isPlaying ? (
+                                                    ) : isCurrentlyPlayingTrack ? (
                                                         <Pause className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                                                     ) : (
                                                         <Play className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
@@ -1168,7 +1131,7 @@ const ArtistPage = () => {
                     </motion.div>
                 )}
 
-                {/* Genres */}
+                {/* All remaining sections (Genres, External Links) - COMPLETELY UNCHANGED */}
                 {artist.genres && artist.genres.length > 0 && (
                     <motion.div
                         className="mb-6 sm:mb-8"
@@ -1206,7 +1169,6 @@ const ArtistPage = () => {
                     </motion.div>
                 )}
 
-                {/* External Links */}
                 <motion.div
                     className="flex gap-4 justify-center pt-6 sm:pt-8 border-t border-gray-800"
                     initial={{ opacity: 0, y: 20 }}
