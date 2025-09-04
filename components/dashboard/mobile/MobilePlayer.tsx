@@ -25,38 +25,38 @@ import { usePlayer } from "@/context/PlayerContext"
 import { toast } from "react-hot-toast"
 import { motion, AnimatePresence } from "framer-motion"
 
-
 interface Playlist {
   id: string;
   name: string;
   songCount?: number;
-  cover:string;
+  cover: string;
 }
 
 const MobilePlayer = () => {
   const {
     currentSong,
     isPlaying,
-    setIsPlaying,
+    togglePlayPause,
     audioRef,
-    playNext,
-    playPrevious,
-    playlist,
+    next,
+    previous,
     queue,
     addToQueue,
     removeFromQueue,
     clearQueue,
-    setCurrentSong,
-    currentQueueIndex,
+    jumpToSong,
+    currentIndex,
     toggleShuffle,
     toggleRepeat,
     isShuffled,
-    repeatMode
+    repeatMode,
+    currentTime,
+    duration,
+    seek,
+    volume,
+    setVolume
   } = usePlayer()
   
-  const [volume, setVolume] = useState(80)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [showPlaylistModal, setShowPlaylistModal] = useState(false)
@@ -101,8 +101,6 @@ const MobilePlayer = () => {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`
   }
 
-
-
   const downloadSong = async () => {
     if (!currentSong) {
       toast.error("No song selected to download")
@@ -113,7 +111,6 @@ const MobilePlayer = () => {
       setIsDownloading(true)
       toast.loading("Starting download...")
 
-      // Get the download URL from the song object
       const downloadUrl = currentSong.url
 
       if (!downloadUrl) {
@@ -121,32 +118,25 @@ const MobilePlayer = () => {
         return
       }
 
-      // Fetch the audio file as blob
       const response = await fetch(downloadUrl)
       if (!response.ok) {
         throw new Error('Failed to fetch audio file')
       }
 
       const blob = await response.blob()
-      
-      // Create object URL from blob
       const blobUrl = window.URL.createObjectURL(blob)
       
-      // Create filename
       const filename = `${currentSong.name.replaceAll("&quot;", "").replace(/[^\w\s-]/g, "").trim()} - ${currentSong.artist.replace(/[^\w\s-]/g, "").trim()}.mp3`
       
-      // Create temporary anchor element to trigger download
       const link = document.createElement('a')
       link.href = blobUrl
       link.download = filename
       link.style.display = 'none'
       
-      // Append to body, click, and remove
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       
-      // Clean up the blob URL after a short delay
       setTimeout(() => {
         window.URL.revokeObjectURL(blobUrl)
       }, 1000)
@@ -161,7 +151,6 @@ const MobilePlayer = () => {
       setIsDownloading(false)
     }
   }
-
 
   // Prevent body scroll when modals are open
   useEffect(() => {
@@ -234,32 +223,12 @@ const MobilePlayer = () => {
     }
   }, [showSleepTimer]);
 
-  // Handle time updates
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    const updateTime = () => {
-      if (!isDragging) {
-        setCurrentTime(audio.currentTime)
-      }
-      setDuration(audio.duration || 0)
-    }
-
-    audio.addEventListener("timeupdate", updateTime)
-    audio.addEventListener("loadedmetadata", updateTime)
-
-    return () => {
-      audio.removeEventListener("timeupdate", updateTime)
-      audio.removeEventListener("loadedmetadata", updateTime)
-    }
-  }, [audioRef, isDragging])
-
   // Apply volume to audio element
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume / 100
     }
+    setVolume(100);
   }, [volume, audioRef])
 
   // Sleep timer countdown effect
@@ -269,7 +238,10 @@ const MobilePlayer = () => {
         setRemainingTime(prev => prev ? prev - 1 : null)
       }, 1000)
     } else if (remainingTime === 0) {
-      setIsPlaying(false)
+      // Sleep timer will pause the player
+      if (isPlaying) {
+        togglePlayPause()
+      }
       setSleepTimer(null)
       setRemainingTime(null)
       toast.success("Sleep timer finished - music stopped")
@@ -280,7 +252,7 @@ const MobilePlayer = () => {
         clearTimeout(countdownRef.current)
       }
     }
-  }, [remainingTime, setIsPlaying])
+  }, [remainingTime, isPlaying, togglePlayPause])
 
   // Set sleep timer
   const setSleepTimerMinutes = (minutes: number) => {
@@ -321,8 +293,7 @@ const MobilePlayer = () => {
     const offsetX = clientX - rect.left;
     const newPosition = Math.max(0, Math.min((offsetX / rect.width) * duration, duration));
 
-    setCurrentTime(newPosition);
-    audioRef.current.currentTime = newPosition;
+    seek(newPosition);
   };
 
   // Touch event handlers for mobile
@@ -494,7 +465,7 @@ const MobilePlayer = () => {
     }
     
     console.log("Play/Pause clicked. Current state:", isPlaying);
-    setIsPlaying(!isPlaying);
+    togglePlayPause();
   };
 
   if (!currentSong) return null;
@@ -734,8 +705,8 @@ const MobilePlayer = () => {
                   </motion.button>
                   <motion.button
                     className="text-zinc-400 hover:text-white transition-colors"
-                    onClick={playPrevious}
-                    disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
+                    onClick={previous}
+                    disabled={!currentSong || queue.length === 0}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -758,8 +729,8 @@ const MobilePlayer = () => {
                   
                   <motion.button
                     className="text-zinc-400 hover:text-white transition-colors"
-                    onClick={playNext}
-                    disabled={!currentSong || (playlist.length === 0 && queue.length === 0)}
+                    onClick={next}
+                    disabled={!currentSong || queue.length === 0}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -888,7 +859,7 @@ const MobilePlayer = () => {
                   <motion.div
                     key={song.id}
                     className={`flex items-center gap-3 p-4 hover:bg-zinc-800/50 transition-colors group border-b border-zinc-800/50 ${
-                      index === currentQueueIndex ? 'bg-violet-500/10 border-violet-500/20' : ''
+                      index === currentIndex ? 'bg-violet-500/10 border-violet-500/20' : ''
                     }`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -903,7 +874,7 @@ const MobilePlayer = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`text-sm font-medium truncate ${
-                        index === currentQueueIndex ? 'text-violet-400' : ''
+                        index === currentIndex ? 'text-violet-400' : ''
                       }`}>
                         {song.name.replaceAll("&quot;", `"`)}
                       </p>
@@ -911,7 +882,7 @@ const MobilePlayer = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <motion.button
-                        onClick={() => setCurrentSong(song)}
+                        onClick={() => jumpToSong(song.id)}
                         className="text-zinc-400 hover:text-white transition-colors"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.95 }}

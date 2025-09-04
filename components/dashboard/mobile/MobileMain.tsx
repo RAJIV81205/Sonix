@@ -44,10 +44,10 @@ interface MenuPosition {
 const MobileMain = () => {
   const router = useRouter();
   const { 
-    setCurrentSong, 
-    setIsPlaying, 
+    setQueue, 
+    play,
     addToQueue, 
-    playNextInQueue, 
+    addToNext, 
     queue = [], 
     currentSong 
   } = usePlayer();
@@ -151,16 +151,16 @@ const MobileMain = () => {
           const songDetails = await getSongDetails(selectedSong.id);
           if (songDetails) {
             updateRecentlyPlayed(songDetails);
-            setCurrentSong(songDetails);
-            setIsPlaying(true);
+            setQueue([songDetails], 0);
+            await play();
             toast.success(`Now playing: ${songDetails.name}`);
           }
           break;
           
         case 'playNext':
           const nextSongDetails = await getSongDetails(selectedSong.id);
-          if (nextSongDetails && playNextInQueue) {
-            playNextInQueue(nextSongDetails);
+          if (nextSongDetails) {
+            addToNext(nextSongDetails);
             toast.success(`Added to play next: ${nextSongDetails.name}`);
           } else {
             toast.error('Play next feature not available');
@@ -399,9 +399,9 @@ const MobileMain = () => {
     <div className="flex flex-col">
       <div
         className="relative aspect-square bg-zinc-800 rounded-lg mb-2 overflow-hidden cursor-pointer group"
-        onClick={() => {
-          setCurrentSong(song);
-          setIsPlaying(true);
+        onClick={async () => {
+          setQueue([song], 0);
+          await play();
         }}
       >
         <img src={song.image.replace('150x150', '500x500').replace('http:', 'https:')} alt={song.name.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />

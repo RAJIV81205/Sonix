@@ -73,8 +73,9 @@ const RoomDashboard = () => {
   const {
     currentSong: playerCurrentSong,
     isPlaying: playerIsPlaying,
-    setCurrentSong: setPlayerCurrentSong,
-    setIsPlaying: setPlayerIsPlaying,
+    setQueue,
+    play,
+    pause,
     audioRef
   } = usePlayer()
 
@@ -122,7 +123,7 @@ const RoomDashboard = () => {
       // Only update if it's a different song
       if (!playerCurrentSong || playerCurrentSong.id !== playerSong.id) {
         syncingRef.current = true
-        setPlayerCurrentSong(playerSong)
+        setQueue([playerSong], 0)
 
         // Set audio source and sync time
         if (audioRef.current) {
@@ -146,7 +147,11 @@ const RoomDashboard = () => {
 
       // Sync playing state
       if (playerIsPlaying !== isPlaying && !isUserInteractionRef.current) {
-        setPlayerIsPlaying(isPlaying)
+        if (isPlaying && !playerIsPlaying) {
+          play()
+        } else if (!isPlaying && playerIsPlaying) {
+          pause()
+        }
 
         if (audioRef.current) {
           if (isPlaying) {
@@ -166,7 +171,7 @@ const RoomDashboard = () => {
         }, 500)
       }
     }
-  }, [currentSong, isPlaying, socketCurrentTime, playerCurrentSong, playerIsPlaying, setPlayerCurrentSong, setPlayerIsPlaying, audioRef])
+  }, [currentSong, isPlaying, socketCurrentTime, playerCurrentSong, playerIsPlaying, setQueue, play, pause, audioRef])
 
   // Handle audio element events for better sync
   useEffect(() => {
@@ -179,7 +184,7 @@ const RoomDashboard = () => {
       isUserInteractionRef.current = false
 
       if (!playerIsPlaying) {
-        setPlayerIsPlaying(true)
+        play()
         socketTogglePlayPause(true, audio.currentTime)
       }
     }
@@ -189,7 +194,7 @@ const RoomDashboard = () => {
       isUserInteractionRef.current = false
 
       if (playerIsPlaying) {
-        setPlayerIsPlaying(false)
+        pause()
         socketTogglePlayPause(false, audio.currentTime)
       }
     }
@@ -350,8 +355,8 @@ const RoomDashboard = () => {
 
       // Convert to player song format and set in player context
       const playerSong = convertToPlayerSong(updatedSong)
-      setPlayerCurrentSong(playerSong)
-      setPlayerIsPlaying(true)
+      setQueue([playerSong], 0)
+      await play()
 
       // Use socket to sync with other users
       socketPlaySong(updatedSong)
@@ -366,15 +371,15 @@ const RoomDashboard = () => {
     }
   }
 
-  const handleSongClick = (song: Song) => {
+  const handleSongClick = async (song: Song) => {
     if (song.url) {
       // Mark as user interaction
       isUserInteractionRef.current = true
 
       // Convert to player song format and set in player context
       const playerSong = convertToPlayerSong(song)
-      setPlayerCurrentSong(playerSong)
-      setPlayerIsPlaying(true)
+      setQueue([playerSong], 0)
+      await play()
 
       // Also sync with socket
       socketPlaySong(song)
@@ -383,7 +388,7 @@ const RoomDashboard = () => {
     }
   }
 
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
     // Mark as user interaction
     isUserInteractionRef.current = true
 
@@ -391,7 +396,11 @@ const RoomDashboard = () => {
     const currentTime = audioRef.current?.currentTime || 0
 
     // Update player context
-    setPlayerIsPlaying(newPlayingState)
+    if (newPlayingState && !playerIsPlaying) {
+      await play()
+    } else if (!newPlayingState && playerIsPlaying) {
+      pause()
+    }
 
     // Sync with socket
     socketTogglePlayPause(newPlayingState, currentTime)

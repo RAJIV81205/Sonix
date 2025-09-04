@@ -35,7 +35,7 @@ interface Song {
 }
 
 const MobileSearch = () => {
-  const { setCurrentSong, setIsPlaying, setPlaylist } = usePlayer();
+  const { setQueue, play } = usePlayer();
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -363,8 +363,8 @@ const MobileSearch = () => {
       localStorage.setItem('recentlyPlayed', JSON.stringify(limited));
       setRecentlyPlayed(limited);
 
-      setCurrentSong(song);
-      setIsPlaying(true);
+      setQueue([song], 0);
+      await play();
       toast.success(`Now playing: ${song.name}`);
     } catch (error) {
       console.error('Error fetching song URL:', error);
@@ -437,12 +437,9 @@ const MobileSearch = () => {
           return;
         }
 
-        // Update playlist with all songs from the album
-        setPlaylist(validSongs);
-
-        // Play the first song
-        setCurrentSong(validSongs[0]);
-        setIsPlaying(true);
+        // Set queue with all songs from the album and play the first one
+        setQueue(validSongs, 0);
+        await play();
 
         // Update recently played with the first song
         const stored = localStorage.getItem('recentlyPlayed');

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback , useRef} from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, Music, Disc3, TrendingUp, Album, AlertTriangle, Play, Loader2 } from 'lucide-react';
 import { usePlayer } from '@/context/PlayerContext';
 import { toast } from 'react-hot-toast';
@@ -65,7 +65,7 @@ const TrendingSkeleton: React.FC = () => {
 
 
 const SearchP: React.FC = () => {
-  const { setCurrentSong, setIsPlaying, setPlaylist } = usePlayer();
+  const { setQueue, play } = usePlayer();
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [songs, setSongs] = useState<Track[]>([]);
@@ -397,8 +397,9 @@ const SearchP: React.FC = () => {
       localStorage.setItem('recentlyPlayed', JSON.stringify(limited));
       setRecentlyPlayed(limited);
 
-      setCurrentSong(song);
-      setIsPlaying(true);
+      // Use new context methods
+      setQueue([song], 0);
+      await play();
       toast.success(`Now playing: ${song.name}`);
     } catch (error) {
       console.error('Error fetching song URL:', error);
@@ -474,12 +475,9 @@ const SearchP: React.FC = () => {
           return;
         }
 
-        // Update playlist with all songs from the album
-        setPlaylist(validSongs);
-
-        // Play the first song
-        setCurrentSong(validSongs[0]);
-        setIsPlaying(true);
+        // Use new context methods to set queue and play
+        setQueue(validSongs, 0);
+        await play();
 
         // Update recently played with the first song
         const stored = localStorage.getItem('recentlyPlayed');

@@ -29,7 +29,7 @@ const MobilePlaylistPage = () => {
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const { setCurrentSong, setPlaylist: setPlayerPlaylist, setIsPlaying, addToQueue, playNextInQueue } = usePlayer()
+  const { setQueue, play, addToQueue, addToNext } = usePlayer()
 
   const [contextMenuVisible, setContextMenuVisible] = useState(false)
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)
@@ -76,11 +76,10 @@ const MobilePlaylistPage = () => {
     }
   }, [id])
 
-  const handlePlayAll = () => {
+  const handlePlayAll = async () => {
     if (playlist && playlist.songs.length > 0) {
-      setPlayerPlaylist(playlist.songs, 0)
-      setCurrentSong(playlist.songs[0])
-      setIsPlaying(true)
+      setQueue(playlist.songs, 0)
+      await play()
     }
   }
 
@@ -93,18 +92,18 @@ const MobilePlaylistPage = () => {
     setContextMenuVisible(true)
   }
 
-  const handleMenuAction = (action: string) => {
+  const handleMenuAction = async (action: string) => {
     if (!selectedSong) return
 
     switch (action) {
       case 'play':
-        setCurrentSong(selectedSong)
-        setPlayerPlaylist(playlist?.songs || [], playlist?.songs.findIndex(s => s.id === selectedSong.id) || 0)
-        setIsPlaying(true)
+        const songIndex = playlist?.songs.findIndex(s => s.id === selectedSong.id) || 0
+        setQueue(playlist?.songs || [], songIndex)
+        await play()
     
         break
       case 'play-next':
-        playNextInQueue(selectedSong)
+        addToNext(selectedSong)
 
         break
       case 'add-to-queue':
@@ -218,10 +217,9 @@ const MobilePlaylistPage = () => {
             <div 
               key={song.id}
               className="flex items-center gap-3 py-3 border-b border-zinc-900 hover:bg-zinc-900/30 transition-colors cursor-pointer rounded-md px-2 relative"
-              onClick={() => {
-                setCurrentSong(song)
-                setPlayerPlaylist(playlist.songs, index)
-                setIsPlaying(true)
+              onClick={async () => {
+                setQueue(playlist.songs, index)
+                await play()
               }}
             >
               <img 

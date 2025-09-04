@@ -347,6 +347,10 @@ class AudioManager {
     return this.isPlaying;
   }
 
+  getLoadingState(): boolean {
+    return this.isLoading;
+  }
+
   getCurrentSong(): Song | null {
     return this.currentSong;
   }
@@ -449,6 +453,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setRepeatMode(queueManagerRef.current.getRepeatMode());
     setCurrentSong(audioManagerRef.current.getCurrentSong());
     setIsPlaying(audioManagerRef.current.getPlayingState());
+    setIsLoading(audioManagerRef.current.getLoadingState());
   }, []);
 
   // Auto-play next song when current ends
