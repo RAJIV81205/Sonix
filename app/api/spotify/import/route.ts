@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import getChosicToken from "@/lib/middleware/ChosicToken";
 
 export async function POST(request: Request) {
     try {
@@ -43,56 +44,58 @@ export async function POST(request: Request) {
             }, { status: 500 });
         }
         
-        let token;
+        let token = await getChosicToken();
         
-        try {
-            // Generate token using fetch
-            console.log("Requesting Spotify access token");
+        // try {
+        //     // Generate token using fetch
+        //     console.log("Requesting Spotify access token");
             
-            // Prepare the request body for token endpoint
-            const tokenRequestBody = new URLSearchParams({
-                grant_type: 'client_credentials',
-                client_id: clientId,
-                client_secret: clientSecret
-            });
+        //     // Prepare the request body for token endpoint
+        //     const tokenRequestBody = new URLSearchParams({
+        //         grant_type: 'client_credentials',
+        //         client_id: clientId,
+        //         client_secret: clientSecret
+        //     });
             
-            // Make request to Spotify token endpoint
-            const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: tokenRequestBody.toString()
-            });
+        //     // Make request to Spotify token endpoint
+        //     const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
+        //         method: "POST",
+        //         headers: {
+        //             "Content-Type": "application/x-www-form-urlencoded"
+        //         },
+        //         body: tokenRequestBody.toString()
+        //     });
             
-            if (!tokenResponse.ok) {
-                const errorData = await tokenResponse.json().catch(() => ({}));
-                console.error("Failed to get Spotify token:", errorData);
-                return NextResponse.json({ 
-                    error: "Failed to obtain access token from Spotify", 
-                    details: errorData 
-                }, { status: tokenResponse.status });
-            }
+        //     if (!tokenResponse.ok) {
+        //         const errorData = await tokenResponse.json().catch(() => ({}));
+        //         console.error("Failed to get Spotify token:", errorData);
+        //         return NextResponse.json({ 
+        //             error: "Failed to obtain access token from Spotify", 
+        //             details: errorData 
+        //         }, { status: tokenResponse.status });
+        //     }
             
-            const tokenData = await tokenResponse.json();
-            token = tokenData.access_token;
+        //     const tokenData = await tokenResponse.json();
+        //     token = tokenData.access_token;
             
-            if (!token) {
-                console.error("No token received:", tokenData);
-                return NextResponse.json({ 
-                    error: "Invalid response from Spotify authentication" 
-                }, { status: 500 });
-            }
+        //     if (!token) {
+        //         console.error("No token received:", tokenData);
+        //         return NextResponse.json({ 
+        //             error: "Invalid response from Spotify authentication" 
+        //         }, { status: 500 });
+        //     }
             
-            console.log("Token generated successfully");
-        } catch (error: any) {
-            console.error("Token generation error:", error);
-            return NextResponse.json({ 
-                error: "Error generating Spotify token" 
-            }, { status: 500 });
-        }
+        //     console.log("Token generated successfully");
+        // } catch (error: any) {
+        //     console.error("Token generation error:", error);
+        //     return NextResponse.json({ 
+        //         error: "Error generating Spotify token" 
+        //     }, { status: 500 });
+        // }
 
         // Make the request to Spotify API to import the playlist
+      
+      
         console.log("Sending request to Spotify API for playlist:", playlistId);
         const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
             method: "GET",

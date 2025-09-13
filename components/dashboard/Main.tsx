@@ -64,6 +64,38 @@ const Main = () => {
   const [showMenuOptions, setShowMenuOptions] = useState<string | null>(null);
   const [userPopup, setUserPopup] = useState<boolean>(false);
 
+  // Charts data
+  const charts = [
+    {
+      id: '37i9dQZEVXbNG2KDcFcKOF',
+      title: 'Top Songs - Global',
+      description: 'Your weekly update of the most played tracks right now',
+      image: 'https://charts-images.scdn.co/assets/locale_en/regional/weekly/region_global_default.jpg',
+      link: `/dashboard/charts/37i9dQZEVXbNG2KDcFcKOF`
+    },
+    {
+      id: '37i9dQZEVXbMWDif5SCBJq',
+      title: 'Top Songs - India',
+      description: 'Your weekly update of the most played tracks right now',
+      image: 'https://charts-images.scdn.co/assets/locale_en/regional/weekly/region_in_default.jpg',
+      link: `/dashboard/charts/37i9dQZEVXbMWDif5SCBJq`
+    },
+    {
+      id: '37i9dQZEVXbMDoHDwVN2tF',
+      title: 'Top 50 - Global',
+      description: 'Your daily update of the most played tracks right now',
+      image: 'https://charts-images.scdn.co/assets/locale_en/regional/daily/region_global_default.jpg',
+      link: `/dashboard/charts/37i9dQZEVXbMDoHDwVN2tF`
+    },
+    {
+      id: '37i9dQZEVXbLZ52XmnySJg',
+      title: 'Top 50 - India',
+      description: 'Your daily update of the most played tracks right now',
+      image: 'https://charts-images.scdn.co/assets/locale_en/regional/daily/region_in_default.jpg',
+      link: `/dashboard/charts/37i9dQZEVXbLZ52XmnySJg`
+    }
+  ];
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -304,7 +336,7 @@ const Main = () => {
       // Use new context methods
       setQueue([song], 0);
       await play();
-      
+
       toast.success(`Now playing: ${item.title.replaceAll("&quot;", `"`)}`);
     } catch (error) {
       console.error('Error playing song:', error);
@@ -347,6 +379,7 @@ const Main = () => {
 
   const { ref: recRef, inView: recInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: recentRef, inView: recentInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: chartsRef, inView: chartsInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: artistRef, inView: artistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: playlistRef, inView: playlistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
 
@@ -419,7 +452,7 @@ const Main = () => {
                     <Loader2 className="w-6 h-6 text-white animate-spin" />
                   </div>
                 )}
-                
+
                 <div onClick={() => handleSongSelect(track)}>
                   <img
                     src={track.coverUrl}
@@ -654,6 +687,50 @@ const Main = () => {
             ))}
           </div>
         )}
+      </motion.div>
+
+      {/* Charts Section */}
+      <motion.div
+        ref={chartsRef}
+        variants={fadeInUp}
+        initial="hidden"
+        animate={chartsInView ? 'visible' : 'hidden'}
+        className="p-4"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Charts</h2>
+          <Link href="/dashboard/charts" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+            View All
+            <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+          {charts.map((chart) => (
+            <Link
+              key={chart.id}
+              href={chart.link}
+              className="group cursor-pointer"
+            >
+              <div className="bg-zinc-900 rounded-xl p-4 hover:bg-zinc-800 transition-all duration-300 group-hover:scale-105">
+                <div className="w-full aspect-square mb-3 rounded-lg shadow-lg overflow-hidden relative">
+                  {/* Chart background image */}
+                  <img
+                    src={chart.image}
+                    alt={chart.title}
+                    className="w-full h-full object-cover"
+                  />
+
+                  
+
+                </div>
+
+                <h3 className="font-medium text-sm truncate mb-1">{chart.title}</h3>
+                <p className="text-xs text-zinc-400 line-clamp-2">{chart.description}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
       </motion.div>
 
       {/* Artists Section */}
