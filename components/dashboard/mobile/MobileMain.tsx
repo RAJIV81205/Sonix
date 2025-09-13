@@ -9,7 +9,7 @@ import MobileAddPlaylistPopup from './MobileAddPlaylistPopup';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import {topArtists} from '@/lib/constant'
+import { topArtists } from '@/lib/constant'
 
 interface Song {
   id: string;
@@ -43,15 +43,15 @@ interface MenuPosition {
 
 const MobileMain = () => {
   const router = useRouter();
-  const { 
-    setQueue, 
+  const {
+    setQueue,
     play,
-    addToQueue, 
-    addToNext, 
-    queue = [], 
-    currentSong 
+    addToQueue,
+    addToNext,
+    queue = [],
+    currentSong
   } = usePlayer();
-  
+
   const [loadingSong, setLoadingSong] = useState<string | null>(null);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -62,10 +62,10 @@ const MobileMain = () => {
   const [showSongMenu, setShowSongMenu] = useState<string | null>(null);
   const [menuPosition, setMenuPosition] = useState<MenuPosition>({ x: 0, y: 0 });
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
-  
+
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  
+
   const [trendingTracks, setTrendingTracks] = useState<Track[]>([]);
   const [isTrendingLoading, setIsTrendingLoading] = useState<boolean>(true);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
@@ -78,22 +78,55 @@ const MobileMain = () => {
 
   const menuVariants = {
     hidden: { opacity: 0, scale: 0.8, y: -10 },
-    visible: { 
-      opacity: 1, 
-      scale: 1, 
+    visible: {
+      opacity: 1,
+      scale: 1,
       y: 0,
       transition: { duration: 0.2, ease: 'easeOut' }
     },
-    exit: { 
-      opacity: 0, 
-      scale: 0.8, 
+    exit: {
+      opacity: 0,
+      scale: 0.8,
       y: -10,
       transition: { duration: 0.15 }
     }
   };
 
+  // Charts data
+  const charts = [
+    {
+      id: '37i9dQZEVXbNG2KDcFcKOF',
+      title: 'Top Songs - Global',
+      description: 'Your weekly update of the most played tracks right now',
+      image: 'https://charts-images.scdn.co/assets/locale_en/regional/weekly/region_global_default.jpg',
+      link: `/dashboard/charts/37i9dQZEVXbNG2KDcFcKOF`
+    },
+    {
+      id: '37i9dQZEVXbMWDif5SCBJq',
+      title: 'Top Songs - India',
+      description: 'Your weekly update of the most played tracks right now',
+      image: 'https://charts-images.scdn.co/assets/locale_en/regional/weekly/region_in_default.jpg',
+      link: `/dashboard/charts/37i9dQZEVXbMWDif5SCBJq`
+    },
+    {
+      id: '37i9dQZEVXbMDoHDwVN2tF',
+      title: 'Top 50 - Global',
+      description: 'Your daily update of the most played tracks right now',
+      image: 'https://charts-images.scdn.co/assets/locale_en/regional/daily/region_global_default.jpg',
+      link: `/dashboard/charts/37i9dQZEVXbMDoHDwVN2tF`
+    },
+    {
+      id: '37i9dQZEVXbLZ52XmnySJg',
+      title: 'Top 50 - India',
+      description: 'Your daily update of the most played tracks right now',
+      image: 'https://charts-images.scdn.co/assets/locale_en/regional/daily/region_in_default.jpg',
+      link: `/dashboard/charts/37i9dQZEVXbLZ52XmnySJg`
+    }
+  ];
+
   const { ref: recRef, inView: recInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: recentRef, inView: recentInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: chartsRef, inView: chartsInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: artistRef, inView: artistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: madeRef, inView: madeInView } = useInView({ triggerOnce: true, threshold: 0.15 });
 
@@ -128,15 +161,15 @@ const MobileMain = () => {
   // Handle menu button click
   const handleMenuClick = (event: React.MouseEvent, song: Song) => {
     event.stopPropagation();
-    
+
     const rect = event.currentTarget.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const menuWidth = 200; // Approximate menu width
-    
+
     // Position menu to the left if it would overflow on the right
     const x = rect.left + menuWidth > viewportWidth ? rect.left - menuWidth : rect.left;
     const y = rect.bottom + 5;
-    
+
     setMenuPosition({ x: Math.max(10, x), y });
     setSelectedSong(song);
     setShowSongMenu(song.id);
@@ -144,7 +177,7 @@ const MobileMain = () => {
 
   const handleMenuAction = async (action: string) => {
     if (!selectedSong) return;
-    
+
     try {
       switch (action) {
         case 'play':
@@ -156,7 +189,7 @@ const MobileMain = () => {
             toast.success(`Now playing: ${songDetails.name}`);
           }
           break;
-          
+
         case 'playNext':
           const nextSongDetails = await getSongDetails(selectedSong.id);
           if (nextSongDetails) {
@@ -166,7 +199,7 @@ const MobileMain = () => {
             toast.error('Play next feature not available');
           }
           break;
-          
+
         case 'addToQueue':
           const queueSongDetails = await getSongDetails(selectedSong.id);
           if (queueSongDetails && addToQueue) {
@@ -176,11 +209,11 @@ const MobileMain = () => {
             toast.error('Queue feature not available');
           }
           break;
-          
+
         case 'addToPlaylist':
           await handleAddToPlaylist(selectedSong);
           break;
-          
+
         default:
           break;
       }
@@ -405,7 +438,7 @@ const MobileMain = () => {
         }}
       >
         <img src={song.image.replace('150x150', '500x500').replace('http:', 'https:')} alt={song.name.replaceAll("&quot;", `"`)} className="w-full h-full object-cover" />
-        
+
         {/* Menu button */}
         <button
           className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -413,7 +446,7 @@ const MobileMain = () => {
         >
           <MoreVertical size={16} />
         </button>
-        
+
         {/* Play button overlay */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
           <div className="p-3 rounded-full bg-purple-600 text-white">
@@ -431,7 +464,7 @@ const MobileMain = () => {
     if (!showSongMenu || !selectedSong) return null;
 
     return (
-      <div 
+      <div
         className="fixed inset-0 z-50"
         style={{ pointerEvents: 'none' }}
       >
@@ -443,8 +476,8 @@ const MobileMain = () => {
             animate="visible"
             exit="exit"
             className="absolute bg-zinc-800 rounded-lg shadow-xl py-2 min-w-[180px] border border-zinc-700"
-            style={{ 
-              left: menuPosition.x, 
+            style={{
+              left: menuPosition.x,
               top: menuPosition.y,
               pointerEvents: 'auto'
             }}
@@ -456,7 +489,7 @@ const MobileMain = () => {
               <Play size={18} />
               Play
             </button>
-            
+
             <button
               className="w-full px-4 py-2 text-left hover:bg-zinc-700 flex items-center gap-3 text-white"
               onClick={() => handleMenuAction('playNext')}
@@ -464,7 +497,7 @@ const MobileMain = () => {
               <SkipForward size={18} />
               Play next
             </button>
-            
+
             <button
               className="w-full px-4 py-2 text-left hover:bg-zinc-700 flex items-center gap-3 text-white"
               onClick={() => handleMenuAction('addToQueue')}
@@ -472,7 +505,7 @@ const MobileMain = () => {
               <Clock size={18} />
               Add to queue
             </button>
-            
+
             <button
               className="w-full px-4 py-2 text-left hover:bg-zinc-700 flex items-center gap-3 text-white"
               onClick={() => handleMenuAction('addToPlaylist')}
@@ -554,13 +587,13 @@ const MobileMain = () => {
       <div className="flex items-center justify-between p-4 pt-20">
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 w-5 h-5" />
-          <input 
-            ref={searchInputRef} 
-            type="text" 
-            placeholder="What do you want to listen to?" 
-            className="w-full bg-zinc-800/50 text-white rounded-full py-2 pl-10 pr-4 focus:outline-none cursor-pointer" 
-            onClick={() => router.push('/dashboard/search')} 
-            readOnly/>
+          <input
+            ref={searchInputRef}
+            type="text"
+            placeholder="What do you want to listen to?"
+            className="w-full bg-zinc-800/50 text-white rounded-full py-2 pl-10 pr-4 focus:outline-none cursor-pointer"
+            onClick={() => router.push('/dashboard/search')}
+            readOnly />
         </div>
       </div>
 
@@ -597,7 +630,7 @@ const MobileMain = () => {
                       alt={track.title}
                       className="w-full h-full object-cover"
                     />
-                    
+
                     {/* Menu button */}
                     <button
                       className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
@@ -615,7 +648,7 @@ const MobileMain = () => {
                     >
                       <MoreVertical size={16} />
                     </button>
-                    
+
                     {/* Play button overlay */}
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                       <div className="p-3 rounded-full bg-purple-600 text-white">
@@ -655,6 +688,41 @@ const MobileMain = () => {
           )}
         </motion.div>
 
+        {/* Charts Section */}
+        <motion.div
+          ref={chartsRef}
+          variants={fadeInUp}
+          initial="hidden"
+          animate={chartsInView ? 'visible' : 'hidden'}
+          className="mb-8"
+        >
+          <h2 className="text-xl font-bold mb-4">Charts</h2>
+          <div className="grid grid-cols-3 gap-4">
+            {charts.map((chart) => (
+              <Link
+                key={chart.id}
+                href={chart.link}
+                className="group cursor-pointer"
+              >
+                <div className="bg-zinc-900 rounded-xl p-2 hover:bg-zinc-800 transition-all duration-300">
+                  <div className="w-full aspect-square mb-3 rounded-lg shadow-lg overflow-hidden relative">
+                    {/* Chart background image */}
+                    <img
+                      src={chart.image}
+                      alt={chart.title}
+                      className="w-full h-full object-cover"
+                    />
+
+                  </div>
+
+                  <h3 className="font-medium text-sm truncate mb-1">{chart.title}</h3>
+                  <p className="text-xs text-zinc-400 line-clamp-2">{chart.description}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </motion.div>
+
         {/* Artists Section */}
         <motion.div
           ref={artistRef}
@@ -665,7 +733,7 @@ const MobileMain = () => {
         >
           <h2 className="text-xl font-bold mb-4">Top Artists</h2>
           <div className="grid grid-cols-3 gap-5">
-            {topArtists.slice(0,6).map((artist) => (
+            {topArtists.slice(0, 6).map((artist) => (
               <Link key={artist.id} href={`dashboard/artist/${artist.id}`} className="flex flex-col">
                 <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40">
                   <img src={artist.img} alt={artist.name} loading="lazy" />

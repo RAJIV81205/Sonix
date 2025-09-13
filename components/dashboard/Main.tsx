@@ -721,7 +721,6 @@ const Main = () => {
                     className="w-full h-full object-cover"
                   />
 
-                  
 
                 </div>
 
