@@ -1,8 +1,9 @@
 import React from 'react'
+import ChartsPage from '@/components/dashboard/ChartsPage'
 
 const page = () => {
   return (
-    <div>page</div>
+    <ChartsPage />
   )
 }
 
