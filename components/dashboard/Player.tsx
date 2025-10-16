@@ -173,18 +173,18 @@ const Player = () => {
 
       const blob = await response.blob()
       const blobUrl = window.URL.createObjectURL(blob)
-      
+
       const filename = `${currentSong.name.replaceAll("&quot;", "").replace(/[^\w\s-]/g, "").trim()} - ${currentSong.artist.replace(/[^\w\s-]/g, "").trim()}.mp3`
-      
+
       const link = document.createElement('a')
       link.href = blobUrl
       link.download = filename
       link.style.display = 'none'
-      
+
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      
+
       setTimeout(() => {
         window.URL.revokeObjectURL(blobUrl)
       }, 1000)
@@ -202,8 +202,8 @@ const Player = () => {
 
   // Get shuffle button classes
   const getShuffleClasses = () => {
-    return isShuffled 
-      ? "text-green-400 hover:text-green-300 transition-colors" 
+    return isShuffled
+      ? "text-green-400 hover:text-green-300 transition-colors"
       : "text-zinc-400 hover:text-white transition-colors"
   }
 
@@ -251,14 +251,14 @@ const Player = () => {
       {/* Player Controls */}
       <div className="flex-1 flex flex-col items-center justify-center">
         <div className="flex items-center gap-2 md:gap-6 mb-1 md:mb-2">
-          <button 
+          <button
             className={getShuffleClasses()}
             onClick={toggleShuffle}
             title={`Shuffle: ${isShuffled ? 'On' : 'Off'}`}
           >
             <Shuffle className="w-4 h-4 md:w-5 md:h-5" />
           </button>
-          
+
           <button
             className="text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
             onClick={previous}
@@ -266,7 +266,7 @@ const Player = () => {
           >
             <SkipBack className="w-4 h-4 md:w-5 md:h-5" />
           </button>
-          
+
           <button
             className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full p-1.5 md:p-2 hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             onClick={togglePlayPause}
@@ -280,7 +280,7 @@ const Player = () => {
               <Play className="w-4 h-4 md:w-5 md:h-5" />
             )}
           </button>
-          
+
           <button
             className="text-zinc-400 hover:text-white transition-colors disabled:opacity-50"
             onClick={next}
@@ -288,8 +288,8 @@ const Player = () => {
           >
             <SkipForward className="w-4 h-4 md:w-5 md:h-5" />
           </button>
-          
-          <button 
+
+          <button
             className={getRepeatClasses()}
             onClick={toggleRepeat}
             title={`Repeat: ${repeatMode === 'off' ? 'Off' : repeatMode === 'all' ? 'All' : 'One'}`}
@@ -297,7 +297,7 @@ const Player = () => {
             <RepeatIcon className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
-        
+
         <div className="w-full max-w-xl flex items-center gap-1 md:gap-2">
           <span className="text-xs text-zinc-400">{formatTime(displayTime)}</span>
           <div
@@ -323,9 +323,8 @@ const Player = () => {
         <button
           onClick={downloadSong}
           disabled={isDownloading || !currentSong}
-          className={`${
-            isDownloading ? 'text-violet-400' : 'text-zinc-400 hover:text-white'
-          } transition-colors flex flex-col items-center disabled:opacity-70`}
+          className={`${isDownloading ? 'text-violet-400' : 'text-zinc-400 hover:text-white'
+            } transition-colors flex flex-col items-center disabled:opacity-70`}
           title="Download Song"
         >
           {isDownloading ? (
@@ -334,22 +333,21 @@ const Player = () => {
             <Download className="w-5 h-5 mb-1" />
           )}
         </button>
-        
+
         <button
           onClick={() => setShowQueue(!showQueue)}
-          className={`${
-            showQueue ? 'text-green-400' : 'text-zinc-400 hover:text-white'
-          } transition-colors`}
+          className={`${showQueue ? 'text-green-400' : 'text-zinc-400 hover:text-white'
+            } transition-colors relative`}
           title="Show Queue"
         >
           <List className="w-5 h-5" />
           {upNext.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
               {upNext.length}
             </span>
           )}
         </button>
-        
+
         <Volume2 className="w-5 h-5 text-zinc-400" />
         <input
           type="range"
@@ -387,7 +385,7 @@ const Player = () => {
               </button>
             </div>
           </div>
-          
+
           <div className="max-h-96 overflow-y-auto">
             {/* Currently Playing */}
             {currentSong && (
