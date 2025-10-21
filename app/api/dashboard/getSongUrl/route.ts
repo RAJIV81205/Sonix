@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     }
     
    
-    const response =  await fetch (`https://saavn.dev/api/songs/${id}`);
+    const response =  await fetch (`https://saavn.sumit.co/api/songs/${id}`);
 
     const data = await response.json();
     
@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ data :data.data }, { status: 200 });
     
   } catch (error: any) {
+    console.error(error)
     return NextResponse.json(
       { error: "Server error", details: error.message },
       { status: 500 }

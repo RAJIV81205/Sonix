@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     }
     
    
-    const response =  await fetch (`https://saavn.dev/api/albums?id=${id}`);
+    const response =  await fetch (`https://saavn.sumit.co/api/albums?id=${id}`);
 
     const data = await response.json();
     

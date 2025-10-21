@@ -59,7 +59,7 @@ const getSongDetails = async (song: any) => {
 
 const getSongUrl = async (songId: string) => {
     try {
-        const response = await fetch(`https://saavn.dev/api/songs/${songId}`)
+        const response = await fetch(`https://saavn.sumit.co/api/songs/${songId}`)
 
         if (!response.ok) {
             console.log("Error fetching song URL:", response.statusText);
