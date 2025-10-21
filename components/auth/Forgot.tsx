@@ -2,13 +2,17 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { AlertCircle, Mail, Loader, ArrowLeft, KeyRound } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { AlertCircle, Mail, Loader, ArrowLeft, KeyRound, Lock, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const Forgot = () => {
-    const [step, setStep] = useState<1 | 2>(1)
+    const router = useRouter()
+    const [step, setStep] = useState<1 | 2 | 3>(1)
     const [email, setEmail] = useState("")
     const [otp, setOtp] = useState("")
+    const [password, setPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
     const [error, setError] = useState<string[]>([])
     const [loading, setLoading] = useState(false)
 
@@ -78,7 +82,54 @@ const Forgot = () => {
             }
 
             toast.success("OTP verified successfully!")
-            // Redirect to reset password page or handle accordingly
+            setStep(3)
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : "An error occurred"
+            setError([errorMsg])
+            toast.error(errorMsg)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
+        setError([])
+
+        if (password !== confirmPassword) {
+            setError(["Passwords do not match"])
+            toast.error("Passwords do not match")
+            setLoading(false)
+            return
+        }
+
+        try {
+            const response = await fetch("/api/auth/reset-password", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email, password, confirmPassword }),
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                if (Array.isArray(data.error)) {
+                    const errorMessages = data.error.map((err: any) => `${err.path} - ${err.message}`)
+                    setError(errorMessages)
+                } else {
+                    setError([data.error || "Something went wrong"])
+                }
+                toast.error(data.error || "Failed to reset password")
+                return
+            }
+
+            toast.success("Password reset successfully!")
+            setTimeout(() => {
+                router.push("/auth/login")
+            }, 1500)
         } catch (err) {
             const errorMsg = err instanceof Error ? err.message : "An error occurred"
             setError([errorMsg])
@@ -93,12 +144,14 @@ const Forgot = () => {
             <div className="max-w-md w-full bg-gray-900 rounded-2xl p-8 shadow-2xl border border-gray-800">
                 <div className="mb-8 text-center">
                     <h2 className="text-3xl font-bold text-white mb-2">
-                        {step === 1 ? "Forgot Password" : "Verify OTP"}
+                        {step === 1 ? "Forgot Password" : step === 2 ? "Verify OTP" : "Reset Password"}
                     </h2>
                     <p className="text-gray-400">
                         {step === 1
                             ? "Enter your email to receive a verification code"
-                            : "Enter the OTP sent to your email"}
+                            : step === 2
+                                ? "Enter the OTP sent to your email"
+                                : "Create a new password for your account"}
                     </p>
                 </div>
 
@@ -149,7 +202,7 @@ const Forgot = () => {
                             )}
                         </button>
                     </form>
-                ) : (
+                ) : step === 2 ? (
                     <form className="space-y-5" onSubmit={handleOtpSubmit}>
                         <div className="space-y-2">
                             <label className="block text-sm font-medium text-gray-300" htmlFor="otp">
@@ -197,6 +250,66 @@ const Forgot = () => {
                         >
                             <ArrowLeft size={16} />
                             Back to Email
+                        </button>
+                    </form>
+                ) : (
+                    <form className="space-y-5" onSubmit={handleResetPassword}>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-300" htmlFor="password">
+                                New Password
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Lock className="h-5 w-5 text-gray-500" />
+                                </div>
+                                <input
+                                    autoComplete='off'
+                                    type="password"
+                                    id="password"
+                                    name="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="Enter new password"
+                                    className="w-full pl-10 pr-3 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                                    required
+                                    minLength={6}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="block text-sm font-medium text-gray-300" htmlFor="confirmPassword">
+                                Confirm Password
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <CheckCircle className="h-5 w-5 text-gray-500" />
+                                </div>
+                                <input
+                                    autoComplete='off'
+                                    type="password"
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="Confirm new password"
+                                    className="w-full pl-10 pr-3 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                                    required
+                                    minLength={6}
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition duration-300 flex items-center justify-center"
+                        >
+                            {loading ? (
+                                <>Resetting <Loader className="ml-2 animate-spin" size={16} /></>
+                            ) : (
+                                "Reset Password"
+                            )}
                         </button>
                     </form>
                 )}
