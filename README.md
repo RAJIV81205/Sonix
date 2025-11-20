@@ -34,7 +34,7 @@ A modern, feature-rich web music player built with cutting-edge technologies for
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/sonix.git
+   git clone https://github.com/RAJIV81205/sonix.git
    cd sonix
    ```
 

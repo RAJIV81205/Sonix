@@ -20,7 +20,7 @@ import {
 } from 'lucide-react'
 import { usePlayer } from '@/context/PlayerContext'
 
-// Animation variants - COMPLETELY UNCHANGED
+// Animation variants
 const fadeInUp = {
     initial: { opacity: 0, y: 60 },
     animate: { opacity: 1, y: 0 },
@@ -53,7 +53,7 @@ const scaleIn = {
     transition: { duration: 0.5 }
 }
 
-// SkeletonLoader - COMPLETELY UNCHANGED from your original
+// SkeletonLoader - UNCHANGED
 const SkeletonLoader = () => (
     <motion.div
         className="min-h-screen bg-black py-20 lg:py-0 text-white overflow-hidden"
@@ -218,7 +218,7 @@ const SkeletonLoader = () => (
                             key={index}
                             className="h-6 xs:h-7 sm:h-8 bg-gray-700 rounded-full animate-pulse"
                             style={{
-                                width: `${60 + Math.random() * 40}px` // Random widths for variety
+                                width: `${60 + Math.random() * 40}px`
                             }}
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
@@ -239,12 +239,12 @@ const SkeletonLoader = () => (
             </motion.div>
 
             {/* Mobile Bottom Spacing */}
-            <div className="h-20 sm:h-0" /> {/* Extra space for mobile navigation */}
+            <div className="h-20 sm:h-0" />
         </div>
     </motion.div>
 )
 
-// All interfaces - UNCHANGED
+// Interfaces
 interface SpotifyImage {
     url: string
     height: number
@@ -328,17 +328,149 @@ interface ApiResponse {
     topTracks: SpotifyTrack[]
 }
 
+// 🔧 FIX: Extract ContextMenu as a SEPARATE memoized component
+const ContextMenu = React.memo(({ 
+    track, 
+    isOpen, 
+    onClose,
+    onPlayNow,
+    onPlayNext,
+    onAddToQueue,
+    onDownload,
+    isLoading
+}: { 
+    track: SpotifyTrack
+    isOpen: boolean
+    onClose: () => void
+    onPlayNow: () => void
+    onPlayNext: () => void
+    onAddToQueue: () => void
+    onDownload: () => void
+    isLoading: boolean
+}) => {
+    const menuRef = useRef<HTMLDivElement>(null)
+
+    // Only log when actually open
+    useEffect(() => {
+        if (isOpen) {
+            console.log('✅ Menu OPENED for:', track.name)
+        }
+    }, [isOpen, track.name])
+
+    return (
+        <AnimatePresence mode="wait">
+            {isOpen && (
+                <motion.div
+                    ref={menuRef}
+                    className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl min-w-[180px] sm:min-w-[200px] overflow-hidden"
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                    }}
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    transition={{ duration: 0.15 }}
+                    style={{ zIndex: 9999 }}
+                >
+                    <motion.div className="py-2">
+                        {[
+                            {
+                                icon: Play,
+                                label: isLoading ? "Loading..." : "Play Now",
+                                action: onPlayNow,
+                                disabled: isLoading
+                            },
+                            { icon: ArrowUp, label: "Play Next", action: onPlayNext, disabled: false },
+                            { icon: ListPlus, label: "Add to Queue", action: onAddToQueue, disabled: false },
+                            { icon: Download, label: "Download", action: onDownload, disabled: false }
+                        ].map((item, index) => (
+                            <motion.button
+                                key={item.label}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    e.preventDefault()
+                                    if (!item.disabled) {
+                                        item.action()
+                                    }
+                                }}
+                                disabled={item.disabled}
+                                className={`flex items-center gap-3 w-full px-4 py-3 text-sm text-white transition-colors focus:outline-none ${
+                                    item.disabled
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-gray-700 focus:bg-gray-700'
+                                }`}
+                                whileHover={item.disabled ? {} : { x: 4 }}
+                                whileTap={item.disabled ? {} : { scale: 0.95 }}
+                            >
+                                {isLoading && item.label.includes("Loading") ? (
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <item.icon className="w-4 h-4" />
+                                )}
+                                {item.label}
+                            </motion.button>
+                        ))}
+
+                        <div className="border-t border-gray-700 my-1" />
+
+                        {[
+                            {
+                                icon: Heart,
+                                label: "Add to Favorites",
+                                action: () => {
+                                    toast.success("Added to favorites")
+                                    onClose()
+                                }
+                            },
+                            {
+                                icon: Share2,
+                                label: "Share",
+                                action: () => {
+                                    if (navigator.share) {
+                                        navigator.share({
+                                            title: track.name,
+                                            text: `Check out "${track.name}" by ${track.artists[0].name}`,
+                                            url: track.external_urls.spotify
+                                        })
+                                    } else {
+                                        navigator.clipboard.writeText(track.external_urls.spotify)
+                                    }
+                                    toast.success("Link copied to clipboard")
+                                    onClose()
+                                }
+                            }
+                        ].map((item, index) => (
+                            <motion.button
+                                key={item.label}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    e.preventDefault()
+                                    item.action()
+                                }}
+                                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-white hover:bg-gray-700 transition-colors focus:outline-none focus:bg-gray-700"
+                                whileHover={{ x: 4 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                <item.icon className="w-4 h-4" />
+                                {item.label}
+                            </motion.button>
+                        ))}
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    )
+})
+
+ContextMenu.displayName = 'ContextMenu'
+
 const ArtistPage = () => {
     const [artistData, setArtistData] = useState<ApiResponse | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [openMenuId, setOpenMenuId] = useState<string | null>(null)
     const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
     const [backgroundLoadingToast, setBackgroundLoadingToast] = useState<string | null>(null)
-    const menuRef = useRef<HTMLDivElement>(null)
-
-    // ONLY FIX: Isolate context values to prevent re-renders
-    const [currentSongId, setCurrentSongId] = useState<string | null>(null)
-    const [isCurrentlyPlaying, setIsCurrentlyPlaying] = useState<boolean>(false)
 
     const param = useParams().id
     const {
@@ -352,32 +484,26 @@ const ArtistPage = () => {
         play
     } = usePlayer()
 
-    // ONLY FIX: Update isolated state when context changes
+    // Click outside handler
     useEffect(() => {
-        setCurrentSongId(currentSong?.id || null)
-        setIsCurrentlyPlaying(isPlaying)
-    }, [currentSong?.id, isPlaying])
-
-    // Rest of useEffects - UNCHANGED
-    useEffect(() => {
-        const handleClickOutside = (event: Event) => {
-            if (
-                menuRef.current &&
-                !menuRef.current.contains(event.target as Node) &&
-                openMenuId !== null
-            ) {
+        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+            const target = event.target as HTMLElement
+            
+            // Check if click is outside any menu
+            if (openMenuId && !target.closest('[data-menu-container]')) {
+                console.log('🖱️ Click outside menu - closing')
                 setOpenMenuId(null)
             }
         }
 
         if (openMenuId) {
             document.addEventListener('mousedown', handleClickOutside)
-            document.addEventListener('touchstart', handleClickOutside)
+            document.addEventListener('touchstart', handleClickOutside as any)
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside)
-            document.removeEventListener('touchstart', handleClickOutside)
+            document.removeEventListener('touchstart', handleClickOutside as any)
         }
     }, [openMenuId])
 
@@ -400,7 +526,6 @@ const ArtistPage = () => {
                 }
 
                 const data = await response.json()
-                console.log("Fetched artist data:", data)
                 setArtistData(data)
 
             } catch (error: unknown) {
@@ -415,7 +540,6 @@ const ArtistPage = () => {
         fetchArtist()
     }, [param])
 
-    // All utility functions - UNCHANGED
     const formatFollowers = (count: number | undefined) => {
         if (!count) return '0'
         if (count >= 1000000) {
@@ -500,12 +624,10 @@ const ArtistPage = () => {
         }
     }
 
-    // All handler functions - UNCHANGED
-    const PlaySong = async (track: SpotifyTrack, index?: number) => {
+    const PlaySong = async (track: SpotifyTrack) => {
         try {
             setLoadingStates(prev => new Set(prev).add(track.id))
             const song = await convertTrackToSong(track)
-            console.log(song)
             
             setQueue([song], 0)
             await play()
@@ -712,142 +834,6 @@ const ArtistPage = () => {
         }
     }
 
-    // ContextMenu component - UNCHANGED except using isolated state
-    const ContextMenu = ({ track, isOpen }: { track: SpotifyTrack, isOpen: boolean }) => {
-        const isTrackLoading = loadingStates.has(track.id)
-
-        return (
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div
-                        ref={menuRef}
-                        className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl min-w-[180px] sm:min-w-[200px] overflow-hidden"
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            e.preventDefault()
-                        }}
-                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        style={{ zIndex: 9999 }}
-                    >
-                        <motion.div
-                            className="py-2"
-                            variants={staggerContainer}
-                            initial="initial"
-                            animate="animate"
-                        >
-                            {[
-                                {
-                                    icon: Play,
-                                    label: isTrackLoading ? "Loading..." : "Play Now",
-                                    action: () => {
-                                        if (!isTrackLoading) {
-                                            PlaySong(track)
-                                            setOpenMenuId(null)
-                                        }
-                                    },
-                                    disabled: isTrackLoading
-                                },
-                                { icon: ArrowUp, label: "Play Next", action: () => handlePlayNext(track), disabled: false },
-                                {
-                                    icon: ListPlus, label: "Add to Queue", action: () => handleAddToQueue(track),
-                                    disabled: false
-                                },
-                                {
-                                    icon: Download, label: "Download",
-                                    action: () => {
-                                        downloadSong(track)
-                                    }
-                                }
-                            ].map((item, index) => (
-                                <motion.button
-                                    key={item.label}
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        e.preventDefault()
-                                        if (!item.disabled) {
-                                            item.action()
-                                        }
-                                    }}
-                                    disabled={item.disabled}
-                                    className={`flex items-center gap-3 w-full px-4 py-3 text-sm text-white transition-colors focus:outline-none ${item.disabled
-                                        ? 'opacity-50 cursor-not-allowed'
-                                        : 'hover:bg-gray-700 focus:bg-gray-700'
-                                        }`}
-                                    variants={fadeInLeft}
-                                    custom={index}
-                                    whileHover={item.disabled ? {} : { x: 4 }}
-                                    whileTap={item.disabled ? {} : { scale: 0.95 }}
-                                >
-                                    {isTrackLoading && item.label.includes("Loading") ? (
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        <item.icon className="w-4 h-4" />
-                                    )}
-                                    {item.label}
-                                </motion.button>
-                            ))}
-
-                            <motion.div
-                                className="border-t border-gray-700 my-1"
-                                initial={{ scaleX: 0 }}
-                                animate={{ scaleX: 1 }}
-                                transition={{ delay: 0.3 }}
-                            />
-
-                            {[
-                                {
-                                    icon: Heart,
-                                    label: "Add to Favorites",
-                                    action: () => {
-                                        toast.success("Added to favorites")
-                                        setOpenMenuId(null)
-                                    }
-                                },
-                                {
-                                    icon: Share2,
-                                    label: "Share",
-                                    action: () => {
-                                        if (navigator.share) {
-                                            navigator.share({
-                                                title: track.name,
-                                                text: `Check out "${track.name}" by ${track.artists[0].name}`,
-                                                url: track.external_urls.spotify
-                                            })
-                                        } else {
-                                            navigator.clipboard.writeText(track.external_urls.spotify)
-                                        }
-                                        toast.success("Link copied to clipboard")
-                                        setOpenMenuId(null)
-                                    }
-                                }
-                            ].map((item, index) => (
-                                <motion.button
-                                    key={item.label}
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        e.preventDefault()
-                                        item.action()
-                                    }}
-                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-white hover:bg-gray-700 transition-colors focus:outline-none focus:bg-gray-700"
-                                    variants={fadeInLeft}
-                                    custom={index + 3}
-                                    whileHover={{ x: 4 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    <item.icon className="w-4 h-4" />
-                                    {item.label}
-                                </motion.button>
-                            ))}
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        )
-    }
-
     if (isLoading) {
         return <SkeletonLoader />
     }
@@ -883,7 +869,7 @@ const ArtistPage = () => {
             transition={{ duration: 0.8 }}
         >
             <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 lg:py-8">
-                {/* Artist Header - COMPLETELY UNCHANGED */}
+                {/* Artist Header */}
                 <motion.div
                     className="flex flex-col lg:flex-row items-start lg:items-end gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12"
                     variants={staggerContainer}
@@ -1022,7 +1008,7 @@ const ArtistPage = () => {
                     </motion.div>
                 </motion.div>
 
-                {/* Top Songs Section - ONLY ONE CHANGE: using isolated state */}
+                {/* Top Songs Section */}
                 {topTracks && topTracks.length > 0 && (
                     <motion.div
                         className="mb-8 sm:mb-12"
@@ -1047,17 +1033,18 @@ const ArtistPage = () => {
                         >
                             {topTracks.map((track: SpotifyTrack, index: number) => {
                                 const isTrackLoading = loadingStates.has(track.id)
-                                // ONLY CHANGE: Use isolated state instead of direct context
-                                const isCurrentlyPlayingTrack = currentSongId === track.id && isCurrentlyPlaying
+                                const isCurrentlyPlayingTrack = currentSong?.id === track.id && isPlaying
+                                const isMenuOpen = openMenuId === track.id
 
                                 return (
                                     <motion.div
                                         key={track.id}
-                                        className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg transition-colors group cursor-pointer relative ${openMenuId === track.id ? 'bg-white/5' : 'hover:bg-white/5'
-                                            } ${isTrackLoading ? 'opacity-75' : ''}`}
+                                        className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg transition-colors group cursor-pointer relative ${
+                                            isMenuOpen ? 'bg-white/5' : 'hover:bg-white/5'
+                                        } ${isTrackLoading ? 'opacity-75' : ''}`}
                                         variants={fadeInUp}
                                         custom={index}
-                                        whileHover={{ x: openMenuId === track.id ? 0 : 4 }}
+                                        whileHover={{ x: isMenuOpen ? 0 : 4 }}
                                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
                                     >
                                         <div
@@ -1075,9 +1062,10 @@ const ArtistPage = () => {
                                                     className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg"
                                                 />
                                                 <motion.div
-                                                    className={`absolute inset-0 bg-black/50 rounded-lg transition-opacity flex items-center justify-center ${isTrackLoading ? 'opacity-100' :
-                                                        openMenuId === track.id ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'
-                                                        }`}
+                                                    className={`absolute inset-0 bg-black/50 rounded-lg transition-opacity flex items-center justify-center ${
+                                                        isTrackLoading ? 'opacity-100' :
+                                                        isMenuOpen ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'
+                                                    }`}
                                                 >
                                                     {isTrackLoading ? (
                                                         <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -1104,12 +1092,12 @@ const ArtistPage = () => {
                                                 {formatDuration(track.duration_ms)}
                                             </div>
 
-                                            <div className="relative">
+                                            <div className="relative" data-menu-container>
                                                 <motion.button
                                                     onClick={(e) => {
                                                         e.stopPropagation()
                                                         e.preventDefault()
-                                                        setOpenMenuId(openMenuId === track.id ? null : track.id)
+                                                        setOpenMenuId(isMenuOpen ? null : track.id)
                                                     }}
                                                     className="p-1.5 sm:p-2 hover:bg-gray-700 rounded-full transition-all focus:outline-none relative z-10"
                                                     whileHover={{ scale: 1.1 }}
@@ -1118,10 +1106,24 @@ const ArtistPage = () => {
                                                     <MoreVertical className="w-3 h-3 sm:w-4 sm:h-4" />
                                                 </motion.button>
 
-                                                <ContextMenu
-                                                    track={track}
-                                                    isOpen={openMenuId === track.id}
-                                                />
+                                                {/* 🔧 FIX: Only render ContextMenu when it's actually open */}
+                                                {isMenuOpen && (
+                                                    <ContextMenu
+                                                        track={track}
+                                                        isOpen={true}
+                                                        onClose={() => setOpenMenuId(null)}
+                                                        onPlayNow={() => {
+                                                            if (!isTrackLoading) {
+                                                                PlaySong(track)
+                                                                setOpenMenuId(null)
+                                                            }
+                                                        }}
+                                                        onPlayNext={() => handlePlayNext(track)}
+                                                        onAddToQueue={() => handleAddToQueue(track)}
+                                                        onDownload={() => downloadSong(track)}
+                                                        isLoading={isTrackLoading}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     </motion.div>
@@ -1131,7 +1133,7 @@ const ArtistPage = () => {
                     </motion.div>
                 )}
 
-                {/* All remaining sections (Genres, External Links) - COMPLETELY UNCHANGED */}
+                {/* Genres section */}
                 {artist.genres && artist.genres.length > 0 && (
                     <motion.div
                         className="mb-6 sm:mb-8"
