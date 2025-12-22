@@ -44,3 +44,4 @@ next-env.d.ts
 /drizzle
 .vscode
 package-lock.json
+bun.lock
