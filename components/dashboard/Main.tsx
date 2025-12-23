@@ -11,6 +11,8 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { gsap } from 'gsap';
 import { topArtists } from '@/lib/constant';
+import { useGsapStagger } from '@/hooks/useGsapstagger';
+
 
 interface Song {
   id: string;
@@ -356,281 +358,29 @@ const Main = () => {
     getTrendingTracks()
   }, []);
 
-  // GSAP animation for recommendation items
-  useEffect(() => {
-    if (!isTrendingLoading && trendingTracks.length > 0 && recommendationItemsRef.current.length > 0) {
-      // Set initial state - items are invisible and scaled down
-      gsap.set(recommendationItemsRef.current, {
-        opacity: 0,
-        scale: 0.6,
-        y: 50,
-        rotation: -5
-      });
+useGsapStagger(recommendationItemsRef, {
+    trigger: trendingTracks.length && !isTrendingLoading,
+    stagger: 1.2,
+  });
 
-      // Animate items in with stagger and spring effect
-      gsap.to(recommendationItemsRef.current, {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        rotation: 0,
-        duration: 0.8,
-        ease: "back.out(1.4)", // Spring effect
-        stagger: {
-          amount: 1.2, // Total time for all items to animate
-          from: "start",
-          ease: "power2.out"
-        }
-      });
+  useGsapStagger(recentlyPlayedItemsRef, {
+    trigger: recentlyPlayed.length,
+  });
 
-      // Add hover animations
-      recommendationItemsRef.current.forEach((item) => {
-        if (item) {
-          const handleMouseEnter = () => {
-            gsap.to(item, {
-              scale: 1.05,
-              y: -5,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          };
+  useGsapStagger(chartsItemsRef, {
+    trigger: 4,
+    stagger: 0.8,
+  });
 
-          const handleMouseLeave = () => {
-            gsap.to(item, {
-              scale: 1,
-              y: 0,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          };
+  useGsapStagger(artistsItemsRef, {
+    trigger: topArtists.length,
+    stagger: 0.6,
+  });
 
-          item.addEventListener('mouseenter', handleMouseEnter);
-          item.addEventListener('mouseleave', handleMouseLeave);
+  useGsapStagger(playlistsItemsRef, {
+    trigger: playlists.length,
+  });
 
-          // Cleanup function
-          return () => {
-            item.removeEventListener('mouseenter', handleMouseEnter);
-            item.removeEventListener('mouseleave', handleMouseLeave);
-          };
-        }
-      });
-    }
-  }, [isTrendingLoading, trendingTracks]);
-
-  // GSAP animation for recently played items
-  useEffect(() => {
-    if (recentlyPlayed.length > 0 && recentlyPlayedItemsRef.current.length > 0) {
-      // Set initial state
-      gsap.set(recentlyPlayedItemsRef.current, {
-        opacity: 0,
-        scale: 0.6,
-        y: 50,
-        rotation: -5
-      });
-
-      // Animate items in with stagger
-      gsap.to(recentlyPlayedItemsRef.current, {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        rotation: 0,
-        duration: 0.8,
-        ease: "back.out(1.4)",
-        stagger: {
-          amount: 1.0,
-          from: "start",
-          ease: "power2.out"
-        }
-      });
-
-      // Add hover animations
-      recentlyPlayedItemsRef.current.forEach((item) => {
-        if (item) {
-          const handleMouseEnter = () => {
-            gsap.to(item, {
-              scale: 1.05,
-              y: -5,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          };
-
-          const handleMouseLeave = () => {
-            gsap.to(item, {
-              scale: 1,
-              y: 0,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          };
-
-          item.addEventListener('mouseenter', handleMouseEnter);
-          item.addEventListener('mouseleave', handleMouseLeave);
-        }
-      });
-    }
-  }, [recentlyPlayed]);
-
-  // GSAP animation for charts items
-  useEffect(() => {
-    if (chartsItemsRef.current.length > 0) {
-      // Set initial state
-      gsap.set(chartsItemsRef.current, {
-        opacity: 0,
-        scale: 0.6,
-        y: 50,
-        rotation: -5
-      });
-
-      // Animate items in with stagger
-      gsap.to(chartsItemsRef.current, {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        rotation: 0,
-        duration: 0.8,
-        ease: "back.out(1.4)",
-        stagger: {
-          amount: 0.8,
-          from: "start",
-          ease: "power2.out"
-        }
-      });
-
-      // Add hover animations
-      chartsItemsRef.current.forEach((item) => {
-        if (item) {
-          const handleMouseEnter = () => {
-            gsap.to(item, {
-              scale: 1.05,
-              y: -5,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          };
-
-          const handleMouseLeave = () => {
-            gsap.to(item, {
-              scale: 1,
-              y: 0,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          };
-
-          item.addEventListener('mouseenter', handleMouseEnter);
-          item.addEventListener('mouseleave', handleMouseLeave);
-        }
-      });
-    }
-  }, [charts]);
-
-  // GSAP animation for artists items
-  useEffect(() => {
-    if (artistsItemsRef.current.length > 0) {
-      // Set initial state
-      gsap.set(artistsItemsRef.current, {
-        opacity: 0,
-        scale: 0.6,
-        y: 50,
-        rotation: -5
-      });
-
-      // Animate items in with stagger
-      gsap.to(artistsItemsRef.current, {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        rotation: 0,
-        duration: 0.8,
-        ease: "back.out(1.4)",
-        stagger: {
-          amount: 0.6,
-          from: "start",
-          ease: "power2.out"
-        }
-      });
-
-      // Add hover animations
-      artistsItemsRef.current.forEach((item) => {
-        if (item) {
-          const handleMouseEnter = () => {
-            gsap.to(item, {
-              scale: 1.05,
-              y: -5,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          };
-
-          const handleMouseLeave = () => {
-            gsap.to(item, {
-              scale: 1,
-              y: 0,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          };
-
-          item.addEventListener('mouseenter', handleMouseEnter);
-          item.addEventListener('mouseleave', handleMouseLeave);
-        }
-      });
-    }
-  }, [topArtists]);
-
-  // GSAP animation for playlists items
-  useEffect(() => {
-    if (playlists.length > 0 && playlistsItemsRef.current.length > 0) {
-      // Set initial state
-      gsap.set(playlistsItemsRef.current, {
-        opacity: 0,
-        scale: 0.6,
-        y: 50,
-        rotation: -5
-      });
-
-      // Animate items in with stagger
-      gsap.to(playlistsItemsRef.current, {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        rotation: 0,
-        duration: 0.8,
-        ease: "back.out(1.4)",
-        stagger: {
-          amount: 1.0,
-          from: "start",
-          ease: "power2.out"
-        }
-      });
-
-      // Add hover animations
-      playlistsItemsRef.current.forEach((item) => {
-        if (item) {
-          const handleMouseEnter = () => {
-            gsap.to(item, {
-              scale: 1.05,
-              y: -5,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          };
-
-          const handleMouseLeave = () => {
-            gsap.to(item, {
-              scale: 1,
-              y: 0,
-              duration: 0.3,
-              ease: "power2.out"
-            });
-          };
-
-          item.addEventListener('mouseenter', handleMouseEnter);
-          item.addEventListener('mouseleave', handleMouseLeave);
-        }
-      });
-    }
-  }, [playlists]);
 
   // Function to handle playlist creation success
   const handlePlaylistCreated = (playlistId: string, playlistName: string) => {
