@@ -9,6 +9,7 @@ import AddPlaylistPopup from './AddPlaylistPopup';
 import Link from "next/link"
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
+import { gsap } from 'gsap';
 import { topArtists } from '@/lib/constant';
 
 interface Song {
@@ -56,6 +57,7 @@ const Main = () => {
   const [recentSongForPlaylist, setRecentSongForPlaylist] = useState<string | null>(null);
   const playlistDropdownRef = useRef<HTMLDivElement | null>(null);
   const recentPlaylistDropdownRef = useRef<HTMLDivElement | null>(null);
+  const recommendationItemsRef = useRef<HTMLDivElement[]>([]);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
   const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState<boolean>(false);
   const [userName, setUserName] = useState<string>("");
@@ -350,6 +352,66 @@ const Main = () => {
     getTrendingTracks()
   }, []);
 
+  // GSAP animation for recommendation items
+  useEffect(() => {
+    if (!isTrendingLoading && trendingTracks.length > 0 && recommendationItemsRef.current.length > 0) {
+      // Set initial state - items are invisible and scaled down
+      gsap.set(recommendationItemsRef.current, {
+        opacity: 0,
+        scale: 0.6,
+        y: 50,
+        rotation: -5
+      });
+
+      // Animate items in with stagger and spring effect
+      gsap.to(recommendationItemsRef.current, {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        rotation: 0,
+        duration: 0.8,
+        ease: "back.out(1.4)", // Spring effect
+        stagger: {
+          amount: 1.2, // Total time for all items to animate
+          from: "start",
+          ease: "power2.out"
+        }
+      });
+
+      // Add hover animations
+      recommendationItemsRef.current.forEach((item) => {
+        if (item) {
+          const handleMouseEnter = () => {
+            gsap.to(item, {
+              scale: 1.05,
+              y: -5,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          };
+
+          const handleMouseLeave = () => {
+            gsap.to(item, {
+              scale: 1,
+              y: 0,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          };
+
+          item.addEventListener('mouseenter', handleMouseEnter);
+          item.addEventListener('mouseleave', handleMouseLeave);
+
+          // Cleanup function
+          return () => {
+            item.removeEventListener('mouseenter', handleMouseEnter);
+            item.removeEventListener('mouseleave', handleMouseLeave);
+          };
+        }
+      });
+    }
+  }, [isTrendingLoading, trendingTracks]);
+
   // Function to handle playlist creation success
   const handlePlaylistCreated = (playlistId: string, playlistName: string) => {
     // Add the new playlist to the state
@@ -377,7 +439,6 @@ const Main = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } },
   };
 
-  const { ref: recRef, inView: recInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: recentRef, inView: recentInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: chartsRef, inView: chartsInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: artistRef, inView: artistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
@@ -421,13 +482,7 @@ const Main = () => {
       </div>
 
       {/* Recommendation Section */}
-      <motion.div
-        ref={recRef}
-        variants={fadeInUp}
-        initial="hidden"
-        animate={recInView ? 'visible' : 'hidden'}
-        className="p-4"
-      >
+      <div className="p-4">
         <h2 className="text-xl font-bold mb-4">Recommendations</h2>
         {isTrendingLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-8 gap-3">
@@ -444,7 +499,10 @@ const Main = () => {
             {trendingTracks.map((track, index) => (
               <div
                 key={track.id}
-                className="bg-zinc-900 rounded-xl p-3 hover:bg-zinc-800 transition-colors cursor-pointer relative group"
+                ref={(el) => {
+                  if (el) recommendationItemsRef.current[index] = el;
+                }}
+                className="recommendation-item bg-zinc-900 rounded-xl p-3 hover:bg-zinc-800 transition-colors cursor-pointer relative group"
               >
                 {/* Loading overlay for trending tracks */}
                 {loadingSong === track.id && (
@@ -458,6 +516,19 @@ const Main = () => {
                     src={track.coverUrl}
                     alt={track.title}
                     className="w-full aspect-square object-cover rounded-lg mb-2"
+                    onClick={(e) => {
+                      // Add click animation
+                      const target = e.currentTarget.closest('.recommendation-item');
+                      if (target) {
+                        gsap.to(target, {
+                          scale: 0.95,
+                          duration: 0.1,
+                          ease: "power2.out",
+                          yoyo: true,
+                          repeat: 1
+                        });
+                      }
+                    }}
                   />
                   <h3 className="font-medium text-sm truncate">{track.title.replaceAll("&quot;", `"`)}</h3>
                   <p className="text-xs text-zinc-400 truncate">{track.artist.replaceAll("&quot;", `"`)}</p>
@@ -484,7 +555,7 @@ const Main = () => {
             ))}
           </div>
         )}
-      </motion.div>
+      </div>
 
       {/* Recently Played Section */}
       <motion.div

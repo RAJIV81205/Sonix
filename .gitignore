@@ -45,3 +45,4 @@ next-env.d.ts
 .vscode
 package-lock.json
 bun.lock
+package-lock.json
