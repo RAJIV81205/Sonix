@@ -1,15 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation"
 import Link from "next/link";
 import { Menu, X, Music } from 'lucide-react';
-import { motion, AnimatePresence } from "framer-motion";
+import gsap from "gsap";
 
 const Navbar = () => {
     const router = useRouter();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const mobileMenuRef = useRef<HTMLDivElement>(null);
+    const menuItemsRef = useRef<HTMLDivElement>(null);
+    const menuButtonsRef = useRef<HTMLDivElement>(null);
 
     const handleLogin = () => {
         router.push("/auth/login");
@@ -32,8 +35,49 @@ const Navbar = () => {
     useEffect(() => {
         if (isMobileMenuOpen) {
             document.body.style.overflow = 'hidden';
+            // Animate menu in
+            if (mobileMenuRef.current) {
+                gsap.set(mobileMenuRef.current, { opacity: 0, y: -20 });
+                gsap.to(mobileMenuRef.current, { 
+                    opacity: 1, 
+                    y: 0, 
+                    duration: 0.2, 
+                    ease: "power2.out" 
+                });
+            }
+            // Animate menu items
+            if (menuItemsRef.current) {
+                gsap.set(menuItemsRef.current.children, { opacity: 0, x: -20 });
+                gsap.to(menuItemsRef.current.children, {
+                    opacity: 1,
+                    x: 0,
+                    duration: 0.3,
+                    stagger: 0.1,
+                    delay: 0.1,
+                    ease: "power2.out"
+                });
+            }
+            // Animate buttons
+            if (menuButtonsRef.current) {
+                gsap.set(menuButtonsRef.current, { opacity: 0 });
+                gsap.to(menuButtonsRef.current, {
+                    opacity: 1,
+                    duration: 0.3,
+                    delay: 0.4,
+                    ease: "power2.out"
+                });
+            }
         } else {
             document.body.style.overflow = 'auto';
+            // Animate menu out
+            if (mobileMenuRef.current) {
+                gsap.to(mobileMenuRef.current, { 
+                    opacity: 0, 
+                    y: -20, 
+                    duration: 0.2, 
+                    ease: "power2.in" 
+                });
+            }
         }
         return () => {
             document.body.style.overflow = 'auto';
@@ -103,69 +147,49 @@ const Navbar = () => {
                 </div>
             </nav>
 
-            <AnimatePresence>
-                {isMobileMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.2 }}
-                        className="fixed inset-0 z-40 bg-gray-900 md:hidden overflow-hidden"
-                    >
-                        <div className="flex flex-col h-full">
-                            <div className="pt-20 px-6 flex-1 overflow-y-auto">
-                                <motion.div 
-                                    className="flex flex-col space-y-6 py-8"
-                                    initial="hidden"
-                                    animate="visible"
-                                    variants={{
-                                        hidden: {},
-                                        visible: {
-                                            transition: {
-                                                staggerChildren: 0.1
-                                            }
-                                        }
-                                    }}
-                                >
-                                    {["Discover", "Playlists", "Premium", "Support"].map((item) => (
-                                        <motion.a
-                                            key={item}
-                                            href="#"
-                                            className="text-2xl font-medium text-gray-200 hover:text-purple-400 transition py-2"
-                                            variants={{
-                                                hidden: { opacity: 0, x: -20 },
-                                                visible: { opacity: 1, x: 0 }
-                                            }}
-                                        >
-                                            {item}
-                                        </motion.a>
-                                    ))}
-                                </motion.div>
-                                
-                                <motion.div 
-                                    className="mt-12 flex flex-col space-y-4"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: 0.4 }}
-                                >
-                                    <button 
-                                        onClick={handleLogin}
-                                        className="w-full px-4 py-4 border border-gray-700 rounded-lg text-gray-200 hover:bg-gray-800 transition"
+            {isMobileMenuOpen && (
+                <div
+                    ref={mobileMenuRef}
+                    className="fixed inset-0 z-40 bg-gray-900 md:hidden overflow-hidden"
+                >
+                    <div className="flex flex-col h-full">
+                        <div className="pt-20 px-6 flex-1 overflow-y-auto">
+                            <div 
+                                ref={menuItemsRef}
+                                className="flex flex-col space-y-6 py-8"
+                            >
+                                {["Discover", "Playlists", "Premium", "Support"].map((item) => (
+                                    <a
+                                        key={item}
+                                        href="#"
+                                        className="text-2xl font-medium text-gray-200 hover:text-purple-400 transition py-2"
                                     >
-                                        Log In
-                                    </button>
-                                    <button
-                                        onClick={handleSignup} 
-                                        className="w-full px-4 py-4 rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition"
-                                    >
-                                        Sign Up
-                                    </button>
-                                </motion.div>
+                                        {item}
+                                    </a>
+                                ))}
+                            </div>
+                            
+                            <div 
+                                ref={menuButtonsRef}
+                                className="mt-12 flex flex-col space-y-4"
+                            >
+                                <button 
+                                    onClick={handleLogin}
+                                    className="w-full px-4 py-4 border border-gray-700 rounded-lg text-gray-200 hover:bg-gray-800 transition"
+                                >
+                                    Log In
+                                </button>
+                                <button
+                                    onClick={handleSignup} 
+                                    className="w-full px-4 py-4 rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition"
+                                >
+                                    Sign Up
+                                </button>
                             </div>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    </div>
+                </div>
+            )}
         </>
     );
 };

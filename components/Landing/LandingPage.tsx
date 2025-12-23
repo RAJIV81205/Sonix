@@ -1,14 +1,113 @@
-"use client"
+"use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Correct import for navigation
+import { useRef, useEffect } from "react";
 import Image from "next/image";
-import { Pause, SkipForward, SkipBack, Volume2, Music, Headphones, Download, Wifi, Star, Shuffle, TrendingUp } from "lucide-react";
+import {
+  Pause,
+  SkipForward,
+  SkipBack,
+  Volume2,
+  Music,
+  Headphones,
+  Download,
+  Wifi,
+  Star,
+  Shuffle,
+  TrendingUp,
+} from "lucide-react";
 import Navbar from "./Navbar";
 import Hero from "./Hero";
 import TopCharts from "./TopCharts";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+// Register ScrollTrigger plugin
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
 export default function LandingPage() {
+  const pricingRef = useRef<HTMLDivElement>(null);
+  const testimonialRef = useRef<HTMLDivElement>(null);
+  const downloadRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (pricingRef.current && pricingRef.current.children.length > 0) {
+      // Set initial state
+      gsap.set(pricingRef.current.children, {
+        scale: 0.9,
+        y: 50,
+        opacity: 0
+      });
+
+      gsap.to(pricingRef.current.children, {
+        scrollTrigger: {
+          trigger: pricingRef.current,
+          start: "top 75%",
+          toggleActions: "play none none reverse"
+        },
+        scale: 1,
+        y: 0,
+        opacity: 1,
+        stagger: 0.15,
+        duration: 0.7,
+        ease: "back.out(1.7)",
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (testimonialRef.current && testimonialRef.current.children.length > 0) {
+      // Set initial state
+      gsap.set(testimonialRef.current.children, {
+        y: 40,
+        opacity: 0
+      });
+
+      gsap.to(testimonialRef.current.children, {
+        scrollTrigger: {
+          trigger: testimonialRef.current,
+          start: "top 80%",
+          toggleActions: "play none none reverse"
+        },
+        y: 0,
+        opacity: 1,
+        stagger: 0.12,
+        duration: 0.7,
+        ease: "power2.out",
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (downloadRef.current && downloadRef.current.children.length > 0) {
+      // Set initial state
+      gsap.set(downloadRef.current.children, {
+        scale: 0.8,
+        opacity: 0
+      });
+
+      gsap.to(downloadRef.current.children, {
+        scrollTrigger: {
+          trigger: downloadRef.current,
+          start: "top 85%",
+          toggleActions: "play none none reverse"
+        },
+        scale: 1,
+        opacity: 1,
+        stagger: 0.15,
+        duration: 0.6,
+        ease: "back.out(1.2)",
+      });
+    }
+
+    // Cleanup all ScrollTriggers on unmount
+    return () => {
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
       {/* Header */}
@@ -19,9 +118,12 @@ export default function LandingPage() {
       <TopCharts />
 
       {/* Features Section */}
-      
+
       {/* Pricing Section - Enhanced with blur effects and interactive cards */}
-      <section id="pricing" className="py-20 md:py-32 bg-black relative overflow-hidden">
+      <section
+        id="pricing"
+        className="py-20 md:py-32 bg-black relative overflow-hidden"
+      >
         {/* Background elements */}
         <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-gray-900 to-transparent z-0"></div>
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-600/10 rounded-full filter blur-[80px] z-0"></div>
@@ -31,16 +133,27 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <div className="flex items-center gap-2 text-purple-500 mb-3 justify-center">
               <TrendingUp size={18} />
-              <span className="text-sm font-medium uppercase tracking-wider">Plans & Pricing</span>
+              <span className="text-sm font-medium uppercase tracking-wider">
+                Plans & Pricing
+              </span>
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">Choose Your Plan</h2>
-            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">Flexible pricing options to suit your needs</p>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">
+              Choose Your Plan
+            </h2>
+            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
+              Flexible pricing options to suit your needs
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div
+            ref={pricingRef}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+          >
             <div className="bg-gray-800/60 rounded-xl border border-gray-700/50 overflow-hidden hover:transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl hover:shadow-purple-900/10 hover:border-gray-600/50 group">
               <div className="p-8">
                 <h3 className="text-xl font-bold mb-2 text-white">Free</h3>
-                <p className="text-gray-400 mb-6">Basic features for casual listeners</p>
+                <p className="text-gray-400 mb-6">
+                  Basic features for casual listeners
+                </p>
                 <div className="flex items-baseline mb-6">
                   <span className="text-4xl font-bold text-white">$0</span>
                   <span className="text-gray-400 ml-2">/month</span>
@@ -50,7 +163,9 @@ export default function LandingPage() {
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
                       <span className="text-green-500 text-xs">✓</span>
                     </div>
-                    <span className="text-gray-300">Ad-supported listening</span>
+                    <span className="text-gray-300">
+                      Ad-supported listening
+                    </span>
                   </li>
                   <li className="flex items-center">
                     <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
@@ -67,7 +182,9 @@ export default function LandingPage() {
                 </ul>
               </div>
               <div className="px-8 pb-8">
-                <button className="w-full px-4 py-3 bg-gray-700/70 hover:bg-gray-700 text-white rounded-lg transition duration-300">Get Started</button>
+                <button className="w-full px-4 py-3 bg-gray-700/70 hover:bg-gray-700 text-white rounded-lg transition duration-300">
+                  Get Started
+                </button>
               </div>
             </div>
             <div className="bg-gray-800/60 rounded-xl border border-purple-500 overflow-hidden relative hover:transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl hover:shadow-purple-900/20 group">
@@ -76,7 +193,9 @@ export default function LandingPage() {
               </div>
               <div className="p-8 pt-12">
                 <h3 className="text-xl font-bold mb-2 text-white">Premium</h3>
-                <p className="text-gray-400 mb-6">Enhanced features for music lovers</p>
+                <p className="text-gray-400 mb-6">
+                  Enhanced features for music lovers
+                </p>
                 <div className="flex items-baseline mb-6">
                   <span className="text-4xl font-bold text-white">$9.99</span>
                   <span className="text-gray-400 ml-2">/month</span>
@@ -117,7 +236,9 @@ export default function LandingPage() {
             <div className="bg-gray-800/60 rounded-xl border border-gray-700/50 overflow-hidden hover:transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl hover:shadow-purple-900/10 hover:border-gray-600/50 group">
               <div className="p-8">
                 <h3 className="text-xl font-bold mb-2 text-white">Family</h3>
-                <p className="text-gray-400 mb-6">Share the experience with loved ones</p>
+                <p className="text-gray-400 mb-6">
+                  Share the experience with loved ones
+                </p>
                 <div className="flex items-baseline mb-6">
                   <span className="text-4xl font-bold text-white">$14.99</span>
                   <span className="text-gray-400 ml-2">/month</span>
@@ -150,7 +271,9 @@ export default function LandingPage() {
                 </ul>
               </div>
               <div className="px-8 pb-8">
-                <button className="w-full px-4 py-3 bg-gray-700/70 hover:bg-gray-700 text-white rounded-lg transition duration-300">Get Family Plan</button>
+                <button className="w-full px-4 py-3 bg-gray-700/70 hover:bg-gray-700 text-white rounded-lg transition duration-300">
+                  Get Family Plan
+                </button>
               </div>
             </div>
           </div>
@@ -158,7 +281,10 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials Section - Updated with the glow effect and improved cards */}
-      <section id="testimonials" className="py-20 md:py-32 bg-gradient-to-b from-black to-gray-900 relative overflow-hidden">
+      <section
+        id="testimonials"
+        className="py-20 md:py-32 bg-gradient-to-b from-black to-gray-900 relative overflow-hidden"
+      >
         {/* Background elements */}
         <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-black to-transparent z-0"></div>
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full filter blur-[80px] z-0"></div>
@@ -168,21 +294,33 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <div className="flex items-center gap-2 text-purple-500 mb-3 justify-center">
               <Star size={18} />
-              <span className="text-sm font-medium uppercase tracking-wider">Testimonials</span>
+              <span className="text-sm font-medium uppercase tracking-wider">
+                Testimonials
+              </span>
             </div>
-            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">What Our Users Say</h2>
-            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">Join thousands of satisfied music lovers</p>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">
+              What Our Users Say
+            </h2>
+            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
+              Join thousands of satisfied music lovers
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div
+            ref={testimonialRef}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
             <div className="bg-gray-800/60 p-8 rounded-xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-900/10 group">
               <div className="flex items-center gap-1 mb-4">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                  <Star
+                    key={i}
+                    className="h-5 w-5 text-yellow-500 fill-yellow-500"
+                  />
                 ))}
               </div>
               <p className="text-gray-300 mb-6">
-                "Sonix has completely transformed how I experience music. The sound quality is unmatched and the
-                interface is beautiful."
+                "Sonix has completely transformed how I experience music. The
+                sound quality is unmatched and the interface is beautiful."
               </p>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-gray-700 rounded-full overflow-hidden">
@@ -195,7 +333,9 @@ export default function LandingPage() {
                   />
                 </div>
                 <div>
-                  <h4 className="font-medium text-white group-hover:text-purple-300 transition-colors">Alex Johnson</h4>
+                  <h4 className="font-medium text-white group-hover:text-purple-300 transition-colors">
+                    Alex Johnson
+                  </h4>
                   <p className="text-sm text-gray-400">Premium User</p>
                 </div>
               </div>
@@ -203,12 +343,16 @@ export default function LandingPage() {
             <div className="bg-gray-800/60 p-8 rounded-xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-900/10 group">
               <div className="flex items-center gap-1 mb-4">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                  <Star
+                    key={i}
+                    className="h-5 w-5 text-yellow-500 fill-yellow-500"
+                  />
                 ))}
               </div>
               <p className="text-gray-300 mb-6">
-                "The family plan is perfect for us. Everyone gets their own personalized experience, and the parental
-                controls give me peace of mind."
+                "The family plan is perfect for us. Everyone gets their own
+                personalized experience, and the parental controls give me peace
+                of mind."
               </p>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-gray-700 rounded-full overflow-hidden">
@@ -221,7 +365,9 @@ export default function LandingPage() {
                   />
                 </div>
                 <div>
-                  <h4 className="font-medium text-white group-hover:text-purple-300 transition-colors">Sarah Miller</h4>
+                  <h4 className="font-medium text-white group-hover:text-purple-300 transition-colors">
+                    Sarah Miller
+                  </h4>
                   <p className="text-sm text-gray-400">Family Plan User</p>
                 </div>
               </div>
@@ -229,12 +375,15 @@ export default function LandingPage() {
             <div className="bg-gray-800/60 p-8 rounded-xl border border-gray-700/50 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-900/10 group">
               <div className="flex items-center gap-1 mb-4">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                  <Star
+                    key={i}
+                    className="h-5 w-5 text-yellow-500 fill-yellow-500"
+                  />
                 ))}
               </div>
               <p className="text-gray-300 mb-6">
-                "As a music producer, I appreciate the lossless audio quality. Sonix lets me hear every detail exactly
-                as intended."
+                "As a music producer, I appreciate the lossless audio quality.
+                Sonix lets me hear every detail exactly as intended."
               </p>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-gray-700 rounded-full overflow-hidden">
@@ -247,7 +396,9 @@ export default function LandingPage() {
                   />
                 </div>
                 <div>
-                  <h4 className="font-medium text-white group-hover:text-purple-300 transition-colors">David Chen</h4>
+                  <h4 className="font-medium text-white group-hover:text-purple-300 transition-colors">
+                    David Chen
+                  </h4>
                   <p className="text-sm text-gray-400">Premium User</p>
                 </div>
               </div>
@@ -257,15 +408,22 @@ export default function LandingPage() {
       </section>
 
       {/* Download Section */}
-      <section id="download" className="py-20 md:py-32 relative overflow-hidden">
+      <section
+        id="download"
+        className="py-20 md:py-32 relative overflow-hidden"
+      >
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900 to-black z-0"></div>
-        
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">Get Sonix Today</h2>
-            <p className="text-xl text-zinc-400 max-w-2xl mx-auto">Available on all your favorite platforms</p>
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">
+              Get Sonix Today
+            </h2>
+            <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
+              Available on all your favorite platforms
+            </p>
           </div>
-          <div className="flex flex-col md:flex-row gap-8 justify-center items-center max-w-3xl mx-auto">
+          <div ref={downloadRef} className="flex flex-col md:flex-row gap-8 justify-center items-center max-w-3xl mx-auto">
             <button className="px-8 py-3 bg-zinc-800 hover:bg-zinc-700 w-full md:w-auto flex items-center gap-2 rounded-md">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -338,7 +496,8 @@ export default function LandingPage() {
                 </span>
               </Link>
               <p className="text-zinc-400 mb-6">
-                Your ultimate music companion. Discover, stream, and enjoy millions of songs.
+                Your ultimate music companion. Discover, stream, and enjoy
+                millions of songs.
               </p>
               <div className="flex gap-4">
                 <button className="p-2 text-zinc-400 hover:text-white transition-colors">
@@ -397,22 +556,34 @@ export default function LandingPage() {
               <h3 className="font-bold text-lg mb-4">Company</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     About
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     Careers
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     Press
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     Blog
                   </Link>
                 </li>
@@ -422,22 +593,34 @@ export default function LandingPage() {
               <h3 className="font-bold text-lg mb-4">Support</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     Help Center
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     Community
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     Contact Us
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     FAQ
                   </Link>
                 </li>
@@ -447,22 +630,34 @@ export default function LandingPage() {
               <h3 className="font-bold text-lg mb-4">Legal</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     Terms of Service
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     Cookie Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="#"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                  >
                     Licenses
                   </Link>
                 </li>
@@ -471,7 +666,8 @@ export default function LandingPage() {
           </div>
           <div className="border-t border-zinc-900 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-zinc-500 text-sm mb-4 md:mb-0">
-              &copy; {new Date().getFullYear()} Sonix Music Player. All rights reserved.
+              &copy; {new Date().getFullYear()} Sonix Music Player. All rights
+              reserved.
             </p>
             <div className="flex gap-6">
               <Link href="#" className="text-zinc-500 hover:text-white text-sm">
