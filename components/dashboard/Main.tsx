@@ -11,7 +11,7 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { gsap } from 'gsap';
 import { topArtists } from '@/lib/constant';
-import { useGsapStagger } from '@/hooks/useGsapstagger';
+import { useGsapStagger } from '@/lib/hooks/useGsapstagger';
 
 
 interface Song {
