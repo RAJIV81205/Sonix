@@ -58,6 +58,10 @@ const Main = () => {
   const playlistDropdownRef = useRef<HTMLDivElement | null>(null);
   const recentPlaylistDropdownRef = useRef<HTMLDivElement | null>(null);
   const recommendationItemsRef = useRef<HTMLDivElement[]>([]);
+  const recentlyPlayedItemsRef = useRef<HTMLDivElement[]>([]);
+  const chartsItemsRef = useRef<HTMLAnchorElement[]>([]);
+  const artistsItemsRef = useRef<HTMLAnchorElement[]>([]);
+  const playlistsItemsRef = useRef<HTMLDivElement[]>([]);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
   const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState<boolean>(false);
   const [userName, setUserName] = useState<string>("");
@@ -412,6 +416,222 @@ const Main = () => {
     }
   }, [isTrendingLoading, trendingTracks]);
 
+  // GSAP animation for recently played items
+  useEffect(() => {
+    if (recentlyPlayed.length > 0 && recentlyPlayedItemsRef.current.length > 0) {
+      // Set initial state
+      gsap.set(recentlyPlayedItemsRef.current, {
+        opacity: 0,
+        scale: 0.6,
+        y: 50,
+        rotation: -5
+      });
+
+      // Animate items in with stagger
+      gsap.to(recentlyPlayedItemsRef.current, {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        rotation: 0,
+        duration: 0.8,
+        ease: "back.out(1.4)",
+        stagger: {
+          amount: 1.0,
+          from: "start",
+          ease: "power2.out"
+        }
+      });
+
+      // Add hover animations
+      recentlyPlayedItemsRef.current.forEach((item) => {
+        if (item) {
+          const handleMouseEnter = () => {
+            gsap.to(item, {
+              scale: 1.05,
+              y: -5,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          };
+
+          const handleMouseLeave = () => {
+            gsap.to(item, {
+              scale: 1,
+              y: 0,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          };
+
+          item.addEventListener('mouseenter', handleMouseEnter);
+          item.addEventListener('mouseleave', handleMouseLeave);
+        }
+      });
+    }
+  }, [recentlyPlayed]);
+
+  // GSAP animation for charts items
+  useEffect(() => {
+    if (chartsItemsRef.current.length > 0) {
+      // Set initial state
+      gsap.set(chartsItemsRef.current, {
+        opacity: 0,
+        scale: 0.6,
+        y: 50,
+        rotation: -5
+      });
+
+      // Animate items in with stagger
+      gsap.to(chartsItemsRef.current, {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        rotation: 0,
+        duration: 0.8,
+        ease: "back.out(1.4)",
+        stagger: {
+          amount: 0.8,
+          from: "start",
+          ease: "power2.out"
+        }
+      });
+
+      // Add hover animations
+      chartsItemsRef.current.forEach((item) => {
+        if (item) {
+          const handleMouseEnter = () => {
+            gsap.to(item, {
+              scale: 1.05,
+              y: -5,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          };
+
+          const handleMouseLeave = () => {
+            gsap.to(item, {
+              scale: 1,
+              y: 0,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          };
+
+          item.addEventListener('mouseenter', handleMouseEnter);
+          item.addEventListener('mouseleave', handleMouseLeave);
+        }
+      });
+    }
+  }, [charts]);
+
+  // GSAP animation for artists items
+  useEffect(() => {
+    if (artistsItemsRef.current.length > 0) {
+      // Set initial state
+      gsap.set(artistsItemsRef.current, {
+        opacity: 0,
+        scale: 0.6,
+        y: 50,
+        rotation: -5
+      });
+
+      // Animate items in with stagger
+      gsap.to(artistsItemsRef.current, {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        rotation: 0,
+        duration: 0.8,
+        ease: "back.out(1.4)",
+        stagger: {
+          amount: 0.6,
+          from: "start",
+          ease: "power2.out"
+        }
+      });
+
+      // Add hover animations
+      artistsItemsRef.current.forEach((item) => {
+        if (item) {
+          const handleMouseEnter = () => {
+            gsap.to(item, {
+              scale: 1.05,
+              y: -5,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          };
+
+          const handleMouseLeave = () => {
+            gsap.to(item, {
+              scale: 1,
+              y: 0,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          };
+
+          item.addEventListener('mouseenter', handleMouseEnter);
+          item.addEventListener('mouseleave', handleMouseLeave);
+        }
+      });
+    }
+  }, [topArtists]);
+
+  // GSAP animation for playlists items
+  useEffect(() => {
+    if (playlists.length > 0 && playlistsItemsRef.current.length > 0) {
+      // Set initial state
+      gsap.set(playlistsItemsRef.current, {
+        opacity: 0,
+        scale: 0.6,
+        y: 50,
+        rotation: -5
+      });
+
+      // Animate items in with stagger
+      gsap.to(playlistsItemsRef.current, {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        rotation: 0,
+        duration: 0.8,
+        ease: "back.out(1.4)",
+        stagger: {
+          amount: 1.0,
+          from: "start",
+          ease: "power2.out"
+        }
+      });
+
+      // Add hover animations
+      playlistsItemsRef.current.forEach((item) => {
+        if (item) {
+          const handleMouseEnter = () => {
+            gsap.to(item, {
+              scale: 1.05,
+              y: -5,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          };
+
+          const handleMouseLeave = () => {
+            gsap.to(item, {
+              scale: 1,
+              y: 0,
+              duration: 0.3,
+              ease: "power2.out"
+            });
+          };
+
+          item.addEventListener('mouseenter', handleMouseEnter);
+          item.addEventListener('mouseleave', handleMouseLeave);
+        }
+      });
+    }
+  }, [playlists]);
+
   // Function to handle playlist creation success
   const handlePlaylistCreated = (playlistId: string, playlistName: string) => {
     // Add the new playlist to the state
@@ -581,12 +801,28 @@ const Main = () => {
             {recentlyPlayed.slice(0, 8).map((song, index) => (
               <div
                 key={song.id}
+                ref={(el) => {
+                  if (el) recentlyPlayedItemsRef.current[index] = el;
+                }}
                 className="bg-zinc-900 rounded-xl p-3 hover:bg-zinc-800 transition-colors cursor-pointer relative group"
               >
                 <img
                   src={song.image}
                   alt={song.name}
                   className="w-full aspect-square object-cover rounded-lg mb-2"
+                  onClick={(e) => {
+                    // Add click animation
+                    const target = e.currentTarget.closest('.group');
+                    if (target) {
+                      gsap.to(target, {
+                        scale: 0.95,
+                        duration: 0.1,
+                        ease: "power2.out",
+                        yoyo: true,
+                        repeat: 1
+                      });
+                    }
+                  }}
                 />
                 <h3 className="font-medium text-sm truncate">{song.name.replaceAll("&quot;", `"`)}</h3>
                 <p className="text-xs text-zinc-400 truncate">{song.artist.replaceAll("&quot;", `"`)}</p>
@@ -777,11 +1013,14 @@ const Main = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
-          {charts.map((chart) => (
+          {charts.map((chart, index) => (
             <Link
               key={chart.id}
               href={chart.link}
               className="group cursor-pointer"
+              ref={(el) => {
+                if (el) chartsItemsRef.current[index] = el;
+              }}
             >
               <div className="bg-zinc-900 rounded-xl p-4 hover:bg-zinc-800 transition-all duration-300 group-hover:scale-105">
                 <div className="w-full aspect-square mb-3 rounded-lg shadow-lg overflow-hidden relative">
@@ -790,6 +1029,19 @@ const Main = () => {
                     src={chart.image}
                     alt={chart.title}
                     className="w-full h-full object-cover"
+                    onClick={(e) => {
+                      // Add click animation
+                      const target = e.currentTarget.closest('.group');
+                      if (target) {
+                        gsap.to(target, {
+                          scale: 0.95,
+                          duration: 0.1,
+                          ease: "power2.out",
+                          yoyo: true,
+                          repeat: 1
+                        });
+                      }
+                    }}
                   />
 
 
@@ -818,10 +1070,34 @@ const Main = () => {
           </Link>
         </div>
         <div className="grid grid-cols-6 gap-6 px-4 py-10">
-          {topArtists.slice(0, 6).map((artist) => (
-            <Link key={artist.id} href={`dashboard/artist/${artist.id}`} className="flex flex-col">
+          {topArtists.slice(0, 6).map((artist, index) => (
+            <Link 
+              key={artist.id} 
+              href={`dashboard/artist/${artist.id}`} 
+              className="flex flex-col"
+              ref={(el) => {
+                if (el) artistsItemsRef.current[index] = el;
+              }}
+            >
               <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40 hover:border-gray-400/60 transition-colors">
-                <img src={artist.img} alt={artist.name} loading="lazy" />
+                <img 
+                  src={artist.img} 
+                  alt={artist.name} 
+                  loading="lazy"
+                  onClick={(e) => {
+                    // Add click animation
+                    const target = e.currentTarget.closest('a');
+                    if (target) {
+                      gsap.to(target, {
+                        scale: 0.95,
+                        duration: 0.1,
+                        ease: "power2.out",
+                        yoyo: true,
+                        repeat: 1
+                      });
+                    }
+                  }}
+                />
               </div>
               <h3 className="font-medium text-sm text-center mb-1 truncate">{artist.name}</h3>
               <p className="text-xs text-zinc-400 text-center truncate">{artist.genre}</p>
@@ -864,8 +1140,23 @@ const Main = () => {
             {playlists.map((playlist, index) => (
               <div
                 key={playlist.id}
+                ref={(el) => {
+                  if (el) playlistsItemsRef.current[index] = el;
+                }}
                 className="bg-zinc-900 rounded-xl p-4 hover:bg-zinc-800 transition-colors cursor-pointer"
-                onClick={() => router.push(`/dashboard/playlist/${playlist.id}`)}
+                onClick={(e) => {
+                  // Add click animation
+                  gsap.to(e.currentTarget, {
+                    scale: 0.95,
+                    duration: 0.1,
+                    ease: "power2.out",
+                    yoyo: true,
+                    repeat: 1,
+                    onComplete: () => {
+                      router.push(`/dashboard/playlist/${playlist.id}`);
+                    }
+                  });
+                }}
               >
                 <div className={`w-full aspect-square mb-3 bg-gradient-to-br ${getPlaylistColor(index)} rounded-lg flex items-center justify-center shadow-lg overflow-hidden`}>
                   {playlist.cover ? (
