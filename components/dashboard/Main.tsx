@@ -358,27 +358,43 @@ const Main = () => {
     getTrendingTracks()
   }, []);
 
-useGsapStagger(recommendationItemsRef, {
+  // Animation variants
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 40 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } },
+  };
+
+  const { ref: recentRef, inView: recentInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: chartsRef, inView: chartsInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: artistRef, inView: artistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+  const { ref: playlistRef, inView: playlistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
+
+  useGsapStagger(recommendationItemsRef, {
     trigger: trendingTracks.length && !isTrendingLoading,
+    inView: true, // Recommendations are always visible at the top
     stagger: 1.2,
   });
 
   useGsapStagger(recentlyPlayedItemsRef, {
     trigger: recentlyPlayed.length,
+    inView: recentInView,
   });
 
   useGsapStagger(chartsItemsRef, {
     trigger: 4,
+    inView: chartsInView,
     stagger: 0.8,
   });
 
   useGsapStagger(artistsItemsRef, {
     trigger: topArtists.length,
+    inView: artistInView,
     stagger: 0.6,
   });
 
   useGsapStagger(playlistsItemsRef, {
     trigger: playlists.length,
+    inView: playlistInView,
   });
 
 
@@ -402,17 +418,6 @@ useGsapStagger(recommendationItemsRef, {
     ];
     return colors[index % colors.length];
   };
-
-  // Animation variants
-  const fadeInUp = {
-    hidden: { opacity: 0, y: 40 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } },
-  };
-
-  const { ref: recentRef, inView: recentInView } = useInView({ triggerOnce: true, threshold: 0.15 });
-  const { ref: chartsRef, inView: chartsInView } = useInView({ triggerOnce: true, threshold: 0.15 });
-  const { ref: artistRef, inView: artistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
-  const { ref: playlistRef, inView: playlistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
 
   return (
     <div className="h-full overflow-y-auto pb-24 text-white relative ">

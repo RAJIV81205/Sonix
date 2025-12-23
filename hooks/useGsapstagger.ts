@@ -1,19 +1,25 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 
 interface GsapStaggerOptions {
   trigger: any;
+  inView?: boolean;
   stagger?: number;
   hover?: boolean;
 }
 
 export function useGsapStagger(
   refs: React.MutableRefObject<HTMLElement[]>,
-  { trigger, stagger = 1, hover = true }: GsapStaggerOptions
+  { trigger, inView = true, stagger = 1, hover = true }: GsapStaggerOptions
 ) {
+  const hasAnimated = useRef(false);
+
   useEffect(() => {
-    if (!refs.current.length) return;
+    if (!refs.current.length || !trigger || !inView || hasAnimated.current) return;
+
+    // Mark as animated to prevent re-running
+    hasAnimated.current = true;
 
     // Initial state
     gsap.set(refs.current, {
@@ -59,5 +65,10 @@ export function useGsapStagger(
         item.removeEventListener("mouseleave", onLeave);
       };
     });
+  }, [trigger, inView]);
+
+  // Reset animation state when trigger changes (for dynamic content)
+  useEffect(() => {
+    hasAnimated.current = false;
   }, [trigger]);
 }
