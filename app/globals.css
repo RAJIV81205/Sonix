@@ -101,13 +101,23 @@
   50% { transform: translateY(-10px); opacity: 0.8; }
   100% { transform: translateY(0); opacity: 0.4; }
 }
-
-/* Starry background */
+/* 
+Starry background
 .bg-stars {
   background-image:
     radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.25), transparent),
     radial-gradient(1px 1px at 80% 20%, rgba(255,255,255,.2), transparent),
     radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,.15), transparent);
   background-size: 300px 300px;
+} */
+
+
+@keyframes tilt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-4deg); }
+}
+
+.animate-blink {
+  animation: tilt 4s ease-in-out infinite;
 }
 
