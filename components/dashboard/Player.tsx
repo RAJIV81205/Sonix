@@ -238,11 +238,11 @@ const Player = () => {
             />
           )}
         </div>
-        <div className="hidden sm:block">
-          <h3 className="font-medium text-sm md:text-base">
+        <div className="hidden sm:block max-w-[16vw]">
+          <h3 className="font-medium text-sm md:text-base truncate">
             {currentSong?.name.replaceAll("&quot;", `"`) || "No song playing"}
           </h3>
-          <p className="text-xs md:text-sm text-zinc-400">
+          <p className="text-xs md:text-sm text-zinc-400 truncate">
             {currentSong?.artist || "Select a song"}
           </p>
         </div>
