@@ -1,9 +1,10 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, Music, Disc3, TrendingUp, Album, AlertTriangle, Play, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { Search, Music, Disc3, TrendingUp, Album, AlertTriangle, Play, Loader2, MoreHorizontal, Plus, Download, SkipForward } from 'lucide-react';
 import { usePlayer } from '@/context/PlayerContext';
 import { toast } from 'react-hot-toast';
+import { gsap } from 'gsap';
 
 // Define types
 interface Track {
@@ -21,6 +22,9 @@ interface TrackItemProps {
   trending: boolean;
   isCompact?: boolean;
   onPlay: (id: string, type?: string) => void;
+  onPlayNext?: (track: Track) => void;
+  onAddToQueue?: (track: Track) => void;
+  onDownload?: (track: Track) => void;
 }
 
 interface SearchResponse {
@@ -35,6 +39,154 @@ interface Song {
   url: string;
   duration: number;
 }
+
+interface DownloadSongPayload {
+  songUrl: string;
+  title: string;
+  artist: string;
+  album: string;
+  albumArtist: string;
+  year: string;
+  duration?: number;
+  language?: string;
+  genre?: string;
+  label?: string;
+  composer?: string;
+  lyricist?: string;
+  copyright?: string;
+  coverUrl?: string;
+}
+
+// Menu component for song actions
+const SongMenu = memo<{
+  track: Track;
+  isOpen: boolean;
+  onClose: () => void;
+  onPlay: (id: string, type?: string) => void;
+  onPlayNext?: (track: Track) => void;
+  onAddToQueue?: (track: Track) => void;
+  onDownload?: (track: Track) => void;
+  position: { x: number; y: number };
+}>(({ track, isOpen, onClose, onPlay, onPlayNext, onAddToQueue, onDownload, position }) => {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [loadingAction, setLoadingAction] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen && menuRef.current) {
+      gsap.fromTo(menuRef.current, 
+        { 
+          opacity: 0, 
+          scale: 0.8,
+          y: -10
+        },
+        { 
+          opacity: 1, 
+          scale: 1,
+          y: 0,
+          duration: 0.2,
+          ease: "back.out(1.7)"
+        }
+      );
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const menuItems = [
+    {
+      icon: Play,
+      label: 'Play Now',
+      action: async () => {
+        onPlay(track.id, track.type);
+        onClose();
+      },
+      actionKey: 'play'
+    },
+    {
+      icon: SkipForward,
+      label: 'Play Next',
+      action: async () => {
+        setLoadingAction('playNext');
+        await onPlayNext?.(track);
+        setLoadingAction(null);
+        onClose();
+      },
+      actionKey: 'playNext'
+    },
+    {
+      icon: Plus,
+      label: 'Add to Queue',
+      action: async () => {
+        setLoadingAction('addToQueue');
+        await onAddToQueue?.(track);
+        setLoadingAction(null);
+        onClose();
+      },
+      actionKey: 'addToQueue'
+    },
+    {
+      icon: Download,
+      label: 'Download',
+      action: async () => {
+        setLoadingAction('download');
+        await onDownload?.(track);
+        setLoadingAction(null);
+        onClose();
+      },
+      actionKey: 'download'
+    }
+  ];
+
+  return (
+    <div 
+      className="fixed inset-0 z-50"
+      style={{ pointerEvents: isOpen ? 'auto' : 'none' }}
+    >
+      <div 
+        ref={menuRef}
+        className="absolute bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl py-2 min-w-[160px]"
+        style={{
+          left: Math.min(position.x, window.innerWidth - 180),
+          top: Math.min(position.y, window.innerHeight - 200),
+        }}
+      >
+        {menuItems.map((item, index) => (
+          <button
+            key={index}
+            onClick={item.action}
+            disabled={loadingAction !== null}
+            className="w-full flex items-center px-4 py-2 text-sm text-white hover:bg-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loadingAction === item.actionKey ? (
+              <Loader2 className="w-4 h-4 mr-3 animate-spin" />
+            ) : (
+              <item.icon className="w-4 h-4 mr-3" />
+            )}
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+SongMenu.displayName = 'SongMenu';
 
 // Skeleton loading component for trending tracks
 const TrendingSkeleton: React.FC = () => {
@@ -63,9 +215,237 @@ const TrendingSkeleton: React.FC = () => {
   );
 };
 
+// Track item component - memoized to prevent unnecessary re-renders
+const TrackItem = memo<TrackItemProps>(({ track, trending, isCompact = false, onPlay, onPlayNext, onAddToQueue, onDownload }) => {
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const isLoading = playingId === track.id;
+
+  const handlePlayTrack = useCallback(() => {
+    onPlay(track.id, track.type);
+  }, [onPlay, track.id, track.type]);
+
+  const handleMenuOpen = useCallback((trackId: string, event: React.MouseEvent) => {
+    event.stopPropagation();
+    const rect = (event.target as HTMLElement).getBoundingClientRect();
+    setMenuPosition({ x: rect.right + 10, y: rect.top });
+    setOpenMenuId(trackId);
+  }, []);
+
+  const handleMenuClose = useCallback(() => {
+    setOpenMenuId(null);
+  }, []);
+
+  useEffect(() => {
+    if (trackRef.current) {
+      gsap.fromTo(trackRef.current,
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.4, ease: "power2.out" }
+      );
+    }
+  }, []);
+
+  if (isCompact) {
+    return (
+      <>
+        <div
+          ref={trackRef}
+          className="flex items-center bg-zinc-900 rounded-lg overflow-hidden hover:bg-zinc-800 transition-all duration-300 cursor-pointer p-3 gap-3 group"
+        >
+          <div className="relative flex-shrink-0" onClick={handlePlayTrack}>
+            <div className="w-14 h-14 bg-zinc-800 rounded-lg overflow-hidden">
+              {track.coverUrl ? (
+                <img
+                  src={track.coverUrl}
+                  alt={track.title}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
+                  <Music className="w-7 h-7 text-white opacity-75" />
+                </div>
+              )}
+            </div>
+            {isLoading && (
+              <div className="absolute inset-0 bg-black/50 rounded-lg overflow-hidden flex items-center justify-center">
+                <Loader2 className="w-5 h-5 text-white animate-spin" />
+              </div>
+            )}
+          </div>
+          <div className="flex-grow overflow-hidden" onClick={handlePlayTrack}>
+            <h3 className="font-semibold text-base truncate text-white group-hover:text-purple-300 transition-colors">
+              {track.title}
+            </h3>
+            <p className="text-sm text-zinc-400 truncate mt-1">{track.artist}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {trending && track.plays && (
+              <div className="text-xs text-purple-400 bg-purple-400/10 px-2 py-1 rounded-full">
+                {track.plays}
+              </div>
+            )}
+            <button
+              onClick={(e) => handleMenuOpen(track.id, e)}
+              className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+            >
+              <MoreHorizontal className="w-4 h-4 text-white" />
+            </button>
+            {!isLoading && (
+              <button
+                onClick={handlePlayTrack}
+                className="w-10 h-10 rounded-full bg-purple-600 hover:bg-purple-500 flex items-center justify-center transition-all duration-200 hover:scale-105"
+              >
+                <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+              </button>
+            )}
+          </div>
+        </div>
+        <SongMenu
+          track={track}
+          isOpen={openMenuId === track.id}
+          onClose={handleMenuClose}
+          onPlay={onPlay}
+          onPlayNext={onPlayNext}
+          onAddToQueue={onAddToQueue}
+          onDownload={onDownload}
+          position={menuPosition}
+        />
+      </>
+    );
+  }
+
+  // Improved trending track display with smaller images
+  if (trending) {
+    return (
+      <>
+        <div
+          ref={trackRef}
+          className="bg-zinc-900 rounded-lg overflow-hidden hover:bg-zinc-800 transition-all duration-300 cursor-pointer group"
+        >
+          <div className="flex items-center p-3">
+            <div className="relative w-12 h-12 flex-shrink-0 mr-4" onClick={handlePlayTrack}>
+              <div className="w-12 h-12 bg-zinc-800 rounded-lg overflow-hidden">
+                {track.coverUrl ? (
+                  <img
+                    src={track.coverUrl}
+                    alt={track.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
+                    <Music className="w-6 h-6 text-white opacity-75" />
+                  </div>
+                )}
+              </div>
+              {isLoading && (
+                <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                </div>
+              )}
+            </div>
+            <div className="flex-grow min-w-0" onClick={handlePlayTrack}>
+              <h3 className="font-semibold text-sm truncate text-white group-hover:text-purple-300 transition-colors">
+                {track.title}
+              </h3>
+              <p className="text-xs text-zinc-400 truncate mt-1">{track.artist}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {track.plays && (
+                <div className="text-xs text-purple-400 bg-purple-400/10 px-2 py-1 rounded-full flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  {track.plays}
+                </div>
+              )}
+              <button
+                onClick={(e) => handleMenuOpen(track.id, e)}
+                className="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200"
+              >
+                <MoreHorizontal className="w-4 h-4 text-white" />
+              </button>
+              {isLoading ? (
+                <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
+                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                </div>
+              ) : (
+                <button
+                  onClick={handlePlayTrack}
+                  className="w-10 h-10 rounded-full bg-purple-600 hover:bg-purple-500 flex items-center justify-center transition-all duration-200 hover:scale-105"
+                >
+                  <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        <SongMenu
+          track={track}
+          isOpen={openMenuId === track.id}
+          onClose={handleMenuClose}
+          onPlay={onPlay}
+          onPlayNext={onPlayNext}
+          onAddToQueue={onAddToQueue}
+          onDownload={onDownload}
+          position={menuPosition}
+        />
+      </>
+    );
+  }
+
+  return (
+    <div
+      ref={trackRef}
+      className="bg-zinc-900 rounded-xl overflow-hidden hover:bg-zinc-800 transition-all duration-300 cursor-pointer group"
+      onClick={handlePlayTrack}
+    >
+      <div className="relative">
+        <div className="aspect-square bg-zinc-800">
+          {track.coverUrl ? (
+            <img
+              src={track.coverUrl}
+              alt={track.title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
+              <Music className="w-12 h-12 text-white opacity-75" />
+            </div>
+          )}
+        </div>
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
+          {isLoading ? (
+            <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
+              <Loader2 className="w-7 h-7 text-white animate-spin" />
+            </div>
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:scale-110 transition-transform">
+              <Play className="w-7 h-7 text-white fill-white ml-1" />
+            </div>
+          )}
+        </div>
+        {trending && track.plays && (
+          <div className="absolute top-3 right-3 bg-purple-500 text-white text-xs px-2 py-1 rounded-full flex items-center">
+            <TrendingUp className="w-3 h-3 mr-1" />
+            {track.plays}
+          </div>
+        )}
+      </div>
+      <div className="p-4">
+        <h3 className="font-semibold truncate text-white group-hover:text-purple-300 transition-colors">
+          {track.title}
+        </h3>
+        <p className="text-sm text-zinc-400 truncate mt-1">{track.artist}</p>
+      </div>
+    </div>
+  );
+});
+
+TrackItem.displayName = 'TrackItem';
 
 const SearchP: React.FC = () => {
-  const { setQueue, play } = usePlayer();
+  const { setQueue, play, addToNext, addToQueue, downloadSong } = usePlayer();
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [songs, setSongs] = useState<Track[]>([]);
@@ -79,13 +459,65 @@ const SearchP: React.FC = () => {
   const [showAllSongs, setShowAllSongs] = useState<boolean>(false);
   const [showAllAlbums, setShowAllAlbums] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
+  const songsContainerRef = useRef<HTMLDivElement>(null);
+  const albumsContainerRef = useRef<HTMLDivElement>(null);
 
   const getAuthToken = (): string | null => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('token');
     }
     return null;
+  };
+
+  // Helper function to fetch song data and convert Track to Song
+  const fetchSongData = async (trackId: string): Promise<Song | null> => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        return null;
+      }
+
+      const response = await fetch('/api/dashboard/getSongUrl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ id: trackId }),
+      });
+
+      if (!response.ok) {
+        toast.error('Failed to get song details.');
+        return null;
+      }
+
+      const data = await response.json();
+      if (!data.data || !data.data[0]) {
+        toast.error('Song data not found');
+        return null;
+      }
+
+      const songData = data.data[0];
+      let artistName = 'Unknown Artist';
+      if (songData.artists && songData.artists.primary && songData.artists.primary.length > 0) {
+        artistName = songData.artists.primary[0].name;
+      }
+
+      return {
+        id: songData.id,
+        name: songData.name.replaceAll("&quot;", `"`),
+        artist: artistName,
+        image: songData.image && songData.image.length > 0 ?
+          (songData.image[2].url || '').replace(/^http:/, 'https:') : '',
+        url: songData.downloadUrl && songData.downloadUrl.length > 0 ?
+          (songData.downloadUrl[4].url || '').replace(/^http:/, 'https:') : '',
+        duration: songData.duration || 0,
+      };
+    } catch (error) {
+      console.error('Error fetching song data:', error);
+      return null;
+    }
   };
 
   const getTrendingTracks = async () => {
@@ -99,7 +531,6 @@ const SearchP: React.FC = () => {
         return num.toString();
       }
     }
-
 
     try {
       const response = await fetch('/api/dashboard/getNewReleases', {
@@ -128,7 +559,6 @@ const SearchP: React.FC = () => {
           }
           newArray.push(realData);
         }
-
       }
 
       setTrendingTracks(newArray);
@@ -147,7 +577,6 @@ const SearchP: React.FC = () => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-
   }, []);
 
   // Debounce function
@@ -388,7 +817,6 @@ const SearchP: React.FC = () => {
         duration: songData.duration || 0,
       };
 
-
       const stored = localStorage.getItem('recentlyPlayed');
       const recentSongs: Song[] = stored ? JSON.parse(stored) : [];
       const filtered = recentSongs.filter((s) => s.id !== song.id);
@@ -500,186 +928,142 @@ const SearchP: React.FC = () => {
     }
   }
 
-  const handlePlayItem = (id: string, type?: string) => {
+  const handlePlayItem = useCallback((id: string, type?: string) => {
     if (type === 'album') {
       getAlbumUrl(id);
     } else {
       getSongUrl(id);
     }
-  };
+  }, []);
 
-  // Track item component
-  const TrackItem: React.FC<TrackItemProps> = ({ track, trending, isCompact = false, onPlay }) => {
-    const isLoading = playingId === track.id;
+  // Menu handlers - memoized to prevent re-renders
+  const handlePlayNext = useCallback(async (track: Track) => {
+    const song = await fetchSongData(track.id);
+    if (song) {
+      addToNext(song);
+      toast.success(`"${song.name}" will play next`);
+    }
+  }, [addToNext]);
 
-    const handlePlayTrack = () => {
-      onPlay(track.id, track.type);
-    };
+  const handleAddToQueue = useCallback(async (track: Track) => {
+    const song = await fetchSongData(track.id);
+    if (song) {
+      addToQueue(song);
+      toast.success(`"${song.name}" added to queue`);
+    }
+  }, [addToQueue]);
 
-    if (isCompact) {
-      return (
-        <div
-          className="flex items-center bg-zinc-900 rounded-lg overflow-hidden hover:bg-zinc-800 transition-colors cursor-pointer p-2 gap-3"
-          onClick={handlePlayTrack}
-        >
-          <div className="relative flex-shrink-0">
-            <div className="w-12 h-12 bg-zinc-800 rounded overflow-hidden">
-              {track.coverUrl ? (
-                <img
-                  src={track.coverUrl}
-                  alt={track.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
-                  <Music className="w-6 h-6 text-white opacity-75" />
-                </div>
-              )}
-            </div>
-            {isLoading && (
-              <div className="absolute inset-0 bg-black/50 rounded overflow-hidden flex items-center justify-center">
-                <Loader2 className="w-5 h-5 text-white animate-spin" />
-              </div>
-            )}
-          </div>
-          <div className="flex-grow overflow-hidden">
-            <h3 className="font-medium text-sm truncate">{track.title}</h3>
-            <p className="text-xs text-zinc-400 truncate">{track.artist}</p>
-          </div>
-          <div className="flex-shrink-0 ml-2">
-            {trending && track.plays && (
-              <div className="text-xs text-purple-400">{track.plays}</div>
-            )}
-            {!isLoading && (
-              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center hover:bg-purple-600 transition-colors">
-                <Play className="w-4 h-4 text-white fill-white" />
-              </div>
-            )}
-          </div>
-        </div>
+  const handleDownload = useCallback(async (track: Track) => {
+    try {
+      // Get full song data including metadata
+      const token = getAuthToken();
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        return;
+      }
+
+      const response = await fetch('/api/dashboard/getSongUrl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ id: track.id }),
+      });
+
+      if (!response.ok) {
+        toast.error('Failed to get song details.');
+        return;
+      }
+
+      const data = await response.json();
+      if (!data.data || !data.data[0]) {
+        toast.error('Song data not found');
+        return;
+      }
+
+      const songData = data.data[0];
+      
+      // Extract metadata
+      let artistName = 'Unknown Artist';
+      if (songData.artists && songData.artists.primary && songData.artists.primary.length > 0) {
+        artistName = songData.artists.primary[0].name;
+      }
+
+      // Create comprehensive download payload
+      const downloadPayload = {
+        songUrl: songData.downloadUrl && songData.downloadUrl.length > 0 ?
+          (songData.downloadUrl[4].url || '').replace(/^http:/, 'https:') : '',
+        title: songData.name.replaceAll("&quot;", `"`),
+        artist: artistName,
+        album: songData.album?.name || track.album || 'Unknown Album',
+        albumArtist: artistName,
+        year: songData.year || new Date().getFullYear().toString(),
+        duration: songData.duration || 0,
+        language: songData.language || 'Unknown',
+        genre: songData.primaryArtistsId ? 'Bollywood' : 'Unknown', // You can enhance this
+        label: songData.label || 'Unknown Label',
+        composer: songData.music || 'Unknown',
+        lyricist: songData.lyrics || 'Unknown',
+        copyright: songData.copyright_text || '',
+        coverUrl: songData.image && songData.image.length > 0 ?
+          (songData.image[2].url || '').replace(/^http:/, 'https:') : '',
+      };
+
+      if (!downloadPayload.songUrl) {
+        toast.error('Song download URL not available');
+        return;
+      }
+
+      await downloadSong(downloadPayload);
+      toast.success(`"${downloadPayload.title}" download started`);
+    } catch (error) {
+      console.error('Error downloading song:', error);
+      toast.error('Failed to download song');
+    }
+  }, [downloadSong]);
+
+  // Animation effects
+  useEffect(() => {
+    if (songsContainerRef.current && songs.length > 0) {
+      gsap.fromTo(songsContainerRef.current.children,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" }
       );
     }
+  }, [songs]);
 
-    // Improved trending track display with smaller images
-    if (trending) {
-      return (
-        <div
-          className="bg-zinc-900 rounded-lg overflow-hidden hover:bg-zinc-800 transition-colors cursor-pointer group"
-          onClick={handlePlayTrack}
-        >
-          <div className="flex items-center p-2">
-            <div className="relative w-10 h-10 flex-shrink-0 mr-3">
-              <div className="w-10 h-10 bg-zinc-800 rounded overflow-hidden">
-                {track.coverUrl ? (
-                  <img
-                    src={track.coverUrl}
-                    alt={track.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
-                    <Music className="w-5 h-5 text-white opacity-75" />
-                  </div>
-                )}
-              </div>
-              {isLoading && (
-                <div className="absolute inset-0 bg-black/50 rounded flex items-center justify-center">
-                  <Loader2 className="w-4 h-4 text-white animate-spin" />
-                </div>
-              )}
-            </div>
-            <div className="flex-grow min-w-0">
-              <h3 className="font-medium text-sm truncate">{track.title}</h3>
-              <p className="text-xs text-zinc-400 truncate">{track.artist}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              {track.plays && (
-                <div className="text-xs text-purple-400 bg-purple-400/10 px-2 py-1 rounded-full flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  {track.plays}
-                </div>
-              )}
-              {isLoading ? (
-                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center hover:bg-purple-600 transition-colors group-hover:bg-purple-600">
-                  <Loader2 className="w-4 h-4 text-white animate-spin" />
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center hover:bg-purple-600 transition-colors group-hover:bg-purple-600">
-                  <Play className="w-4 h-4 text-white fill-white " />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+  useEffect(() => {
+    if (albumsContainerRef.current && albums.length > 0) {
+      gsap.fromTo(albumsContainerRef.current.children,
+        { opacity: 0, scale: 0.8 },
+        { opacity: 1, scale: 1, duration: 0.6, stagger: 0.1, ease: "back.out(1.7)" }
       );
     }
-
-    return (
-      <div
-        className="bg-zinc-900 rounded-xl overflow-hidden hover:bg-zinc-800 transition-colors cursor-pointer group"
-        onClick={handlePlayTrack}
-      >
-        <div className="relative">
-          <div className="aspect-square bg-zinc-800">
-            {track.coverUrl ? (
-              <img
-                src={track.coverUrl}
-                alt={track.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center">
-                <Music className="w-12 h-12 text-white opacity-75" />
-              </div>
-            )}
-          </div>
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-            {isLoading ? (
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-                <Loader2 className="w-6 h-6 text-white animate-spin" />
-              </div>
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-                <Play className="w-6 h-6 text-white fill-white" />
-              </div>
-            )}
-          </div>
-          {trending && track.plays && (
-            <div className="absolute top-2 right-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full flex items-center">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              {track.plays}
-            </div>
-          )}
-        </div>
-        <div className="p-3">
-          <h3 className="font-medium truncate">{track.title}</h3>
-          <p className="text-xs text-zinc-400 truncate mt-1">{track.artist}</p>
-        </div>
-      </div>
-    );
-  };
+  }, [albums]);
 
   return (
     <div className="h-full overflow-y-auto pb-24 text-white">
       {/* Header area */}
       <div className="bg-gradient-to-b from-indigo-900/20 to-black p-6">
-        <h1 className="text-3xl font-bold mb-2">Search</h1>
-        <p className="text-zinc-400 mb-6">Find your favorite songs, artists, and albums</p>
+        <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-white to-purple-300 bg-clip-text text-transparent">
+          Search
+        </h1>
+        <p className="text-zinc-400 mb-8 text-lg">Find your favorite songs, artists, and albums</p>
 
         {/* Search input */}
-        <div className="relative max-w-2xl">
-          <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-full px-4 py-3 focus-within:border-purple-500 transition-colors">
-            <Search className="w-5 h-5 text-zinc-400 mr-2" />
+        <div className="relative max-w-3xl">
+          <div className="flex items-center bg-zinc-900/80 backdrop-blur-sm border border-zinc-700 rounded-2xl px-6 py-4 focus-within:border-purple-500 focus-within:bg-zinc-900 transition-all duration-300 shadow-lg">
+            <Search className="w-6 h-6 text-zinc-400 mr-3" />
             <input
-              ref={inputRef}   // 👈 attach the ref here
+              ref={inputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="What do you want to listen to?"
-              className="bg-transparent border-none outline-none text-white placeholder-zinc-500 w-full"
+              className="bg-transparent border-none outline-none text-white placeholder-zinc-500 w-full text-lg"
             />
-
-            {isLoading && <Loader2 className="w-5 h-5 text-purple-400 animate-spin ml-2" />}
+            {isLoading && <Loader2 className="w-6 h-6 text-purple-400 animate-spin ml-3" />}
           </div>
         </div>
       </div>
@@ -698,17 +1082,26 @@ const SearchP: React.FC = () => {
           /* Trending section when no search */
           <>
             <div className="mb-8">
-              <h2 className="text-xl font-bold mb-4 flex items-center">
-                <TrendingUp className="w-5 h-5 text-purple-400 mr-2" />
+              <h2 className="text-2xl font-bold mb-6 flex items-center">
+                <TrendingUp className="w-6 h-6 text-purple-400 mr-3" />
                 Trending Tracks
+                <span className="ml-3 text-sm text-zinc-400 font-normal">Hot right now</span>
               </h2>
 
               {isTrendingLoading ? (
                 <TrendingSkeleton />
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {trendingTracks.map(track => (
-                    <TrackItem key={track.id} track={track} trending={true} onPlay={handlePlayItem} />
+                    <TrackItem 
+                      key={track.id} 
+                      track={track} 
+                      trending={true} 
+                      onPlay={handlePlayItem}
+                      onPlayNext={handlePlayNext}
+                      onAddToQueue={handleAddToQueue}
+                      onDownload={handleDownload}
+                    />
                   ))}
                 </div>
               )}
@@ -721,61 +1114,56 @@ const SearchP: React.FC = () => {
             {(songs.length > 0 || albums.length > 0) && (
               <div className="space-y-8">
                 {/* Combined view with filtering options */}
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold flex items-center">
-                    <Search className="w-5 h-5 text-purple-400 mr-2" />
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold flex items-center">
+                    <Search className="w-6 h-6 text-purple-400 mr-3" />
                     Search Results
                   </h2>
                   <div className="flex space-x-2">
-                    <span className="text-sm text-zinc-400">
-                      Found {songs.length} songs and {albums.length} albums
+                    <span className="text-sm text-zinc-400 bg-zinc-800 px-3 py-1 rounded-full">
+                      {songs.length} songs • {albums.length} albums
                     </span>
                   </div>
                 </div>
 
                 {/* Songs section - compact list view */}
                 {songs.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-medium mb-3 flex items-center">
-                      <Music className="w-4 h-4 text-purple-400 mr-2" />
-                      Songs
+                  <div className="mb-8">
+                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                      <Music className="w-5 h-5 text-purple-400 mr-3" />
+                      Top Songs
+                      <span className="ml-2 text-sm text-zinc-400 font-normal">({Math.min(songs.length, 5)} results)</span>
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {(showAllSongs ? songs : songs.slice(0, 8)).map(track => (
+                    <div ref={songsContainerRef} className="space-y-2">
+                      {songs.slice(0, 5).map(track => (
                         <TrackItem
                           key={track.id}
                           track={track}
                           trending={false}
                           isCompact={true}
                           onPlay={handlePlayItem}
+                          onPlayNext={handlePlayNext}
+                          onAddToQueue={handleAddToQueue}
+                          onDownload={handleDownload}
                         />
                       ))}
                     </div>
-                    {songs.length > 8 && (
-                      <div className="mt-2 text-center">
-                        <button
-                          onClick={() => setShowAllSongs(!showAllSongs)}
-                          className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
-                        >
-                          {showAllSongs ? "Show less" : `Show more songs (${songs.length - 8} more)`}
-                        </button>
-                      </div>
-                    )}
                   </div>
                 )}
 
                 {/* Albums section - grid view */}
                 {albums.length > 0 && (
                   <div>
-                    <h3 className="text-lg font-medium mb-3 flex items-center">
-                      <Disc3 className="w-4 h-4 text-purple-400 mr-2" />
+                    <h3 className="text-xl font-semibold mb-4 flex items-center">
+                      <Disc3 className="w-5 h-5 text-purple-400 mr-3" />
                       Albums
+                      <span className="ml-2 text-sm text-zinc-400 font-normal">({albums.length} results)</span>
                     </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <div ref={albumsContainerRef} className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                       {(showAllAlbums ? albums : albums.slice(0, 12)).map(album => (
                         <div
                           key={album.id}
-                          className="bg-zinc-900 rounded-lg overflow-hidden hover:bg-zinc-800 transition-colors cursor-pointer group"
+                          className="bg-zinc-900 rounded-lg overflow-hidden hover:bg-zinc-800 transition-all duration-300 cursor-pointer group"
                           onClick={() => handlePlayItem(album.id, 'album')}
                         >
                           <div className="relative">
@@ -783,7 +1171,7 @@ const SearchP: React.FC = () => {
                               <img
                                 src={album.coverUrl}
                                 alt={album.title}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 onError={(e) => {
                                   e.currentTarget.src = '';
                                   e.currentTarget.parentElement!.classList.add('bg-gradient-to-br', 'from-purple-600', 'to-indigo-600', 'flex', 'items-center', 'justify-center');
@@ -794,30 +1182,30 @@ const SearchP: React.FC = () => {
                                 }}
                               />
                             </div>
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300">
                               {playingId === album.id ? (
-                                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-                                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                                <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
+                                  <Loader2 className="w-6 h-6 text-white animate-spin" />
                                 </div>
                               ) : (
-                                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
-                                  <Play className="w-5 h-5 text-white fill-white" />
+                                <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:scale-110 transition-transform">
+                                  <Play className="w-6 h-6 text-white fill-white ml-0.5" />
                                 </div>
                               )}
                             </div>
                           </div>
-                          <div className="p-2">
-                            <h3 className="font-medium text-sm truncate">{album.title}</h3>
-                            <p className="text-xs text-zinc-400 truncate">{album.artist}</p>
+                          <div className="p-3">
+                            <h3 className="font-semibold text-sm truncate text-white group-hover:text-purple-300 transition-colors">{album.title}</h3>
+                            <p className="text-xs text-zinc-400 truncate mt-1">{album.artist}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                     {albums.length > 12 && (
-                      <div className="mt-2 text-center">
+                      <div className="mt-4 text-center">
                         <button
                           onClick={() => setShowAllAlbums(!showAllAlbums)}
-                          className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                          className="bg-zinc-800 hover:bg-zinc-700 text-white px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 hover:scale-105"
                         >
                           {showAllAlbums ? "Show less" : `Show more albums (${albums.length - 12} more)`}
                         </button>
