@@ -26,10 +26,12 @@ const corsOptions = {
   origin: [
     "http://localhost:3000",
     "https://localhost:3000",
-    "https://sonix.rajivdubey.tech/",
+    "https://sonix.rajivdubey.tech",
     process.env.FRONTEND_URL,
-  ].filter(Boolean), // Remove any undefined values
+  ].filter(Boolean),
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  credentials: true
 };
 
 app.use(cors(corsOptions));
@@ -41,6 +43,7 @@ const io = new Server(server, {
     origin: [
       "http://localhost:3000",
       "https://localhost:3000",
+      "https://sonix.rajivdubey.tech",
       process.env.FRONTEND_URL,
     ].filter(Boolean),
     methods: ["GET", "POST"],
