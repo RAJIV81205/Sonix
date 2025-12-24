@@ -26,6 +26,7 @@ const corsOptions = {
   origin: [
     "http://localhost:3000",
     "https://localhost:3000",
+    "https://sonix.rajivdubey.tech/",
     process.env.FRONTEND_URL,
   ].filter(Boolean), // Remove any undefined values
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
