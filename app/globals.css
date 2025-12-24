@@ -65,4 +65,49 @@
   }
 }
 
+/* Floating animation */
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+  100% { transform: translateY(0); }
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Blink animation */
+@keyframes blink {
+  0%, 96%, 100% { transform: scaleY(1); }
+  97%, 99% { transform: scaleY(0.1); }
+}
+.animate-blink {
+  animation: blink 5s infinite;
+}
+
+/* Question marks */
+.qm {
+  position: absolute;
+  font-size: 1.75rem;
+  color: rgba(255,255,255,0.4);
+  animation: qm-float 3s ease-in-out infinite;
+}
+
+.qm-1 { top: -20px; left: -24px; animation-delay: 0s; }
+.qm-2 { top: -30px; right: -20px; animation-delay: 0.8s; }
+.qm-3 { bottom: -10px; right: -30px; animation-delay: 1.4s; }
+
+@keyframes qm-float {
+  0% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(-10px); opacity: 0.8; }
+  100% { transform: translateY(0); opacity: 0.4; }
+}
+
+/* Starry background */
+.bg-stars {
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.25), transparent),
+    radial-gradient(1px 1px at 80% 20%, rgba(255,255,255,.2), transparent),
+    radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,.15), transparent);
+  background-size: 300px 300px;
+}
 
