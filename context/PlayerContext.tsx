@@ -696,7 +696,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   };
 
   const downloadSong = async (payload: DownloadSongPayload) => {
-    const res = await fetch("/api/dashboard/download", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SOCKET_SERVER_URL}/api/download`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
