@@ -30,8 +30,6 @@ const corsOptions = {
     process.env.FRONTEND_URL,
   ].filter(Boolean), // Remove any undefined values
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  credentials: true,
 };
 
 app.use(cors(corsOptions));
