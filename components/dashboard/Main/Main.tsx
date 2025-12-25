@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, useRef } from 'react';
 import { usePlayerControls } from '@/context/PlayerControlsContext';
 import { toast } from 'react-hot-toast';
-import AddPlaylistPopup from './AddPlaylistPopup';
+import AddPlaylistPopup from '../AddPlaylistPopup';
 import Link from "next/link"
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
