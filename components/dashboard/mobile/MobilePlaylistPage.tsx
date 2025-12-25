@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { Music, MoreVertical, ArrowLeft, Play } from 'lucide-react'
 import LoadingSpinner from '../../LoadingSpinner'
-import { usePlayer } from '@/context/PlayerContext'
+import { usePlayerControls } from '@/context/PlayerControlsContext'
 import Link from 'next/link'
 
 interface Song {
@@ -29,7 +29,7 @@ const MobilePlaylistPage = () => {
   const [playlist, setPlaylist] = useState<Playlist | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const { setQueue, play, addToQueue, addToNext } = usePlayer()
+  const { setQueue, play, addToQueue, addToNext } = usePlayerControls()
 
   const [contextMenuVisible, setContextMenuVisible] = useState(false)
   const [selectedSong, setSelectedSong] = useState<Song | null>(null)

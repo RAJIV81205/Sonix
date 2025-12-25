@@ -3,7 +3,7 @@
 import { Search, Bell, User, Loader2, Plus, Music, X, MoreVertical, Play, SkipForward, ListPlus, Heart, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, useRef } from 'react';
-import { usePlayer } from '@/context/PlayerContext';
+import { usePlayerControls } from '@/context/PlayerControlsContext';
 import { toast } from 'react-hot-toast';
 import MobileAddPlaylistPopup from './MobileAddPlaylistPopup';
 import Link from 'next/link';
@@ -50,7 +50,7 @@ const MobileMain = () => {
     addToNext,
     queue = [],
     currentSong
-  } = usePlayer();
+  } = usePlayerControls();
 
   const [loadingSong, setLoadingSong] = useState<string | null>(null);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);

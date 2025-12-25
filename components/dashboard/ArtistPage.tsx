@@ -18,7 +18,7 @@ import {
     ArrowUp,
     Download
 } from 'lucide-react'
-import { usePlayer } from '@/context/PlayerContext'
+import { usePlayerControls } from '@/context/PlayerControlsContext'
 
 // Animation variants
 const fadeInUp = {
@@ -482,7 +482,7 @@ const ArtistPage = () => {
         playAlbum,
         shufflePlay: contextShufflePlay,
         play
-    } = usePlayer()
+    } = usePlayerControls()
 
     // Click outside handler
     useEffect(() => {

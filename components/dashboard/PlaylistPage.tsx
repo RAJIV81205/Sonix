@@ -19,7 +19,7 @@ import {
     Users,
     Clock
 } from 'lucide-react'
-import { usePlayer } from '@/context/PlayerContext'
+import { usePlayerControls } from '@/context/PlayerControlsContext'
 
 // Animation variants - matching ArtistPage
 const fadeInUp = {
@@ -215,7 +215,7 @@ const PlaylistPage = () => {
         playAlbum,
         shufflePlay,
         play
-    } = usePlayer()
+    } = usePlayerControls()
 
     // Update isolated state when context changes
     useEffect(() => {

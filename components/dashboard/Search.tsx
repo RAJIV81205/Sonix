@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { Search, Music, Disc3, TrendingUp, Album, AlertTriangle, Play, Loader2, MoreHorizontal, Plus, Download, SkipForward } from 'lucide-react';
-import { usePlayer } from '@/context/PlayerContext';
+import { usePlayerControls } from '@/context/PlayerControlsContext';
 import { toast } from 'react-hot-toast';
 import { gsap } from 'gsap';
 
@@ -445,7 +445,7 @@ const TrackItem = memo<TrackItemProps>(({ track, trending, isCompact = false, on
 TrackItem.displayName = 'TrackItem';
 
 const SearchP: React.FC = () => {
-  const { setQueue, play, addToNext, addToQueue, downloadSong } = usePlayer();
+  const { setQueue, play, addToNext, addToQueue, downloadSong } = usePlayerControls();
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [songs, setSongs] = useState<Track[]>([]);

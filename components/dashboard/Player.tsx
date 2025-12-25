@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Play,
@@ -13,11 +13,12 @@ import {
   Trash2,
   Loader2,
   Download,
-  Repeat1
-} from "lucide-react"
-import React, { useState, useEffect, useRef } from "react"
-import { usePlayer } from "@/context/PlayerContext"
-import toast from "react-hot-toast"
+  Repeat1,
+} from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { usePlayerControls } from "@/context/PlayerControlsContext";
+import { usePlayerProgress } from "@/context/PlayerProgressContext";
+import toast from "react-hot-toast";
 
 const Player = () => {
   const {
@@ -26,8 +27,6 @@ const Player = () => {
     isLoading,
     queue,
     upNext,
-    currentTime,
-    duration,
     volume,
     isShuffled,
     repeatMode,
@@ -41,189 +40,186 @@ const Player = () => {
     setVolume,
     toggleShuffle,
     toggleRepeat,
-    audioRef
-  } = usePlayer()
+    downloadSong,
+  } = usePlayerControls();
 
-  const [isDragging, setIsDragging] = useState(false)
-  const [showQueue, setShowQueue] = useState(false)
-  const [localCurrentTime, setLocalCurrentTime] = useState(0)
-  const [isDownloading, setIsDownloading] = useState(false)
-  const progressBarRef = useRef<HTMLDivElement>(null)
-  const queueRef = useRef<HTMLDivElement>(null)
+  const { currentTime, duration } = usePlayerProgress();
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [showQueue, setShowQueue] = useState(false);
+  const [localCurrentTime, setLocalCurrentTime] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const queueRef = useRef<HTMLDivElement>(null);
 
   // Format time in MM:SS
   const formatTime = (time: number) => {
-    if (!time || isNaN(time)) return "0:00"
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`
-  }
+    if (!time || isNaN(time)) return "0:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
 
   // Use local current time when dragging, otherwise use context current time
-  const displayTime = isDragging ? localCurrentTime : currentTime
+  const displayTime = isDragging ? localCurrentTime : currentTime;
 
   // Handle seeking in the timeline
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!progressBarRef.current || !duration) return
+    if (!progressBarRef.current || !duration) return;
 
-    const progressBar = progressBarRef.current
-    const rect = progressBar.getBoundingClientRect()
-    const offsetX = e.clientX - rect.left
-    const newPosition = Math.max(0, Math.min((offsetX / rect.width) * duration, duration))
+    const progressBar = progressBarRef.current;
+    const rect = progressBar.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const newPosition = Math.max(
+      0,
+      Math.min((offsetX / rect.width) * duration, duration)
+    );
 
     if (isDragging) {
-      setLocalCurrentTime(newPosition)
+      setLocalCurrentTime(newPosition);
     } else {
-      seek(newPosition)
+      seek(newPosition);
     }
-  }
+  };
 
   // Handle mouse down on the progress bar
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    setIsDragging(true)
-    setLocalCurrentTime(currentTime)
-    handleSeek(e)
-  }
+    setIsDragging(true);
+    setLocalCurrentTime(currentTime);
+    handleSeek(e);
+  };
 
   // Handle mouse move while dragging
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (isDragging) {
-      handleSeek(e)
+      handleSeek(e);
     }
-  }
+  };
 
   // Handle mouse up to end dragging
   const handleMouseUp = () => {
     if (isDragging) {
-      seek(localCurrentTime)
-      setIsDragging(false)
+      seek(localCurrentTime);
+      setIsDragging(false);
     }
-  }
+  };
 
   // Add global mouse up and move handlers
   useEffect(() => {
     const handleGlobalMouseUp = () => {
       if (isDragging) {
-        seek(localCurrentTime)
-        setIsDragging(false)
+        seek(localCurrentTime);
+        setIsDragging(false);
       }
-    }
+    };
 
     const handleGlobalMouseMove = (e: MouseEvent) => {
       if (isDragging && progressBarRef.current) {
-        const rect = progressBarRef.current.getBoundingClientRect()
-        const offsetX = e.clientX - rect.left
-        const newPosition = Math.max(0, Math.min((offsetX / rect.width) * duration, duration))
-        setLocalCurrentTime(newPosition)
+        const rect = progressBarRef.current.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const newPosition = Math.max(
+          0,
+          Math.min((offsetX / rect.width) * duration, duration)
+        );
+        setLocalCurrentTime(newPosition);
       }
-    }
+    };
 
     if (isDragging) {
-      window.addEventListener('mouseup', handleGlobalMouseUp)
-      window.addEventListener('mousemove', handleGlobalMouseMove)
+      window.addEventListener("mouseup", handleGlobalMouseUp);
+      window.addEventListener("mousemove", handleGlobalMouseMove);
     }
 
     return () => {
-      window.removeEventListener('mouseup', handleGlobalMouseUp)
-      window.removeEventListener('mousemove', handleGlobalMouseMove)
-    }
-  }, [isDragging, duration, localCurrentTime, seek])
+      window.removeEventListener("mouseup", handleGlobalMouseUp);
+      window.removeEventListener("mousemove", handleGlobalMouseMove);
+    };
+  }, [isDragging, duration, localCurrentTime, seek]);
 
   // Calculate progress bar %
-  const progress = duration ? (displayTime / duration) * 100 : 0
+  const progress = duration ? (displayTime / duration) * 100 : 0;
 
   // Handle click outside queue panel
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (queueRef.current && !queueRef.current.contains(event.target as Node)) {
-        setShowQueue(false)
+      if (
+        queueRef.current &&
+        !queueRef.current.contains(event.target as Node)
+      ) {
+        setShowQueue(false);
       }
-    }
+    };
 
     if (showQueue) {
-      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [showQueue])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showQueue]);
 
-  const downloadSong = async () => {
+  const download = async () => {
     if (!currentSong) {
-      toast.error("No song selected to download")
-      return
+      toast.error("No song selected to download");
+      return;
     }
 
     try {
-      setIsDownloading(true)
-      toast.loading("Starting download...")
+      setIsDownloading(true);
+      
+      // Create comprehensive download payload using the context's downloadSong function
+      const downloadPayload = {
+        songUrl: currentSong.url || "",
+        title: currentSong.name.replaceAll("&quot;", `"`),
+        artist: currentSong.artist,
+        album: "Unknown Album", // Song interface doesn't have album
+        albumArtist: currentSong.artist,
+        year: new Date().getFullYear().toString(),
+        duration: currentSong.duration || 0,
+        language: "Unknown",
+        genre: "Unknown",
+        label: "Unknown Label",
+        composer: "Unknown",
+        lyricist: "Unknown",
+        copyright: "",
+        coverUrl: currentSong.image || "",
+      };
 
-      const downloadUrl = currentSong.url
-
-      if (!downloadUrl) {
-        toast.error("Download URL not available for this song")
-        return
-      }
-
-      const response = await fetch(downloadUrl)
-      if (!response.ok) {
-        throw new Error('Failed to fetch audio file')
-      }
-
-      const blob = await response.blob()
-      const blobUrl = window.URL.createObjectURL(blob)
-
-      const filename = `${currentSong.name.replaceAll("&quot;", "").replace(/[^\w\s-]/g, "").trim()} - ${currentSong.artist.replace(/[^\w\s-]/g, "").trim()}.mp3`
-
-      const link = document.createElement('a')
-      link.href = blobUrl
-      link.download = filename
-      link.style.display = 'none'
-
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-
-      setTimeout(() => {
-        window.URL.revokeObjectURL(blobUrl)
-      }, 1000)
-
-      toast.dismiss()
-      toast.success(`"${currentSong.name.replaceAll("&quot;", `"`)}" downloaded successfully`)
+      await downloadSong(downloadPayload);
+      toast.success(`"${downloadPayload.title}" download started`);
     } catch (error) {
-      console.error('Download error:', error)
-      toast.dismiss()
-      toast.error("Failed to download song")
+      console.error('Download error:', error);
+      toast.error('Failed to download song');
     } finally {
-      setIsDownloading(false)
+      setIsDownloading(false);
     }
-  }
+  };
 
   // Get shuffle button classes
   const getShuffleClasses = () => {
     return isShuffled
       ? "text-green-400 hover:text-green-300 transition-colors"
-      : "text-zinc-400 hover:text-white transition-colors"
-  }
+      : "text-zinc-400 hover:text-white transition-colors";
+  };
 
   // Get repeat button classes and icon
   const getRepeatClasses = () => {
     switch (repeatMode) {
-      case 'all':
-        return "text-green-400 hover:text-green-300 transition-colors"
-      case 'one':
-        return "text-green-400 hover:text-green-300 transition-colors"
+      case "all":
+        return "text-green-400 hover:text-green-300 transition-colors";
+      case "one":
+        return "text-green-400 hover:text-green-300 transition-colors";
       default:
-        return "text-zinc-400 hover:text-white transition-colors"
+        return "text-zinc-400 hover:text-white transition-colors";
     }
-  }
+  };
 
   const getRepeatIcon = () => {
-    return repeatMode === 'one' ? Repeat1 : Repeat
-  }
+    return repeatMode === "one" ? Repeat1 : Repeat;
+  };
 
-  const RepeatIcon = getRepeatIcon()
+  const RepeatIcon = getRepeatIcon();
 
   return (
     <div className="w-full h-16 md:h-20 bg-black border-t border-zinc-900 flex items-center px-2 md:px-4 relative">
@@ -232,7 +228,7 @@ const Player = () => {
         <div className="w-10 h-10 md:w-14 md:h-14 bg-zinc-900 rounded overflow-hidden">
           {currentSong?.image && (
             <img
-              src={currentSong.image.replace("150x150", "500x500").replace("http:", "https:")}
+              src={currentSong.image}
               alt={currentSong.name.replaceAll("&quot;", `"`)}
               className="w-full h-full object-cover"
             />
@@ -254,7 +250,7 @@ const Player = () => {
           <button
             className={getShuffleClasses()}
             onClick={toggleShuffle}
-            title={`Shuffle: ${isShuffled ? 'On' : 'Off'}`}
+            title={`Shuffle: ${isShuffled ? "On" : "Off"}`}
           >
             <Shuffle className="w-4 h-4 md:w-5 md:h-5" />
           </button>
@@ -292,17 +288,25 @@ const Player = () => {
           <button
             className={getRepeatClasses()}
             onClick={toggleRepeat}
-            title={`Repeat: ${repeatMode === 'off' ? 'Off' : repeatMode === 'all' ? 'All' : 'One'}`}
+            title={`Repeat: ${
+              repeatMode === "off"
+                ? "Off"
+                : repeatMode === "all"
+                ? "All"
+                : "One"
+            }`}
           >
             <RepeatIcon className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
 
         <div className="w-full max-w-xl flex items-center gap-1 md:gap-2">
-          <span className="text-xs text-zinc-400">{formatTime(displayTime)}</span>
+          <span className="text-xs text-zinc-400">
+            {formatTime(displayTime)}
+          </span>
           <div
             ref={progressBarRef}
-            className="flex-1 h-1 bg-zinc-800 rounded-full cursor-pointer relative"
+            className="flex-1 h-1.5 bg-zinc-800 rounded-full cursor-pointer relative"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -321,10 +325,11 @@ const Player = () => {
       {/* Volume and Queue Controls */}
       <div className="hidden md:flex items-center justify-end gap-3 w-1/4">
         <button
-          onClick={downloadSong}
+          onClick={download}
           disabled={isDownloading || !currentSong}
-          className={`${isDownloading ? 'text-violet-400' : 'text-zinc-400 hover:text-white'
-            } transition-colors flex flex-col items-center disabled:opacity-70`}
+          className={`${
+            isDownloading ? "text-violet-400" : "text-zinc-400 hover:text-white"
+          } transition-colors flex flex-col items-center disabled:opacity-70`}
           title="Download Song"
         >
           {isDownloading ? (
@@ -336,8 +341,9 @@ const Player = () => {
 
         <button
           onClick={() => setShowQueue(!showQueue)}
-          className={`${showQueue ? 'text-green-400' : 'text-zinc-400 hover:text-white'
-            } transition-colors relative`}
+          className={`${
+            showQueue ? "text-green-400" : "text-zinc-400 hover:text-white"
+          } transition-colors relative`}
           title="Show Queue"
         >
           <List className="w-5 h-5" />
@@ -393,7 +399,7 @@ const Player = () => {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-zinc-800 rounded overflow-hidden flex-shrink-0">
                     <img
-                      src={currentSong.image.replace("150x150", "500x500").replace("http:", "https:")}
+                      src={currentSong.image}
                       alt={currentSong.name.replaceAll("&quot;", `"`)}
                       className="w-full h-full object-cover"
                     />
@@ -402,7 +408,9 @@ const Player = () => {
                     <p className="text-sm font-medium truncate text-green-400">
                       {currentSong.name.replaceAll("&quot;", `"`)}
                     </p>
-                    <p className="text-xs text-zinc-400 truncate">{currentSong.artist}</p>
+                    <p className="text-xs text-zinc-400 truncate">
+                      {currentSong.artist}
+                    </p>
                     <p className="text-xs text-green-400">Now Playing</p>
                   </div>
                 </div>
@@ -426,7 +434,7 @@ const Player = () => {
                   >
                     <div className="w-10 h-10 bg-zinc-800 rounded overflow-hidden flex-shrink-0">
                       <img
-                        src={song.image.replace("150x150", "500x500").replace("http:", "https:")}
+                        src={song.image}
                         alt={song.name.replaceAll("&quot;", `"`)}
                         className="w-full h-full object-cover"
                       />
@@ -435,7 +443,9 @@ const Player = () => {
                       <p className="text-sm font-medium truncate">
                         {song.name.replaceAll("&quot;", `"`)}
                       </p>
-                      <p className="text-xs text-zinc-400 truncate">{song.artist}</p>
+                      <p className="text-xs text-zinc-400 truncate">
+                        {song.artist}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -461,7 +471,7 @@ const Player = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Player
+export default Player;

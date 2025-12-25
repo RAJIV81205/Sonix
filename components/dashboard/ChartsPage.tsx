@@ -327,7 +327,8 @@ const ChartsPage = () => {
         addToNext,
         playAlbum,
         shufflePlay: contextShufflePlay,
-        play
+        play,
+        downloadSong: contextDownloadSong
     } = usePlayerControls()
 
     // Update isolated state when context changes
@@ -642,38 +643,27 @@ const ChartsPage = () => {
             toast.loading("Starting download...")
             const song = await convertTrackToSong(track)
 
-            const downloadUrl = song.url
-
-            if (!downloadUrl) {
-                toast.error("Download URL not available for this song")
-                return
+            // Create proper download payload for the context function
+            const downloadPayload = {
+                songUrl: song.url || "",
+                title: song.name.replaceAll("&quot;", `"`),
+                artist: song.artist,
+                album: track.album.name || "Unknown Album",
+                albumArtist: song.artist,
+                year: track.album.release_date ? new Date(track.album.release_date).getFullYear().toString() : new Date().getFullYear().toString(),
+                duration: song.duration || 0,
+                language: "Unknown",
+                genre: "Unknown",
+                label: "Unknown Label",
+                composer: "Unknown",
+                lyricist: "Unknown",
+                copyright: "",
+                coverUrl: song.image || "",
             }
 
-            const response = await fetch(downloadUrl)
-            if (!response.ok) {
-                throw new Error('Failed to fetch audio file')
-            }
-
-            const blob = await response.blob()
-            const blobUrl = window.URL.createObjectURL(blob)
-
-            const filename = `${song.name.replaceAll("&quot;", "").replace(/[^\w\s-]/g, "").trim()} - ${song.artist.replace(/[^\w\s-]/g, "").trim()}.mp3`
-
-            const link = document.createElement('a')
-            link.href = blobUrl
-            link.download = filename
-            link.style.display = 'none'
-
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-
-            setTimeout(() => {
-                window.URL.revokeObjectURL(blobUrl)
-            }, 1000)
-
+            await contextDownloadSong(downloadPayload)
             toast.dismiss()
-            toast.success(`"${song.name.replaceAll("&quot;", `"`)}" downloaded successfully`)
+            toast.success(`"${downloadPayload.title}" downloaded successfully`)
         } catch (error) {
             console.error('Download error:', error)
             toast.dismiss()

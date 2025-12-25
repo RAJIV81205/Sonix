@@ -21,7 +21,8 @@ import {
   Download
 } from "lucide-react"
 import React, { useState, useEffect, useRef } from "react"
-import { usePlayer } from "@/context/PlayerContext"
+import { usePlayerControls } from '@/context/PlayerControlsContext'
+import { usePlayerProgress } from '@/context/PlayerProgressContext'
 import { toast } from "react-hot-toast"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -50,12 +51,12 @@ const MobilePlayer = () => {
     toggleRepeat,
     isShuffled,
     repeatMode,
-    currentTime,
-    duration,
     seek,
     volume,
     setVolume
-  } = usePlayer()
+  } = usePlayerControls()
+  
+  const { currentTime, duration } = usePlayerProgress()
   
   const [isDragging, setIsDragging] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
