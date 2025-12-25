@@ -1015,8 +1015,22 @@ const ChartsPage = () => {
                             <h2 className="text-xl sm:text-2xl font-bold">Chart Songs</h2>
                         </motion.div>
 
+                        {/* Table Header */}
                         <motion.div
-                            className="space-y-2"
+                            className="grid grid-cols-[40px_1fr_1fr_100px_40px] gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800 mb-2"
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 1.6, duration: 0.6 }}
+                        >
+                            <div className="text-center">#</div>
+                            <div>Title</div>
+                            <div className="hidden sm:block">Album</div>
+                            <div className="text-right hidden sm:block">Duration</div>
+                            <div></div>
+                        </motion.div>
+
+                        <motion.div
+                            className="space-y-1"
                             variants={staggerContainer}
                             initial="initial"
                             animate="animate"
@@ -1029,81 +1043,93 @@ const ChartsPage = () => {
                                 return (
                                     <motion.div
                                         key={track.id}
-                                        className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg transition-colors group cursor-pointer relative ${openMenuId === track.id ? 'bg-white/5' : 'hover:bg-white/5'
+                                        className={`grid grid-cols-[40px_1fr_1fr_100px_40px] gap-4 px-4 py-2 rounded-md transition-colors group cursor-pointer relative ${openMenuId === track.id ? 'bg-white/10' : 'hover:bg-white/5'
                                             } ${isTrackLoading ? 'opacity-75' : ''}`}
                                         variants={fadeInUp}
                                         custom={index}
-                                        whileHover={{ x: openMenuId === track.id ? 0 : 4 }}
+                                        whileHover={{ backgroundColor: openMenuId === track.id ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)' }}
                                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
                                     >
+                                        {/* Rank Number / Play Button */}
                                         <div
-                                            className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0"
+                                            className="flex items-center justify-center text-gray-400 text-sm relative"
                                             onClick={() => !isTrackLoading && PlaySong(track)}
                                         >
-                                            {/* Rank Number */}
-                                            <div className="w-6 text-center text-gray-400 font-mono text-sm flex-shrink-0">
+                                            <span className={`${isTrackLoading || isCurrentlyPlayingTrack ? 'opacity-0' : 'group-hover:opacity-0'} transition-opacity`}>
                                                 {index + 1}
-                                            </div>
+                                            </span>
+                                            <motion.div
+                                                className={`absolute inset-0 flex items-center justify-center transition-opacity ${isTrackLoading ? 'opacity-100' : isCurrentlyPlayingTrack ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                                    }`}
+                                            >
+                                                {isTrackLoading ? (
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                ) : isCurrentlyPlayingTrack ? (
+                                                    <Pause className="w-4 h-4 text-green-500" />
+                                                ) : (
+                                                    <Play className="w-4 h-4 text-white" />
+                                                )}
+                                            </motion.div>
+                                        </div>
 
+                                        {/* Title Column */}
+                                        <div
+                                            className="flex items-center gap-3 min-w-0"
+                                            onClick={() => !isTrackLoading && PlaySong(track)}
+                                        >
                                             <motion.div
                                                 className="relative shrink-0"
-                                                whileHover={{ scale: isTrackLoading ? 1 : 1.05 }}
-                                                whileTap={{ scale: isTrackLoading ? 1 : 0.95 }}
+                                                whileHover={{ scale: isTrackLoading ? 1 : 1.02 }}
                                             >
                                                 <img
                                                     src={track.album.images[2]?.url || track.album.images[1]?.url || track.album.images[0]?.url || '/placeholder-song.jpg'}
                                                     alt={track.name}
-                                                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg"
+                                                    className="w-10 h-10 rounded"
                                                 />
-                                                <motion.div
-                                                    className={`absolute inset-0 bg-black/50 rounded-lg transition-opacity flex items-center justify-center ${isTrackLoading ? 'opacity-100' :
-                                                        openMenuId === track.id ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'
-                                                        }`}
-                                                >
-                                                    {isTrackLoading ? (
-                                                        <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                    ) : isCurrentlyPlayingTrack ? (
-                                                        <Pause className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-                                                    ) : (
-                                                        <Play className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-                                                    )}
-                                                </motion.div>
                                             </motion.div>
-
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-semibold text-white group-hover:text-green-300 transition-colors truncate text-sm sm:text-base">
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className={`font-medium truncate text-sm ${isCurrentlyPlayingTrack ? 'text-green-500' : 'text-white group-hover:text-white'}`}>
                                                     {track.name}
                                                 </h3>
-                                                <p className="text-xs sm:text-sm text-gray-400 truncate">
-                                                    {track.artists.map((artist: SpotifyTrackArtist) => artist.name).join(', ')} • {track.album.name}
+                                                <p className="text-xs text-gray-400 truncate">
+                                                    {track.artists.map((artist: SpotifyTrackArtist) => artist.name).join(', ')}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-                                            <div className="text-xs sm:text-sm text-gray-400 hidden xs:block">
+                                        {/* Album Column */}
+                                        <div className="hidden sm:flex items-center min-w-0">
+                                            <p className="text-sm text-gray-400 truncate hover:text-white transition-colors cursor-pointer">
+                                                {track.album.name}
+                                            </p>
+                                        </div>
+
+                                        {/* Duration Column */}
+                                        <div className="hidden sm:flex items-center justify-end">
+                                            <span className="text-sm text-gray-400">
                                                 {formatDuration(track.duration_ms)}
-                                            </div>
+                                            </span>
+                                        </div>
 
-                                            <div className="relative">
-                                                <motion.button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        e.preventDefault()
-                                                        setOpenMenuId(openMenuId === track.id ? null : track.id)
-                                                    }}
-                                                    className="p-1.5 sm:p-2 hover:bg-gray-700 rounded-full transition-all focus:outline-none relative z-10"
-                                                    whileHover={{ scale: 1.1 }}
-                                                    whileTap={{ scale: 0.95 }}
-                                                >
-                                                    <MoreVertical className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                </motion.button>
+                                        {/* Menu Column */}
+                                        <div className="flex items-center justify-center relative">
+                                            <motion.button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    e.preventDefault()
+                                                    setOpenMenuId(openMenuId === track.id ? null : track.id)
+                                                }}
+                                                className="p-1 hover:bg-gray-700 rounded opacity-0 group-hover:opacity-100 transition-all focus:outline-none relative z-10"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
+                                                <MoreVertical className="w-4 h-4 text-gray-400" />
+                                            </motion.button>
 
-                                                <ContextMenu
-                                                    track={track}
-                                                    isOpen={openMenuId === track.id}
-                                                />
-                                            </div>
+                                            <ContextMenu
+                                                track={track}
+                                                isOpen={openMenuId === track.id}
+                                            />
                                         </div>
                                     </motion.div>
                                 )
