@@ -19,7 +19,7 @@ import {
     Download,
     TrendingUp
 } from 'lucide-react'
-import { usePlayer } from '@/context/PlayerContext'
+import { usePlayerControls } from '@/context/PlayerControlsContext'
 
 // Animation variants
 const fadeInUp = {
@@ -328,7 +328,7 @@ const ChartsPage = () => {
         playAlbum,
         shufflePlay: contextShufflePlay,
         play
-    } = usePlayer()
+    } = usePlayerControls()
 
     // Update isolated state when context changes
     useEffect(() => {
