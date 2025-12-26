@@ -15,7 +15,7 @@ export const topArtists = [
     "id": "0oOet2f43PA68X5RxKobEy",
     "name": "Shreya Ghoshal",
     "genre": "Classical/Bollywood",
-    "img": "https://i.scdn.co/image/ab6761610000e5eb59303d54ce789210e745e1a9"
+    "img": "https://i.scdn.co/image/ab6761610000e5ebe7ce89a9f5d11e0ba26677eb"
   },
   {
     "id": "1mYsTxnqsietFxj1OgoGbG",
@@ -111,19 +111,19 @@ export const topArtists = [
     "id": "4ITkqBlf5eoVCOFwsJCnqo",
     "name": "Harrdy Sandhu",
     "genre": "Punjabi/Bollywood",
-    "img": "https://i.scdn.co/image/ab6761610000e5eb0f91fa8766ef8adb10fe3b4e"
+    "img": "https://i.scdn.co/image/ab6761610000e5ebd6f8eea11ffe8c3a701a0e7a"
   },
   {
     "id": "6QoCrBHsojKnOrsGNfRcTN",
     "name": "Talwiinder",
     "genre": "Punjabi",
-    "img": "https://i.scdn.co/image/ab6761610000e5eb1b41d98a6831d076c45e1d88"
+    "img": "https://i.scdn.co/image/ab6761610000e5eb3966ca5f9b36d4a5d3d7f6b1"
   },
   {
     "id": "06HL4z0CvFAxyc27GXpf02",
     "name": "Taylor Swift",
     "genre": "Pop/Country",
-    "img": "https://i.scdn.co/image/ab6761610000e5ebe672b5f553298dcdccb0e676"
+    "img": "https://i.scdn.co/image/ab6761610000e5ebe2e8e7ff002a4afda1c7147e"
   },
   {
     "id": "3WrFJ7ztbogyGnTHbHJFl2",
@@ -189,7 +189,7 @@ export const topArtists = [
     "id": "1uNFoZAHBGtllmzznpCI3s",
     "name": "Justin Bieber",
     "genre": "Pop",
-    "img": "https://i.scdn.co/image/ab6761610000e5eb86e362deb9f22566331fbdeb"
+    "img": "https://i.scdn.co/image/ab6761610000e5ebaf20f7db5288bce9beede034"
   },
   {
     "id": "6eUKZXaKkcviH0Ku9w2n3V",
@@ -201,7 +201,7 @@ export const topArtists = [
     "id": "6VuMaDnrHyPL1p4EHjYLi7",
     "name": "Charlie Puth",
     "genre": "Pop",
-    "img": "https://i.scdn.co/image/ab6761610000e5ebd5594e3ae145bbb2c096366d"
+    "img": "https://i.scdn.co/image/ab6761610000e5eb6721f541fb123145d4cb3ace"
   },
   {
     "id": "0C8ZW7ezQVs4URX5aX7Kqx",
@@ -237,7 +237,7 @@ export const topArtists = [
     "id": "181bsRPaVXVlUKXrxwZfHK",
     "name": "Megan Thee Stallion",
     "genre": "Hip-Hop",
-    "img": "https://i.scdn.co/image/ab6761610000e5ebf4b26e8ff566b88dce51af2b"
+    "img": "https://i.scdn.co/image/ab6761610000e5eb65a9ac943abab7c9935ea282"
   },
   {
     "id": "41MozSoPIsD1dJM0CLPjZF",
@@ -279,7 +279,7 @@ export const topArtists = [
     "id": "64KEffDW9EtZ1y2vBYgq8T",
     "name": "Marshmello",
     "genre": "EDM",
-    "img": "https://i.scdn.co/image/ab6761610000e5eb3b2498dc8a8c6eceed0a2db3"
+    "img": "https://i.scdn.co/image/ab6761610000e5eb646c8a9d78f11834febcf978"
   }
 ];
 
@@ -314,3 +314,12 @@ export const charts = [
     link: `/dashboard/charts/37i9dQZEVXbLZ52XmnySJg`
   }
 ];
+
+export const tophits = [
+  {
+    id: '37i9dQZF1DX0XUfTFmNBRM',
+    title: 'Hot Hits Hindi',
+    image: 'https://i.scdn.co/image/ab67706f00000002c1f6d4f7c6d2e1a9f1f1f1f1',
+    link: `/dashboard/charts/37i9dQZF1DX0XUfTFmNBRM`
+  },
+]

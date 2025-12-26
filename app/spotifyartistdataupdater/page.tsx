@@ -17,7 +17,7 @@ interface SpotifyArtist {
   images: { url: string; height: number; width: number }[];
 }
 
-const SPOTIFY_TOKEN = "BQDkNgP3KcoUSI66lpbHLFMefQgO_F0TbkrYAs-olyhz4Au7kcQL-58tPQrhmYAagA8HIlLQoYPhj_zGogB8uJWiDZHmPd9J7aETOdYpPZFTWHZFp0IAcHqmiRR_5aDibzUf8r8gZ-8rx4pf4cU6RePYJBoO4NZtmtubn8UnTIM8nETmBSSJsyz31MS5PFjKITpSyqvqkUqWSxdxTdopsD0hS_n4wHcbJSsLoOeVMfl4lNGfkTmckSFw4uAfZyAcjy1nH-T1CNPDdWhL8D3hs1TBNG8ZQ-1uYC-Hqj0E_LtkpaXOUJ7QSYDo_HKf5SKtonDUYWQGpf5F65T4ofnynR3eqHpuxOGwK2iuBAs4uw2wPInhzTQI";  // ⚠️ keep it outside the repo!
+const SPOTIFY_TOKEN = "BQACGdcUmL8uEIlKL8IOYQvE7rl2yvK1Si0CocuIOgQr6u5gAnO3CduEB03xgiJvAsELis4_4P9kLLj6pXawW1owAALiQgwvsI7IsTymgZ62Y5H3cyUU7YunoFDSAA6oto5rxEpXrh3BjXakEqoaoMqvp8Xade34DbrnoHOTyqHDrDj6K71ExvWQx5SAs1jNqtgoalJAvb584OEIhF22jm92Ho96_KZ2IL4MgBoTAOTj5CPuszbNHsPZM0H7c4QPDyB2KJOvA09zyFPjB53ur4cYoNkZRV1u8ePOZJRZY7XBJ1rGlaVzpi0oxWhZeiFYHA-Un_Ls1BnL_kquQIs3cK6ab7tSySGDhdRRML6zy5_v3khxzz9ke1UTO1mZrHmChqU";  // ⚠️ keep it outside the repo!
 
 const SpotifyArtistUpdater: React.FC = () => {
   const [artists] = useState<Artist[]>(seedArtists.filter(Boolean));
