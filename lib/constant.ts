@@ -282,3 +282,35 @@ export const topArtists = [
     "img": "https://i.scdn.co/image/ab6761610000e5eb3b2498dc8a8c6eceed0a2db3"
   }
 ];
+
+// Charts data
+export const charts = [
+  {
+    id: '37i9dQZEVXbNG2KDcFcKOF',
+    title: 'Top Songs - Global',
+    description: 'Your weekly update of the most played tracks right now',
+    image: 'https://charts-images.scdn.co/assets/locale_en/regional/weekly/region_global_default.jpg',
+    link: `/dashboard/charts/37i9dQZEVXbNG2KDcFcKOF`
+  },
+  {
+    id: '37i9dQZEVXbMWDif5SCBJq',
+    title: 'Top Songs - India',
+    description: 'Your weekly update of the most played tracks right now',
+    image: 'https://charts-images.scdn.co/assets/locale_en/regional/weekly/region_in_default.jpg',
+    link: `/dashboard/charts/37i9dQZEVXbMWDif5SCBJq`
+  },
+  {
+    id: '37i9dQZEVXbMDoHDwVN2tF',
+    title: 'Top 50 - Global',
+    description: 'Your daily update of the most played tracks right now',
+    image: 'https://charts-images.scdn.co/assets/locale_en/regional/daily/region_global_default.jpg',
+    link: `/dashboard/charts/37i9dQZEVXbMDoHDwVN2tF`
+  },
+  {
+    id: '37i9dQZEVXbLZ52XmnySJg',
+    title: 'Top 50 - India',
+    description: 'Your daily update of the most played tracks right now',
+    image: 'https://charts-images.scdn.co/assets/locale_en/regional/daily/region_in_default.jpg',
+    link: `/dashboard/charts/37i9dQZEVXbLZ52XmnySJg`
+  }
+];
