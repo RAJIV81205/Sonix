@@ -12,7 +12,7 @@ const ArtistsSection = () => {
     // Get 6 random artists
     const randomArtists = useMemo(() => {
         const shuffled = [...topArtists].sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, 6);
+        return shuffled.slice(0, 8);
     }, []);
     
     // Animation variants
@@ -42,7 +42,7 @@ const ArtistsSection = () => {
             View All
           </Link>
         </div>
-        <div className="grid grid-cols-6 gap-6 px-4 py-10">
+        <div className="grid grid-cols-8 gap-6 px-4 py-10">
           {randomArtists.map((artist, index) => (
             <Link 
               key={artist.id} 
