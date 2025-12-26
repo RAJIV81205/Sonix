@@ -1,6 +1,6 @@
 "use client"
 
-import Main from "@/components/dashboard/Main";
+import Main from "@/components/dashboard/Main/Main";
 import MobileMain from "@/components/dashboard/mobile/MobileMain";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
