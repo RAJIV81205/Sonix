@@ -10,8 +10,9 @@ import Link from "next/link"
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { gsap } from 'gsap';
-import { topArtists } from '@/lib/constant';
+
 import { useGsapStagger } from '@/lib/hooks/useGsapstagger';
+import ArtistsSection from './sections/ArtistsSection';
 
 
 interface Song {
@@ -62,7 +63,6 @@ const Main = () => {
   const recommendationItemsRef = useRef<HTMLDivElement[]>([]);
   const recentlyPlayedItemsRef = useRef<HTMLDivElement[]>([]);
   const chartsItemsRef = useRef<HTMLAnchorElement[]>([]);
-  const artistsItemsRef = useRef<HTMLAnchorElement[]>([]);
   const playlistsItemsRef = useRef<HTMLDivElement[]>([]);
   const token = typeof window !== "undefined" ? localStorage.getItem('token') : null;
   const [showAddPlaylistPopup, setShowAddPlaylistPopup] = useState<boolean>(false);
@@ -366,7 +366,6 @@ const Main = () => {
 
   const { ref: recentRef, inView: recentInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: chartsRef, inView: chartsInView } = useInView({ triggerOnce: true, threshold: 0.15 });
-  const { ref: artistRef, inView: artistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
   const { ref: playlistRef, inView: playlistInView } = useInView({ triggerOnce: true, threshold: 0.15 });
 
   useGsapStagger(recommendationItemsRef, {
@@ -384,12 +383,6 @@ const Main = () => {
     trigger: 4,
     inView: chartsInView,
     stagger: 0.8,
-  });
-
-  useGsapStagger(artistsItemsRef, {
-    trigger: topArtists.length,
-    inView: artistInView,
-    stagger: 0.6,
   });
 
   useGsapStagger(playlistsItemsRef, {
@@ -811,55 +804,7 @@ const Main = () => {
       </motion.div>
 
       {/* Artists Section */}
-      <motion.div
-        ref={artistRef}
-        variants={fadeInUp}
-        initial="hidden"
-        animate={artistInView ? 'visible' : 'hidden'}
-        className="p-4 px-5"
-      >
-        <div className="flex flex-row items-center justify-between mb-4 px-2">
-          <h2 className="text-xl font-bold">Top Artists</h2>
-          <Link href="/dashboard/artist" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
-            View All
-          </Link>
-        </div>
-        <div className="grid grid-cols-6 gap-6 px-4 py-10">
-          {topArtists.slice(0, 6).map((artist, index) => (
-            <Link 
-              key={artist.id} 
-              href={`dashboard/artist/${artist.id}`} 
-              className="flex flex-col"
-              ref={(el) => {
-                if (el) artistsItemsRef.current[index] = el;
-              }}
-            >
-              <div className="aspect-square bg-zinc-800 rounded-full mb-4 overflow-hidden border border-gray-400/40 hover:border-gray-400/60 transition-colors">
-                <img 
-                  src={artist.img} 
-                  alt={artist.name} 
-                  loading="lazy"
-                  onClick={(e) => {
-                    // Add click animation
-                    const target = e.currentTarget.closest('a');
-                    if (target) {
-                      gsap.to(target, {
-                        scale: 0.95,
-                        duration: 0.1,
-                        ease: "power2.out",
-                        yoyo: true,
-                        repeat: 1
-                      });
-                    }
-                  }}
-                />
-              </div>
-              <h3 className="font-medium text-sm text-center mb-1 truncate">{artist.name}</h3>
-              <p className="text-xs text-zinc-400 text-center truncate">{artist.genre}</p>
-            </Link>
-          ))}
-        </div>
-      </motion.div>
+     <ArtistsSection />
 
       {/* Your Playlists Section */}
       <motion.div
