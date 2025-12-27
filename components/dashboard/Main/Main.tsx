@@ -24,9 +24,10 @@ import { useInView } from "react-intersection-observer";
 import { gsap } from "gsap";
 
 import { useGsapStagger } from "@/lib/hooks/useGsapstagger";
+import { charts, topHitsHindi } from "@/lib/constant";
 import ArtistsSection from "./sections/ArtistsSection";
 import ChartsSection from "./sections/ChartsSection";
-import TopHitsSection from "./sections/TopHitsSection";
+
 
 interface Song {
   id: string;
@@ -58,6 +59,19 @@ const Main = () => {
   const router = useRouter();
   const { currentSong, setQueue, addToQueue, addToNext, playAlbum, play } =
     usePlayerControls();
+
+  // Function to transform topHitsHindi data for ChartsSection
+  const transformTopHitsData = (section: any) => {
+    return section.items.slice(0,8)
+      .filter((item: any) => item.id && item.name) // Filter out null items
+      .map((item: any) => ({
+        id: item.id,
+        title: item.name,
+        description: item.description || "",
+        image: item.image,
+        link: `/dashboard/playlist/${item.id}`, // Create playlist link
+      }));
+  };
 
   const [loadingSong, setLoadingSong] = useState<string | null>(null);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
@@ -808,11 +822,24 @@ const Main = () => {
         )}
       </motion.div>
 
-      {/* Top Hits Section */}
-      <TopHitsSection />
+      {/* Top Hits Hindi Sections */}
+      {topHitsHindi.slice(0, 3).map((section, index) => (
+        <ChartsSection
+          key={`top-hits-${index}`}
+          title={section.section}
+          data={transformTopHitsData(section)}
+          gridCols="grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-8"
+          showDescription={true}
+        />
+      ))}
 
       {/* Charts Section */}
-      <ChartsSection />
+      <ChartsSection 
+        title="Charts"
+        data={charts}
+        gridCols="grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-8"
+        showDescription={true}
+      />
 
       {/* Artists Section */}
       <ArtistsSection />
