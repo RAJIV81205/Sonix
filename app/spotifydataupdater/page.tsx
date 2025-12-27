@@ -161,6 +161,15 @@ const SpotifyArtistUpdater: React.FC = () => {
           <p className="text-gray-300">
             Updates artist data and automatically saves to constant file
           </p>
+          <div className="mt-4">
+            <a 
+              href="/tophitsupdater" 
+              className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Top Hits Hindi Updater
+            </a>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
