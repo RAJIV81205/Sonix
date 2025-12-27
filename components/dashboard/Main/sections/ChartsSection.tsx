@@ -70,7 +70,7 @@ const ChartsSection = ({
         {data.map((chart, index) => (
           <Link
             key={chart.id}
-            href={chart.link}
+            href= {`/dashboard/charts/${chart.id}`}
             className="group cursor-pointer"
             ref={(el) => {
               if (el) chartsItemsRef.current[index] = el;
