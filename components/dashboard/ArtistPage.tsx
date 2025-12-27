@@ -328,149 +328,17 @@ interface ApiResponse {
     topTracks: SpotifyTrack[]
 }
 
-// 🔧 FIX: Extract ContextMenu as a SEPARATE memoized component
-const ContextMenu = React.memo(({ 
-    track, 
-    isOpen, 
-    onClose,
-    onPlayNow,
-    onPlayNext,
-    onAddToQueue,
-    onDownload,
-    isLoading
-}: { 
-    track: SpotifyTrack
-    isOpen: boolean
-    onClose: () => void
-    onPlayNow: () => void
-    onPlayNext: () => void
-    onAddToQueue: () => void
-    onDownload: () => void
-    isLoading: boolean
-}) => {
-    const menuRef = useRef<HTMLDivElement>(null)
-
-    // Only log when actually open
-    useEffect(() => {
-        if (isOpen) {
-            console.log('✅ Menu OPENED for:', track.name)
-        }
-    }, [isOpen, track.name])
-
-    return (
-        <AnimatePresence mode="wait">
-            {isOpen && (
-                <motion.div
-                    ref={menuRef}
-                    className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl min-w-[180px] sm:min-w-[200px] overflow-hidden"
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        e.preventDefault()
-                    }}
-                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                    transition={{ duration: 0.15 }}
-                    style={{ zIndex: 9999 }}
-                >
-                    <motion.div className="py-2">
-                        {[
-                            {
-                                icon: Play,
-                                label: isLoading ? "Loading..." : "Play Now",
-                                action: onPlayNow,
-                                disabled: isLoading
-                            },
-                            { icon: ArrowUp, label: "Play Next", action: onPlayNext, disabled: false },
-                            { icon: ListPlus, label: "Add to Queue", action: onAddToQueue, disabled: false },
-                            { icon: Download, label: "Download", action: onDownload, disabled: false }
-                        ].map((item, index) => (
-                            <motion.button
-                                key={item.label}
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    e.preventDefault()
-                                    if (!item.disabled) {
-                                        item.action()
-                                    }
-                                }}
-                                disabled={item.disabled}
-                                className={`flex items-center gap-3 w-full px-4 py-3 text-sm text-white transition-colors focus:outline-none ${
-                                    item.disabled
-                                        ? 'opacity-50 cursor-not-allowed'
-                                        : 'hover:bg-gray-700 focus:bg-gray-700'
-                                }`}
-                                whileHover={item.disabled ? {} : { x: 4 }}
-                                whileTap={item.disabled ? {} : { scale: 0.95 }}
-                            >
-                                {isLoading && item.label.includes("Loading") ? (
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                    <item.icon className="w-4 h-4" />
-                                )}
-                                {item.label}
-                            </motion.button>
-                        ))}
-
-                        <div className="border-t border-gray-700 my-1" />
-
-                        {[
-                            {
-                                icon: Heart,
-                                label: "Add to Favorites",
-                                action: () => {
-                                    toast.success("Added to favorites")
-                                    onClose()
-                                }
-                            },
-                            {
-                                icon: Share2,
-                                label: "Share",
-                                action: () => {
-                                    if (navigator.share) {
-                                        navigator.share({
-                                            title: track.name,
-                                            text: `Check out "${track.name}" by ${track.artists[0].name}`,
-                                            url: track.external_urls.spotify
-                                        })
-                                    } else {
-                                        navigator.clipboard.writeText(track.external_urls.spotify)
-                                    }
-                                    toast.success("Link copied to clipboard")
-                                    onClose()
-                                }
-                            }
-                        ].map((item, index) => (
-                            <motion.button
-                                key={item.label}
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    e.preventDefault()
-                                    item.action()
-                                }}
-                                className="flex items-center gap-3 w-full px-4 py-3 text-sm text-white hover:bg-gray-700 transition-colors focus:outline-none focus:bg-gray-700"
-                                whileHover={{ x: 4 }}
-                                whileTap={{ scale: 0.95 }}
-                            >
-                                <item.icon className="w-4 h-4" />
-                                {item.label}
-                            </motion.button>
-                        ))}
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
-    )
-})
-
-ContextMenu.displayName = 'ContextMenu'
-
 const ArtistPage = () => {
     const [artistData, setArtistData] = useState<ApiResponse | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true)
     const [openMenuId, setOpenMenuId] = useState<string | null>(null)
     const [loadingStates, setLoadingStates] = useState<Set<string>>(new Set())
     const [backgroundLoadingToast, setBackgroundLoadingToast] = useState<string | null>(null)
+    const menuRef = useRef<HTMLDivElement>(null)
+
+    // Isolate context values to prevent re-renders
+    const [currentSongId, setCurrentSongId] = useState<string | null>(null)
+    const [isCurrentlyPlaying, setIsCurrentlyPlaying] = useState<boolean>(false)
 
     const param = useParams().id
     const {
@@ -481,29 +349,36 @@ const ArtistPage = () => {
         addToNext,
         playAlbum,
         shufflePlay: contextShufflePlay,
-        play
+        play,
+        downloadSong: contextDownloadSong
     } = usePlayerControls()
+
+    // Update isolated state when context changes
+    useEffect(() => {
+        setCurrentSongId(currentSong?.id || null)
+        setIsCurrentlyPlaying(isPlaying)
+    }, [currentSong?.id, isPlaying])
 
     // Click outside handler
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-            const target = event.target as HTMLElement
-            
-            // Check if click is outside any menu
-            if (openMenuId && !target.closest('[data-menu-container]')) {
-                console.log('🖱️ Click outside menu - closing')
+        const handleClickOutside = (event: Event) => {
+            if (
+                menuRef.current &&
+                !menuRef.current.contains(event.target as Node) &&
+                openMenuId !== null
+            ) {
                 setOpenMenuId(null)
             }
         }
 
         if (openMenuId) {
             document.addEventListener('mousedown', handleClickOutside)
-            document.addEventListener('touchstart', handleClickOutside as any)
+            document.addEventListener('touchstart', handleClickOutside)
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside)
-            document.removeEventListener('touchstart', handleClickOutside as any)
+            document.removeEventListener('touchstart', handleClickOutside)
         }
     }, [openMenuId])
 
@@ -793,38 +668,27 @@ const ArtistPage = () => {
             toast.loading("Starting download...")
             const song = await convertTrackToSong(track)
 
-            const downloadUrl = song.url
-
-            if (!downloadUrl) {
-                toast.error("Download URL not available for this song")
-                return
+            // Create proper download payload for the context function
+            const downloadPayload = {
+                songUrl: song.url || "",
+                title: song.name.replaceAll("&quot;", `"`),
+                artist: song.artist,
+                album: track.album.name || "Unknown Album",
+                albumArtist: song.artist,
+                year: track.album.release_date ? new Date(track.album.release_date).getFullYear().toString() : new Date().getFullYear().toString(),
+                duration: song.duration || 0,
+                language: "Unknown",
+                genre: "Unknown",
+                label: "Unknown Label",
+                composer: "Unknown",
+                lyricist: "Unknown",
+                copyright: "",
+                coverUrl: song.image || "",
             }
 
-            const response = await fetch(downloadUrl)
-            if (!response.ok) {
-                throw new Error('Failed to fetch audio file')
-            }
-
-            const blob = await response.blob()
-            const blobUrl = window.URL.createObjectURL(blob)
-            
-            const filename = `${song.name.replaceAll("&quot;", "").replace(/[^\w\s-]/g, "").trim()} - ${song.artist.replace(/[^\w\s-]/g, "").trim()}.mp3`
-            
-            const link = document.createElement('a')
-            link.href = blobUrl
-            link.download = filename
-            link.style.display = 'none'
-            
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-            
-            setTimeout(() => {
-                window.URL.revokeObjectURL(blobUrl)
-            }, 1000)
-
+            await contextDownloadSong(downloadPayload)
             toast.dismiss()
-            toast.success(`"${song.name.replaceAll("&quot;", `"`)}" downloaded successfully`)
+            toast.success(`"${downloadPayload.title}" downloaded successfully`)
         } catch (error) {
             console.error('Download error:', error)
             toast.dismiss()
@@ -832,6 +696,142 @@ const ArtistPage = () => {
         } finally {
             setOpenMenuId(null)
         }
+    }
+
+    // ContextMenu component
+    const ContextMenu = ({ track, isOpen }: { track: SpotifyTrack, isOpen: boolean }) => {
+        const isTrackLoading = loadingStates.has(track.id)
+
+        return (
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        ref={menuRef}
+                        className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl min-w-[180px] sm:min-w-[200px] overflow-hidden"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            e.preventDefault()
+                        }}
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        style={{ zIndex: 9999 }}
+                    >
+                        <motion.div
+                            className="py-2"
+                            variants={staggerContainer}
+                            initial="initial"
+                            animate="animate"
+                        >
+                            {[
+                                {
+                                    icon: Play,
+                                    label: isTrackLoading ? "Loading..." : "Play Now",
+                                    action: () => {
+                                        if (!isTrackLoading) {
+                                            PlaySong(track)
+                                            setOpenMenuId(null)
+                                        }
+                                    },
+                                    disabled: isTrackLoading
+                                },
+                                { icon: ArrowUp, label: "Play Next", action: () => handlePlayNext(track), disabled: false },
+                                {
+                                    icon: ListPlus, label: "Add to Queue", action: () => handleAddToQueue(track),
+                                    disabled: false
+                                },
+                                {
+                                    icon: Download, label: "Download",
+                                    action: () => {
+                                        downloadSong(track)
+                                    }
+                                }
+                            ].map((item, index) => (
+                                <motion.button
+                                    key={item.label}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        e.preventDefault()
+                                        if (!item.disabled) {
+                                            item.action()
+                                        }
+                                    }}
+                                    disabled={item.disabled}
+                                    className={`flex items-center gap-3 w-full px-4 py-3 text-sm text-white transition-colors focus:outline-none ${item.disabled
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-gray-700 focus:bg-gray-700'
+                                        }`}
+                                    variants={fadeInLeft}
+                                    custom={index}
+                                    whileHover={item.disabled ? {} : { x: 4 }}
+                                    whileTap={item.disabled ? {} : { scale: 0.95 }}
+                                >
+                                    {isTrackLoading && item.label.includes("Loading") ? (
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                        <item.icon className="w-4 h-4" />
+                                    )}
+                                    {item.label}
+                                </motion.button>
+                            ))}
+
+                            <motion.div
+                                className="border-t border-gray-700 my-1"
+                                initial={{ scaleX: 0 }}
+                                animate={{ scaleX: 1 }}
+                                transition={{ delay: 0.3 }}
+                            />
+
+                            {[
+                                {
+                                    icon: Heart,
+                                    label: "Add to Favorites",
+                                    action: () => {
+                                        toast.success("Added to favorites")
+                                        setOpenMenuId(null)
+                                    }
+                                },
+                                {
+                                    icon: Share2,
+                                    label: "Share",
+                                    action: () => {
+                                        if (navigator.share) {
+                                            navigator.share({
+                                                title: track.name,
+                                                text: `Check out "${track.name}" by ${track.artists[0].name}`,
+                                                url: track.external_urls.spotify
+                                            })
+                                        } else {
+                                            navigator.clipboard.writeText(track.external_urls.spotify)
+                                        }
+                                        toast.success("Link copied to clipboard")
+                                        setOpenMenuId(null)
+                                    }
+                                }
+                            ].map((item, index) => (
+                                <motion.button
+                                    key={item.label}
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        e.preventDefault()
+                                        item.action()
+                                    }}
+                                    className="flex items-center gap-3 w-full px-4 py-3 text-sm text-white hover:bg-gray-700 transition-colors focus:outline-none focus:bg-gray-700"
+                                    variants={fadeInLeft}
+                                    custom={index + 3}
+                                    whileHover={{ x: 4 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <item.icon className="w-4 h-4" />
+                                    {item.label}
+                                </motion.button>
+                            ))}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        )
     }
 
     if (isLoading) {
@@ -1022,109 +1022,125 @@ const ArtistPage = () => {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 1.5, duration: 0.6 }}
                         >
+                            <Music className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500" />
                             <h2 className="text-xl sm:text-2xl font-bold">Top Songs</h2>
                         </motion.div>
 
+                        {/* Table Header */}
                         <motion.div
-                            className="space-y-2"
+                            className="grid grid-cols-[40px_1fr_1fr_100px_40px] gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-800 mb-2"
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 1.6, duration: 0.6 }}
+                        >
+                            <div className="text-center">#</div>
+                            <div>Title</div>
+                            <div className="hidden sm:block">Album</div>
+                            <div className="text-right hidden sm:block">Duration</div>
+                            <div></div>
+                        </motion.div>
+
+                        <motion.div
+                            className="space-y-1"
                             variants={staggerContainer}
                             initial="initial"
                             animate="animate"
                         >
                             {topTracks.map((track: SpotifyTrack, index: number) => {
                                 const isTrackLoading = loadingStates.has(track.id)
-                                const isCurrentlyPlayingTrack = currentSong?.id === track.id && isPlaying
-                                const isMenuOpen = openMenuId === track.id
+                                const isCurrentlyPlayingTrack = currentSongId === track.id && isCurrentlyPlaying
 
                                 return (
                                     <motion.div
                                         key={track.id}
-                                        className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg transition-colors group cursor-pointer relative ${
-                                            isMenuOpen ? 'bg-white/5' : 'hover:bg-white/5'
-                                        } ${isTrackLoading ? 'opacity-75' : ''}`}
+                                        className={`grid grid-cols-[40px_1fr_1fr_100px_40px] gap-4 px-4 py-2 rounded-md transition-colors group cursor-pointer relative ${openMenuId === track.id ? 'bg-white/10' : 'hover:bg-white/5'
+                                            } ${isTrackLoading ? 'opacity-75' : ''}`}
                                         variants={fadeInUp}
                                         custom={index}
-                                        whileHover={{ x: isMenuOpen ? 0 : 4 }}
+                                        whileHover={{ backgroundColor: openMenuId === track.id ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)' }}
                                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
                                     >
+                                        {/* Rank Number / Play Button */}
                                         <div
-                                            className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0"
+                                            className="flex items-center justify-center text-gray-400 text-sm relative"
+                                            onClick={() => !isTrackLoading && PlaySong(track)}
+                                        >
+                                            <span className={`${isTrackLoading || isCurrentlyPlayingTrack ? 'opacity-0' : 'group-hover:opacity-0'} transition-opacity`}>
+                                                {index + 1}
+                                            </span>
+                                            <motion.div
+                                                className={`absolute inset-0 flex items-center justify-center transition-opacity ${isTrackLoading ? 'opacity-100' : isCurrentlyPlayingTrack ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                                    }`}
+                                            >
+                                                {isTrackLoading ? (
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                ) : isCurrentlyPlayingTrack ? (
+                                                    <Pause className="w-4 h-4 text-purple-500" />
+                                                ) : (
+                                                    <Play className="w-4 h-4 text-white" />
+                                                )}
+                                            </motion.div>
+                                        </div>
+
+                                        {/* Title Column */}
+                                        <div
+                                            className="flex items-center gap-3 min-w-0"
                                             onClick={() => !isTrackLoading && PlaySong(track)}
                                         >
                                             <motion.div
                                                 className="relative shrink-0"
-                                                whileHover={{ scale: isTrackLoading ? 1 : 1.05 }}
-                                                whileTap={{ scale: isTrackLoading ? 1 : 0.95 }}
+                                                whileHover={{ scale: isTrackLoading ? 1 : 1.02 }}
                                             >
                                                 <img
                                                     src={track.album.images[2]?.url || track.album.images[1]?.url || track.album.images[0]?.url || '/placeholder-song.jpg'}
                                                     alt={track.name}
-                                                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg"
+                                                    className="w-10 h-10 rounded"
                                                 />
-                                                <motion.div
-                                                    className={`absolute inset-0 bg-black/50 rounded-lg transition-opacity flex items-center justify-center ${
-                                                        isTrackLoading ? 'opacity-100' :
-                                                        isMenuOpen ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'
-                                                    }`}
-                                                >
-                                                    {isTrackLoading ? (
-                                                        <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                    ) : isCurrentlyPlayingTrack ? (
-                                                        <Pause className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-                                                    ) : (
-                                                        <Play className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-                                                    )}
-                                                </motion.div>
                                             </motion.div>
-
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-semibold text-white group-hover:text-purple-300 transition-colors truncate text-sm sm:text-base">
+                                            <div className="min-w-0 flex-1">
+                                                <h3 className={`font-medium truncate text-sm ${isCurrentlyPlayingTrack ? 'text-purple-500' : 'text-white group-hover:text-white'}`}>
                                                     {track.name}
                                                 </h3>
-                                                <p className="text-xs sm:text-sm text-gray-400 truncate">
-                                                    {track.artists.map((artist: SpotifyTrackArtist) => artist.name).join(', ')} • {track.album.name}
+                                                <p className="text-xs text-gray-400 truncate">
+                                                    {track.artists.map((artist: SpotifyTrackArtist) => artist.name).join(', ')}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-                                            <div className="text-xs sm:text-sm text-gray-400 hidden xs:block">
+                                        {/* Album Column */}
+                                        <div className="hidden sm:flex items-center min-w-0">
+                                            <p className="text-sm text-gray-400 truncate hover:text-white transition-colors cursor-pointer">
+                                                {track.album.name}
+                                            </p>
+                                        </div>
+
+                                        {/* Duration Column */}
+                                        <div className="hidden sm:flex items-center justify-end">
+                                            <span className="text-sm text-gray-400">
                                                 {formatDuration(track.duration_ms)}
-                                            </div>
+                                            </span>
+                                        </div>
 
-                                            <div className="relative" data-menu-container>
-                                                <motion.button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        e.preventDefault()
-                                                        setOpenMenuId(isMenuOpen ? null : track.id)
-                                                    }}
-                                                    className="p-1.5 sm:p-2 hover:bg-gray-700 rounded-full transition-all focus:outline-none relative z-10"
-                                                    whileHover={{ scale: 1.1 }}
-                                                    whileTap={{ scale: 0.95 }}
-                                                >
-                                                    <MoreVertical className="w-3 h-3 sm:w-4 sm:h-4" />
-                                                </motion.button>
+                                        {/* Menu Column */}
+                                        <div className="flex items-center justify-center relative">
+                                            <motion.button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    e.preventDefault()
+                                                    setOpenMenuId(openMenuId === track.id ? null : track.id)
+                                                }}
+                                                className="p-1 hover:bg-gray-700 rounded opacity-0 group-hover:opacity-100 transition-all focus:outline-none relative z-10"
+                                                whileHover={{ scale: 1.1 }}
+                                                whileTap={{ scale: 0.95 }}
+                                            >
+                                                <MoreVertical className="w-4 h-4 text-gray-400" />
+                                            </motion.button>
 
-                                                {/* 🔧 FIX: Only render ContextMenu when it's actually open */}
-                                                {isMenuOpen && (
-                                                    <ContextMenu
-                                                        track={track}
-                                                        isOpen={true}
-                                                        onClose={() => setOpenMenuId(null)}
-                                                        onPlayNow={() => {
-                                                            if (!isTrackLoading) {
-                                                                PlaySong(track)
-                                                                setOpenMenuId(null)
-                                                            }
-                                                        }}
-                                                        onPlayNext={() => handlePlayNext(track)}
-                                                        onAddToQueue={() => handleAddToQueue(track)}
-                                                        onDownload={() => downloadSong(track)}
-                                                        isLoading={isTrackLoading}
-                                                    />
-                                                )}
-                                            </div>
+                                            {/* Context Menu */}
+                                            <ContextMenu
+                                                track={track}
+                                                isOpen={openMenuId === track.id}
+                                            />
                                         </div>
                                     </motion.div>
                                 )
