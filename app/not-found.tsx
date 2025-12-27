@@ -25,7 +25,7 @@ export default function NotFound() {
       />
 
       {/* Dark overlay for contrast */}
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-black/80" />
 
       {/* Content */}
       <div className="relative z-10 text-center px-6 max-w-lg">
