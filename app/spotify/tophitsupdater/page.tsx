@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Upload, RefreshCw, ClipboardCheck, Save, CheckCircle, FileText } from "lucide-react";
+import { Upload, RefreshCw, ClipboardCheck, FileText } from "lucide-react";
 
 interface ParsedSection {
   section: string | null;
@@ -20,8 +20,6 @@ const TopHitsHindiUpdater: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
   const [parsedData, setParsedData] = useState<ParsedSection[]>([]);
-  const [isAutoUpdating, setIsAutoUpdating] = useState(false);
-  const [autoUpdateSuccess, setAutoUpdateSuccess] = useState(false);
   const [copied, setCopied] = useState(false);
 
   /* helpers ---------------------------------------------------------------- */
@@ -88,43 +86,6 @@ const TopHitsHindiUpdater: React.FC = () => {
     }
   };
 
-  /* auto-update constant file ---------------------------------------------- */
-
-  const autoUpdateConstantFile = async () => {
-    if (parsedData.length === 0) {
-      addLog("❌  No parsed data to save");
-      return;
-    }
-
-    setIsAutoUpdating(true);
-    setAutoUpdateSuccess(false);
-    addLog("🔄  Updating constant file...");
-
-    try {
-      const response = await fetch('/api/update-tophits', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ rawApiResponse: apiResponse }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        addLog(`✅  Successfully updated ${result.sectionsCount} sections with ${result.totalItems} items in constant file`);
-        setAutoUpdateSuccess(true);
-        setTimeout(() => setAutoUpdateSuccess(false), 3000);
-      } else {
-        addLog(`❌  Failed to update constant file: ${result.error}`);
-      }
-    } catch (error) {
-      addLog(`❌  Error updating constant file: ${(error as Error).message}`);
-    } finally {
-      setIsAutoUpdating(false);
-    }
-  };
-
   /* copy-to-clipboard ------------------------------------------------------ */
 
   const exportString = `export const topHitsHindi = ${JSON.stringify(parsedData, null, 2)};`;
@@ -141,7 +102,6 @@ const TopHitsHindiUpdater: React.FC = () => {
     setApiResponse("");
     setParsedData([]);
     setLogs([]);
-    setAutoUpdateSuccess(false);
     setCopied(false);
   };
 
@@ -156,7 +116,7 @@ const TopHitsHindiUpdater: React.FC = () => {
             Top Hits Hindi Updater
           </h1>
           <p className="text-gray-300">
-            Paste Spotify Browse API response to update topHitsHindi data
+            Paste Spotify Browse API response to parse topHitsHindi data
           </p>
           <div className="mt-4">
             <a 
@@ -216,7 +176,7 @@ const TopHitsHindiUpdater: React.FC = () => {
               <p>Parsed Sections: {parsedData.length}</p>
               {parsedData.length > 0 && (
                 <p className="text-purple-400 mt-2">
-                  ✨ Ready to auto-update constant file!
+                  ✨ Ready to copy parsed data!
                 </p>
               )}
             </div>
@@ -244,37 +204,13 @@ const TopHitsHindiUpdater: React.FC = () => {
           <div className="mt-8 bg-gray-900/50 rounded-lg p-6 border border-gray-700">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Parsed Data Preview</h2>
-              <div className="flex gap-3">
-                <button
-                  onClick={autoUpdateConstantFile}
-                  disabled={isAutoUpdating}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm font-medium"
-                >
-                  {isAutoUpdating ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Updating File...
-                    </>
-                  ) : autoUpdateSuccess ? (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Updated!
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4" />
-                      Auto Update File
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={copyToClipboard}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm"
-                >
-                  <ClipboardCheck className="w-4 h-4" />
-                  {copied ? "Copied!" : "Copy"}
-                </button>
-              </div>
+              <button
+                onClick={copyToClipboard}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm"
+              >
+                <ClipboardCheck className="w-4 h-4" />
+                {copied ? "Copied!" : "Copy Code"}
+              </button>
             </div>
 
             {/* sections summary */}
