@@ -66,10 +66,9 @@ const Main = () => {
       .filter((item: any) => item.id && item.name) // Filter out null items
       .map((item: any) => ({
         id: item.id,
-        title: item.name,
+        name: item.name, // Changed from 'name' to 'title'
         description: item.description || "",
         image: item.image,
-        link: `/dashboard/playlist/${item.id}`, // Create playlist link
       }));
   };
 

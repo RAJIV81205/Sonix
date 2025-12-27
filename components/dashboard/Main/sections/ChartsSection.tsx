@@ -7,10 +7,9 @@ import { useGsapStagger } from "@/lib/hooks/useGsapstagger";
 
 interface ChartItem {
   id: string;
-  title: string;
+  name: string;
   description: string;
   image: string;
-  link: string;
 }
 
 interface ChartsSectionProps {
@@ -70,7 +69,7 @@ const ChartsSection = ({
         {data.map((chart, index) => (
           <Link
             key={chart.id}
-            href= {`/dashboard/charts/${chart.id}`}
+            href={`/dashboard/charts/${chart.id}`}
             className="group cursor-pointer"
             ref={(el) => {
               if (el) chartsItemsRef.current[index] = el;
@@ -80,7 +79,7 @@ const ChartsSection = ({
               <div className="w-full aspect-square mb-2 rounded-lg shadow-lg overflow-hidden relative">
                 <img
                   src={chart.image}
-                  alt={chart.title}
+                  alt={chart.name}
                   className="w-full h-full object-cover"
                   loading="lazy"
                   onError={(e) => {
@@ -104,7 +103,7 @@ const ChartsSection = ({
               </div>
 
               <h3 className="font-medium text-sm truncate">
-                {chart.title}
+                {chart.name}
               </h3>
               {showDescription && chart.description && (
                 <p className="text-xs text-zinc-400 truncate">
