@@ -315,7 +315,7 @@ export const charts = [
   }
 ];
 
-export const tophits = [
+export const topHits = [
   {
     id: '37i9dQZF1DX0XUfTFmNBRM',
     title: 'Hot Hits Hindi',

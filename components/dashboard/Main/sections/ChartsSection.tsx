@@ -5,7 +5,7 @@ import Link from "next/link";
 import { gsap } from "gsap";
 import { useGsapStagger } from "@/lib/hooks/useGsapstagger";
 import { charts } from "@/lib/constant";
-import { ChevronRight } from "lucide-react";
+
 
 const ChartsSection = () => {
   const chartsItemsRef = useRef<HTMLAnchorElement[]>([]);
@@ -41,16 +41,10 @@ const ChartsSection = () => {
     >
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Charts</h2>
-        <Link
-          href="/dashboard/charts"
-          className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1"
-        >
-          View All
-          <ChevronRight className="w-4 h-4" />
-        </Link>
+        
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
         {charts.map((chart, index) => (
           <Link
             key={chart.id}
@@ -86,9 +80,9 @@ const ChartsSection = () => {
               <h3 className="font-medium text-sm truncate mb-1">
                 {chart.title}
               </h3>
-              <p className="text-xs text-zinc-400 line-clamp-2">
+              {/* <p className="text-xs text-zinc-400 line-clamp-2">
                 {chart.description}
-              </p>
+              </p> */}
             </div>
           </Link>
         ))}

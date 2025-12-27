@@ -26,6 +26,7 @@ import { gsap } from "gsap";
 import { useGsapStagger } from "@/lib/hooks/useGsapstagger";
 import ArtistsSection from "./sections/ArtistsSection";
 import ChartsSection from "./sections/ChartsSection";
+import TopHitsSection from "./sections/TopHitsSection";
 
 interface Song {
   id: string;
@@ -806,6 +807,9 @@ const Main = () => {
           </div>
         )}
       </motion.div>
+
+      {/* Top Hits Section */}
+      <TopHitsSection />
 
       {/* Charts Section */}
       <ChartsSection />
