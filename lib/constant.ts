@@ -280,6 +280,336 @@ export const topArtists = [
     "name": "Marshmello",
     "genre": "EDM",
     "img": "https://i.scdn.co/image/ab6761610000e5eb646c8a9d78f11834febcf978"
+  },
+  {
+    "id": "1wRPtKGflJrBx9BmLsSwlU",
+    "name": "Pritam",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebcb6926f44f620555ba444fca"
+  },
+  {
+    "id": "1mBydYMVBECdDmMfE2sEUO",
+    "name": "Sachin-Jigar",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebbb4064bef3a825344d5eb79e"
+  },
+  {
+    "id": "0y59o4v8uw5crbN9M3JiL1",
+    "name": "Badshah",
+    "genre": "Punjabi Pop/Hip-Hop",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb7b386b1320742bd6686854e7"
+  },
+  {
+    "id": "5UdFr0GeO7jKIaNIJgwB36",
+    "name": "Raftaar",
+    "genre": "Hip-Hop",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb715b4d3baa72278cf77b1c15"
+  },
+  {
+    "id": "5C1S9XwxMuuCciutwMhp5t",
+    "name": "KR$NA",
+    "genre": "Hip-Hop",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb33a750f4e8264286af8e751a"
+  },
+  {
+    "id": "2oBG74gAocPMFv6Ij9ykdo",
+    "name": "Seedhe Maut",
+    "genre": "Hip-Hop",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebdbfd70ecee8d42dfd5fbb29d"
+  },
+  {
+    "id": "7HCqGPJcQTyGJ2yqntbuyr",
+    "name": "Amit Trivedi",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5eba37271f7a4862a6e99ce345f"
+  },
+  {
+    "id": "6Mv8GjQa7LKUGCAqa9qqdb",
+    "name": "Vishal-Shekhar",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb90b6c3d093f9b02aad628eaf"
+  },
+  {
+    "id": "0L5GV6LN8SWWUWIdBbTLTZ",
+    "name": "Shankar-Ehsaan-Loy",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb3db0499a689aa9b4a47ebba3"
+  },
+  {
+    "id": "1tqysapcCh1lWEAc9dIFpa",
+    "name": "Jubin Nautiyal",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb716a9e718655bd0374073ef7"
+  },
+  {
+    "id": "2GoeZ0qOTt6kjsWW4eA6LS",
+    "name": "Darshan Raval",
+    "genre": "Indian Pop/Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebe971c19e2c773085fe2e4c32"
+  },
+  {
+    "id": "1dVygo6tRFXC8CSWURQJq2",
+    "name": "Sonu Nigam",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebbc959d7569618ec2af2210f5"
+  },
+  {
+    "id": "5f4QpKfy7ptCHwTqspnSJI",
+    "name": "Neha Kakkar",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb32562ae7f933506c332f6586"
+  },
+  {
+    "id": "3eDT9fwXKuHWFvgZaaYC5v",
+    "name": "Sunidhi Chauhan",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5eba45f7ef3e1c982461f2dad6b"
+  },
+  {
+    "id": "5GnnSrwNCGyfAU4zuIytiS",
+    "name": "Mohit Chauhan",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb16691117e2ba803946b203ba"
+  },
+  {
+    "id": "4fEkbug6kZzzJ8eYX6Kbbp",
+    "name": "KK",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebb09a31f853166e721d4d46b2"
+  },
+  {
+    "id": "5wJ1H6ud777odtZl5gG507",
+    "name": "Vishal Mishra",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb2ab7328003efce0578d1ed91"
+  },
+  {
+    "id": "19LIHDDSHBD5NyYHI3gpzB",
+    "name": "Shilpa Rao",
+    "genre": "Bollywood",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebada368118a052fb40d3f1a68"
+  },
+  {
+    "id": "4gdMJYnopf2nEUcanAwstx",
+    "name": "Anuv Jain",
+    "genre": "Indie/Indian Pop",
+    "img": "https://i.scdn.co/image/ab6761610000e5eba837a6cb82dd949d5e1f9b53"
+  },
+  {
+    "id": "0tC995Rfn9k2l7nqgCZsV7",
+    "name": "Prateek Kuhad",
+    "genre": "Indie/Indian Pop",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb284fbc05b35f3a52501ba30a"
+  },
+  {
+    "id": "2YZyLoL8N0Wb9xBt1NhZWg",
+    "name": "Kendrick Lamar",
+    "genre": "Hip-Hop/Rap",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb39ba6dcd4355c03de0b50918"
+  },
+  {
+    "id": "0du5cEVh5yTK9QJze8zA0C",
+    "name": "Bruno Mars",
+    "genre": "Pop/R&B",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebc36dd9eb55fb0db4911f25dd"
+  },
+  {
+    "id": "4gzpq5DPGxSnKTe4SA8HAU",
+    "name": "Coldplay",
+    "genre": "Pop Rock/Alternative",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb1ba8fc5f5c73e7e9313cc6eb"
+  },
+  {
+    "id": "53XhwfbYqKCa1cC15pYq2q",
+    "name": "Imagine Dragons",
+    "genre": "Pop Rock/Alternative",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebab47d8dae2b24f5afe7f9d38"
+  },
+  {
+    "id": "7tYKF4w9nC0nq9CsPZTHyP",
+    "name": "SZA",
+    "genre": "R&B",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebfd0a9fb6c252a3ba44079acf"
+  },
+  {
+    "id": "0Y5tJX1MQlPlqiwlOH1tJY",
+    "name": "Travis Scott",
+    "genre": "Hip-Hop/Rap",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb19c2790744c792d05570bb71"
+  },
+  {
+    "id": "1RyvyyTE3xzB2ZywiAwp0i",
+    "name": "Future",
+    "genre": "Hip-Hop/Rap",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb7565b356bc9d9394eefa2ccb"
+  },
+  {
+    "id": "1URnnhqYAYcrqrcwql10ft",
+    "name": "21 Savage",
+    "genre": "Hip-Hop/Rap",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb4f8f76117470957c0e81e5b2"
+  },
+  {
+    "id": "5cj0lLjcoR7YOSnhnX0Po5",
+    "name": "Doja Cat",
+    "genre": "Pop/Hip-Hop",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb8a0644455ebfa7d3976f5101"
+  },
+  {
+    "id": "00FQb4jTyendYWaN8pK0wa",
+    "name": "Lana Del Rey",
+    "genre": "Alternative Pop",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebb99cacf8acd5378206767261"
+  },
+  {
+    "id": "6KImCVD70vtIoJWnq6nGn3",
+    "name": "Harry Styles",
+    "genre": "Pop",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebf7db7c8ede90a019c54590bb"
+  },
+  {
+    "id": "4AK6F7OLvEQ5QYCBNiQWHq",
+    "name": "One Direction",
+    "genre": "Pop",
+    "img": "https://i.scdn.co/image/5bb443424a1ad71603c43d67f5af1a04da6bb3c8"
+  },
+  {
+    "id": "1HY2Jd0NmPuamShAr6KMms",
+    "name": "Lady Gaga",
+    "genre": "Pop/Dance Pop",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebaadc18cac8d48124357c38e6"
+  },
+  {
+    "id": "6jJ0s89eD6GaHleKKya26X",
+    "name": "Katy Perry",
+    "genre": "Pop",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb4be5330bd48527f9dd620663"
+  },
+  {
+    "id": "6vWDO969PvNqNYHIOW5v0m",
+    "name": "Beyoncé",
+    "genre": "Pop/R&B",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb7eaa373538359164b843f7c0"
+  },
+  {
+    "id": "0EmeFodog0BfCgMzAIvKQp",
+    "name": "Shakira",
+    "genre": "Latin Pop",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb44b07362e94585ebd7c564c9"
+  },
+  {
+    "id": "790FomKkXshlbRYZFtlgla",
+    "name": "Karol G",
+    "genre": "Latin/Reggaeton",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb66041ce9eb4497057cbc3496"
+  },
+  {
+    "id": "1vyhD5VmyZ7KMfW5gqLgo5",
+    "name": "J Balvin",
+    "genre": "Latin/Reggaeton",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb0405b03342c2e56751b9923d"
+  },
+  {
+    "id": "12GqGscKJx3aE4t07u7eVZ",
+    "name": "Peso Pluma",
+    "genre": "Regional Mexican",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebe5283f5b671cf618b82a2696"
+  },
+  {
+    "id": "0ys2OFYzWYB5hRDLCsBqxt",
+    "name": "Fuerza Regida",
+    "genre": "Regional Mexican",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebce436c411ab2436c7ab2c04d"
+  },
+  {
+    "id": "4VMYDCV2IEDYJArk749S6m",
+    "name": "Daddy Yankee",
+    "genre": "Reggaeton",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb9a6918fd0b2fd675d63c675d"
+  },
+  {
+    "id": "1mcTU81TzQhprhouKaTkpq",
+    "name": "Rauw Alejandro",
+    "genre": "Latin/Reggaeton",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb43ea45ccf08451d2511d33fa"
+  },
+  {
+    "id": "2LRoIwlKmHjgvigdNGBHNo",
+    "name": "Feid",
+    "genre": "Latin/Reggaeton",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb600ee3d2a14da8d038fa7bbf"
+  },
+  {
+    "id": "7ltDVBr6mKbRvohxheJ9h1",
+    "name": "ROSALÍA",
+    "genre": "Latin/Alternative",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb9354faf80eb87961466edfbf"
+  },
+  {
+    "id": "540vIaP2JwjQb9dm3aArA4",
+    "name": "DJ Snake",
+    "genre": "EDM",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb7e57e2ed9b787ba5773b7cb9"
+  },
+  {
+    "id": "1Cs0zKBU1kc0i8ypK3B9ai",
+    "name": "David Guetta",
+    "genre": "EDM",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebf150017ca69c8793503c2d4f"
+  },
+  {
+    "id": "60d24wfXkVzDSfLS6hyCjZ",
+    "name": "Martin Garrix",
+    "genre": "EDM",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebf5b8ee60f1f4ee3453aba40b"
+  },
+  {
+    "id": "23fqKkggKUBHNkbKtXEls4",
+    "name": "Kygo",
+    "genre": "EDM",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebe5ea1aa1404629c12ad86658"
+  },
+  {
+    "id": "7vk5e3vY1uw9plTHJAMwjN",
+    "name": "Alan Walker",
+    "genre": "EDM",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb572a8eae56feae217f618078"
+  },
+  {
+    "id": "6XyY86QOPPrYVGvF9ch6wz",
+    "name": "Linkin Park",
+    "genre": "Rock/Alternative",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb527d95dabbe8b8b527e8136f"
+  },
+  {
+    "id": "7Ln80lUS6He07XvHI8qqHH",
+    "name": "Arctic Monkeys",
+    "genre": "Indie Rock",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb7da39dea0a72f581535fb11f"
+  },
+  {
+    "id": "0k17h0D3J5VfsdmQ1iZtE9",
+    "name": "Pink Floyd",
+    "genre": "Rock",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb97885ce689d644c91dfba05c"
+  },
+  {
+    "id": "711MCceyCBcFnzjGY4Q7Un",
+    "name": "AC/DC",
+    "genre": "Rock",
+    "img": "https://i.scdn.co/image/ab6761610000e5ebc4c77549095c86acb4e77b37"
+  },
+  {
+    "id": "2ye2Wgw4gimLv2eAKyk1NB",
+    "name": "Metallica",
+    "genre": "Metal/Rock",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb69ca98dd3083f1082d740e44"
+  },
+  {
+    "id": "3qm84nBOXUEQ2vnTfUTTFC",
+    "name": "Guns N' Roses",
+    "genre": "Rock",
+    "img": "https://i.scdn.co/image/ab6761610000e5eb50defaf9fc059a1efc541f4c"
   }
 ];
 
