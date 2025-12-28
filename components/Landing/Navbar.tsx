@@ -1,18 +1,14 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"
 import Link from "next/link";
 import { Menu, X, Music } from 'lucide-react';
-import gsap from "gsap";
 
 const Navbar = () => {
     const router = useRouter();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const mobileMenuRef = useRef<HTMLDivElement>(null);
-    const menuItemsRef = useRef<HTMLDivElement>(null);
-    const menuButtonsRef = useRef<HTMLDivElement>(null);
 
     const handleLogin = () => {
         router.push("/auth/login");
@@ -35,49 +31,8 @@ const Navbar = () => {
     useEffect(() => {
         if (isMobileMenuOpen) {
             document.body.style.overflow = 'hidden';
-            // Animate menu in
-            if (mobileMenuRef.current) {
-                gsap.set(mobileMenuRef.current, { opacity: 0, y: -20 });
-                gsap.to(mobileMenuRef.current, { 
-                    opacity: 1, 
-                    y: 0, 
-                    duration: 0.2, 
-                    ease: "power2.out" 
-                });
-            }
-            // Animate menu items
-            if (menuItemsRef.current) {
-                gsap.set(menuItemsRef.current.children, { opacity: 0, x: -20 });
-                gsap.to(menuItemsRef.current.children, {
-                    opacity: 1,
-                    x: 0,
-                    duration: 0.3,
-                    stagger: 0.1,
-                    delay: 0.1,
-                    ease: "power2.out"
-                });
-            }
-            // Animate buttons
-            if (menuButtonsRef.current) {
-                gsap.set(menuButtonsRef.current, { opacity: 0 });
-                gsap.to(menuButtonsRef.current, {
-                    opacity: 1,
-                    duration: 0.3,
-                    delay: 0.4,
-                    ease: "power2.out"
-                });
-            }
         } else {
             document.body.style.overflow = 'auto';
-            // Animate menu out
-            if (mobileMenuRef.current) {
-                gsap.to(mobileMenuRef.current, { 
-                    opacity: 0, 
-                    y: -20, 
-                    duration: 0.2, 
-                    ease: "power2.in" 
-                });
-            }
         }
         return () => {
             document.body.style.overflow = 'auto';
@@ -85,7 +40,7 @@ const Navbar = () => {
     }, [isMobileMenuOpen]);
 
     return (
-        <>
+        <div className="animate-fade-in-up">
             <nav
                 className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 overflow-x-hidden ${
                     isScrolled
@@ -148,16 +103,10 @@ const Navbar = () => {
             </nav>
 
             {isMobileMenuOpen && (
-                <div
-                    ref={mobileMenuRef}
-                    className="fixed inset-0 z-40 bg-gray-900 md:hidden overflow-hidden"
-                >
+                <div className="fixed inset-0 z-40 bg-gray-900 md:hidden overflow-hidden">
                     <div className="flex flex-col h-full">
                         <div className="pt-20 px-6 flex-1 overflow-y-auto">
-                            <div 
-                                ref={menuItemsRef}
-                                className="flex flex-col space-y-6 py-8"
-                            >
+                            <div className="flex flex-col space-y-6 py-8">
                                 {["Discover", "Playlists", "Premium", "Support"].map((item) => (
                                     <a
                                         key={item}
@@ -169,10 +118,7 @@ const Navbar = () => {
                                 ))}
                             </div>
                             
-                            <div 
-                                ref={menuButtonsRef}
-                                className="mt-12 flex flex-col space-y-4"
-                            >
+                            <div className="mt-12 flex flex-col space-y-4">
                                 <button 
                                     onClick={handleLogin}
                                     className="w-full px-4 py-4 border border-gray-700 rounded-lg text-gray-200 hover:bg-gray-800 transition"
@@ -190,7 +136,7 @@ const Navbar = () => {
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 };
 
