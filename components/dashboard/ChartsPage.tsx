@@ -995,7 +995,7 @@ const ChartsPage = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 1.3, duration: 0.8 }}
                     >
-                        <motion.div
+                        {/* <motion.div
                             className="flex items-center gap-3 mb-4 sm:mb-6"
                             initial={{ opacity: 0, x: -30 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -1003,7 +1003,7 @@ const ChartsPage = () => {
                         >
                             <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
                             <h2 className="text-xl sm:text-2xl font-bold">Chart Songs</h2>
-                        </motion.div>
+                        </motion.div> */}
 
                         {/* Table Header */}
                         <motion.div
