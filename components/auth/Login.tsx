@@ -1,15 +1,14 @@
 "use client"
 
 import React, { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePageTransition } from "@/context/TransitionContext";
 import { Loader, Mail, Lock, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { signInWithPopup } from 'firebase/auth'
 import { auth, googleProvider } from '@/firebase'
 
 const Login = () => {
-  const router = useRouter()
+  const navigate = usePageTransition()
   const [formData, setFormData] = useState({
     email: "",
     password: ""
@@ -65,7 +64,7 @@ const Login = () => {
 
       // Redirect to home page on successful login
       setTimeout(() => {
-        router.push("/dashboard")
+        navigate("/dashboard")
       }, 500)
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "An error occurred"
@@ -109,7 +108,7 @@ const Login = () => {
       
       // Redirect to dashboard
       setTimeout(() => {
-        router.push("/dashboard")
+        navigate("/dashboard")
       }, 500)
     } catch (error) {
       console.error("Google login error:", error)
@@ -180,9 +179,9 @@ const Login = () => {
           </div>
 
           <div className="flex justify-end">
-            <Link href="/auth/forgot-password" className="text-sm text-purple-400 hover:text-purple-300">
+            <button type="button" onClick={()=>{navigate("/auth/forgot-password")}} className="text-sm text-purple-400 hover:text-purple-300">
               Forgot password?
-            </Link>
+            </button>
           </div>
 
           <button
@@ -227,9 +226,9 @@ const Login = () => {
 
         <p className="mt-8 text-center text-gray-400 text-sm">
           Don't have an account?{" "}
-          <Link href="/auth/register" className="text-purple-400 hover:text-purple-300 font-medium">
+          <button onClick={()=>{navigate("/auth/register")}} className="text-purple-400 hover:text-purple-300 font-medium">
             Sign up
-          </Link>
+          </button>
         </p>
       </div>
     </div>
