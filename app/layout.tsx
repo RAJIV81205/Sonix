@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import { TransitionProvider } from "@/context/TransitionContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,6 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
+        <TransitionProvider>
         <Toaster 
           position="top-center"
           reverseOrder={false}
@@ -51,6 +53,7 @@ export default function RootLayout({
           }}
         />
         {children}
+        </TransitionProvider>
         <SpeedInsights />
       </body>
     </html>

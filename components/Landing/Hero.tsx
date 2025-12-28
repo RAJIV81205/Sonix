@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
+import { usePageTransition } from "@/context/TransitionContext"
 import { Play, Headphones } from "lucide-react";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
@@ -19,76 +19,74 @@ const Hero = () => {
   const ctaRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
 
-
-
+  const navigate = usePageTransition();
 
   useEffect(() => {
-  if (
-    !badgeRef.current ||
-    !titleRef.current ||
-    !descRef.current ||
-    !ctaRef.current ||
-    !statsRef.current
-  )
-    return;
+    if (
+      !badgeRef.current ||
+      !titleRef.current ||
+      !descRef.current ||
+      !ctaRef.current ||
+      !statsRef.current
+    )
+      return;
 
-  // ✅ FIX: ensure buttons are visible
-  gsap.set(ctaRef.current.querySelectorAll("button"), { opacity: 1 });
+    // ✅ FIX: ensure buttons are visible
+    gsap.set(ctaRef.current.querySelectorAll("button"), { opacity: 1 });
 
-  const ctx = gsap.context(() => {
-    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-    tl.from(badgeRef.current!, {
-      opacity: 0,
-      y: 20,
-      duration: 0.5,
-    })
-      .from(
-        titleRef.current!.children,
-        {
-          opacity: 0,
-          y: 40,
-          stagger: 0.08,
-          duration: 0.7,
-        },
-        "-=0.2"
-      )
-      .from(
-        descRef.current!,
-        {
-          opacity: 0,
-          y: 20,
-          duration: 0.4,
-        },
-        "-=0.3"
-      )
-      .from(
-        ctaRef.current!.querySelectorAll("button"),
-        {
-          opacity: 0,
-          scale: 1,
-          y: 20,
-          stagger: 0.15,
-          duration: 0.6,
-          ease: "elastic.out(1, 0.6)",
-        },
-        "-=0.2"
-      )
-      .from(
-        statsRef.current!.children,
-        {
-          opacity: 0,
-          y: 20,
-          stagger: 0.1,
-          duration: 0.5,
-        },
-        "-=0.2"
-      );
-  });
+      tl.from(badgeRef.current!, {
+        opacity: 0,
+        y: 20,
+        duration: 0.5,
+      })
+        .from(
+          titleRef.current!.children,
+          {
+            opacity: 0,
+            y: 40,
+            stagger: 0.08,
+            duration: 0.7,
+          },
+          "-=0.2"
+        )
+        .from(
+          descRef.current!,
+          {
+            opacity: 0,
+            y: 20,
+            duration: 0.4,
+          },
+          "-=0.3"
+        )
+        .from(
+          ctaRef.current!.querySelectorAll("button"),
+          {
+            opacity: 0,
+            scale: 1,
+            y: 20,
+            stagger: 0.15,
+            duration: 0.6,
+            ease: "elastic.out(1, 0.6)",
+          },
+          "-=0.2"
+        )
+        .from(
+          statsRef.current!.children,
+          {
+            opacity: 0,
+            y: 20,
+            stagger: 0.1,
+            duration: 0.5,
+          },
+          "-=0.2"
+        );
+    });
 
-  return () => ctx.revert();
-}, []);
-
+    return () => ctx.revert();
+  }, []);
 
   return (
     <section className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex flex-col items-center justify-center overflow-hidden px-4 ">
@@ -138,12 +136,14 @@ const Hero = () => {
             ref={ctaRef}
             className="pt-6 flex flex-col sm:flex-row justify-center gap-4"
           >
-            <Link href="/auth/register">
-              <button className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg rounded-lg transition duration-300 flex items-center justify-center gap-2 font-medium w-full sm:w-auto">
-                <Play size={20} />
-                Get Started
-              </button>
-            </Link>
+            <button
+              onClick={() => navigate("/auth/login")}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 text-lg rounded-lg transition duration-300 flex items-center justify-center gap-2 font-medium w-full sm:w-auto"
+            >
+              <Play size={20} />
+              Get Started
+            </button>
+
             <button className="border border-gray-700 bg-gray-800/50 text-white hover:bg-gray-700 px-8 py-4 text-lg rounded-lg transition duration-300 flex items-center justify-center gap-2 font-medium w-full sm:w-auto">
               <Headphones size={20} />
               Explore Music
