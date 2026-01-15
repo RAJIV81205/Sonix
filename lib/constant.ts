@@ -658,22 +658,16 @@ export const topHitsHindi = [
     "section": "Popular Hindi Playlists",
     "items": [
       {
+        "id": "37i9dQZF1DX0XUfTFmNBRM",
+        "name": "Hot Hits Hindi",
+        "description": "Hottest Hindi music that India is listening to. Cover - Dhurandhar",
+        "image": "https://i.scdn.co/image/ab67706f000000022b117d6dc96345bedf9adc1b"
+      },
+      {
         "id": "37i9dQZF1DX14CbVHtvHRB",
         "name": "Trending Valentine's Hits ",
         "description": "India's ultimate love playlist ❤️ Cover - Dhurandhar",
         "image": "https://i.scdn.co/image/ab67706f000000026a1e87399717228f539f9eac"
-      },
-      {
-        "id": "37i9dQZF1DX0XUfTFmNBRM",
-        "name": "Hot Hits Hindi",
-        "description": "Hottest Hindi music that India is listening to. Cover - Dhurandhar",
-        "image": "https://i.scdn.co/image/ab67706f00000002d5b8f67e837e87478e83e398"
-      },
-      {
-        "id": "37i9dQZF1DXdpQPPZq3F7n",
-        "name": "Bollywood Mush",
-        "description": "Let these songs be the background score to your love story.  Cover - Saiyaara",
-        "image": "https://i.scdn.co/image/ab67706f000000026b11ebc6868de42d8a278a69"
       },
       {
         "id": "37i9dQZF1DWZNJXX2UeBij",
@@ -682,16 +676,16 @@ export const topHitsHindi = [
         "image": "https://i.scdn.co/image/ab67706f000000023ecf97d47f4c7d7d60d28bba"
       },
       {
+        "id": "37i9dQZF1DXdpQPPZq3F7n",
+        "name": "Bollywood Mush",
+        "description": "Let these songs be the background score to your love story.  Cover - Saiyaara",
+        "image": "https://i.scdn.co/image/ab67706f000000026b11ebc6868de42d8a278a69"
+      },
+      {
         "id": "37i9dQZF1DX8xfQRRX1PDm",
         "name": "Bollywood Dance Music",
         "description": "Party-ready, the biggest Bollywood dance tracks. Cover - Stree 2",
         "image": "https://i.scdn.co/image/ab67706f000000022a64e78825adaa8794f9dd65"
-      },
-      {
-        "id": "37i9dQZF1DXa6iPZDThhLh",
-        "name": "90s Love Hits",
-        "description": "Let your heart sing all the 90s love songs you'll ever need. Cover - DDLJ",
-        "image": "https://i.scdn.co/image/ab67706f00000002554ccb79e45bd939d63011c3"
       },
       {
         "id": "37i9dQZF1DXdcRZAcc2QFU",
@@ -700,22 +694,28 @@ export const topHitsHindi = [
         "image": "https://i.scdn.co/image/ab67706f00000002a33a4974aa5e8bc133c11d8e"
       },
       {
+        "id": "37i9dQZF1DXa6iPZDThhLh",
+        "name": "90s Love Hits",
+        "description": "Let your heart sing all the 90s love songs you'll ever need. Cover - DDLJ",
+        "image": "https://i.scdn.co/image/ab67706f00000002554ccb79e45bd939d63011c3"
+      },
+      {
         "id": "37i9dQZF1DWYRTlrhMB12D",
         "name": "Old is Gold",
         "description": "Soulful Hindi songs for your nostalgic journey. Cover - Mere Jeevan Saathi",
         "image": "https://i.scdn.co/image/ab67706f00000002ac5edc3e31371c6040cc9e87"
       },
       {
-        "id": "37i9dQZF1DWX7nMmBhSzhN",
-        "name": "90s Sad Bollywood",
-        "description": "Soothe your broken heart with these timeless Bollywood tunes.",
-        "image": "https://i.scdn.co/image/ab67706f00000002fa66b7a117911c8123ae2932"
-      },
-      {
         "id": "37i9dQZF1DWX76Z8XDsZzF",
         "name": "Bollywood & Chill",
         "description": "Sit back, and chill with Bollywood's easygoing hits. Cover - Param Sundari",
         "image": "https://i.scdn.co/image/ab67706f0000000203b72ae3caf435bd1f95fbd5"
+      },
+      {
+        "id": "37i9dQZF1DWX7nMmBhSzhN",
+        "name": "90s Sad Bollywood",
+        "description": "Soothe your broken heart with these timeless Bollywood tunes.",
+        "image": "https://i.scdn.co/image/ab67706f00000002fa66b7a117911c8123ae2932"
       }
     ]
   },
@@ -725,14 +725,14 @@ export const topHitsHindi = [
       {
         "id": "37i9dQZF1DXd8cOUiye1o2",
         "name": "New Music Hindi",
-        "description": "Fresh from the recording to your ears. Latest Hindi music, right here. Cover - TMMTMTTM",
-        "image": "https://i.scdn.co/image/ab67706f000000029631937ee43893d72ebfabe3"
+        "description": "Fresh from the recording to your ears. Latest Hindi music, right here. Cover - Border 2",
+        "image": "https://i.scdn.co/image/ab67706f0000000276b324f3393c2655d3a889b0"
       },
       {
         "id": "37i9dQZF1DX0XUfTFmNBRM",
         "name": "Hot Hits Hindi",
         "description": "Hottest Hindi music that India is listening to. Cover - Dhurandhar",
-        "image": "https://i.scdn.co/image/ab67706f00000002d5b8f67e837e87478e83e398"
+        "image": "https://i.scdn.co/image/ab67706f000000022b117d6dc96345bedf9adc1b"
       },
       {
         "id": "37i9dQZF1DWXtlo6ENS92N",
@@ -743,8 +743,8 @@ export const topHitsHindi = [
       {
         "id": "37i9dQZF1DWVCuOatqCW5M",
         "name": "New Music Friday I-Pop ",
-        "description": "Latest music from Anuv Jain, Sonu Nigam,  Arijit Singh and more.",
-        "image": "https://i.scdn.co/image/ab67706f00000002f6a9dbe149e00d655d01a2af"
+        "description": "Latest music from Jasleen Royal, Rashmeet Kaur,  tricksingh and more.",
+        "image": "https://i.scdn.co/image/ab67706f000000024072b7826f44a997be5169eb"
       },
       {
         "id": "37i9dQZF1DX3txqabhtJQF",
@@ -755,14 +755,14 @@ export const topHitsHindi = [
       {
         "id": "37i9dQZF1DWZZMVXluTJ3U",
         "name": "Latest Love Tunes",
-        "description": "Because love is a mood. Latest love ballads. Cover - Ikkis",
-        "image": "https://i.scdn.co/image/ab67706f00000002c983137fdea5a5eefd72bd5e"
+        "description": "Because love is a mood. Latest love ballads. Cover - Border 2",
+        "image": "https://i.scdn.co/image/ab67706f00000002ea082e8201c0439ade881b4b"
       },
       {
         "id": "37i9dQZF1DWSYPG5hvDijP",
         "name": "New Rap Hindi",
-        "description": "Naya Hip-Hop Hindi! Cover: Emiway Bantai",
-        "image": "https://i.scdn.co/image/ab67706f00000002772c4ed17744f19e2c0e4b9b"
+        "description": "Naya Hip-Hop Hindi! Cover: DRV",
+        "image": "https://i.scdn.co/image/ab67706f0000000284f8466b6c0110f0619156e6"
       },
       {
         "id": "37i9dQZF1DX0F3lb30Ibi9",
@@ -790,8 +790,8 @@ export const topHitsHindi = [
       {
         "id": "37i9dQZF1DWVq1SXCH6uFn",
         "name": "00's Love Hits",
-        "description": "Fall in love with 00's Bollywood like never before! Cover - Hum Tum",
-        "image": "https://i.scdn.co/image/ab67706f00000002a8fd43a53b598d4ba76b5d50"
+        "description": "Fall in love with 00's Bollywood like never before! Cover - Bachna Ae Haseeno",
+        "image": "https://i.scdn.co/image/ab67706f00000002996603016cf78fffaacf8ade"
       },
       {
         "id": "37i9dQZF1DXa6iPZDThhLh",
@@ -826,8 +826,8 @@ export const topHitsHindi = [
       {
         "id": "37i9dQZF1DWZZMVXluTJ3U",
         "name": "Latest Love Tunes",
-        "description": "Because love is a mood. Latest love ballads. Cover - Ikkis",
-        "image": "https://i.scdn.co/image/ab67706f00000002c983137fdea5a5eefd72bd5e"
+        "description": "Because love is a mood. Latest love ballads. Cover - Border 2",
+        "image": "https://i.scdn.co/image/ab67706f00000002ea082e8201c0439ade881b4b"
       },
       {
         "id": "37i9dQZF1DX3NU3NvyoJUz",
@@ -1019,10 +1019,10 @@ export const topHitsHindi = [
         "image": "https://i.scdn.co/image/ab67706f00000002106af4847b504a2e2f7983a8"
       },
       {
-        "id": "37i9dQZF1DX6pDQpW17Q92",
-        "name": "Starring Priyanka Chopra",
-        "description": "Essential tracks of Priyanka Chopra, all in one playlist",
-        "image": "https://i.scdn.co/image/ab67706f00000002a031bf110b1637bb8248d14b"
+        "id": null,
+        "name": null,
+        "description": null,
+        "image": null
       },
       {
         "id": "37i9dQZF1DWVM7EOngb723",
@@ -1040,12 +1040,6 @@ export const topHitsHindi = [
         "name": "All Out 00s Hindi",
         "description": "Bollywood songs that ruled hearts in the Y2K decade. Cover - Jab We Met",
         "image": "https://i.scdn.co/image/ab67706f000000023ecf97d47f4c7d7d60d28bba"
-      },
-      {
-        "id": "37i9dQZF1DWVDvBpGQbzXj",
-        "name": "All Out 10s Hindi",
-        "description": "Relive the biggest tracks of the decade. Cover - Yeh Jawaani Hai Deewani",
-        "image": "https://i.scdn.co/image/ab67706f00000002d4a11feb5de1877e20658d41"
       },
       {
         "id": "37i9dQZF1DXa2huSXaKVkW",
@@ -1084,16 +1078,22 @@ export const topHitsHindi = [
         "image": "https://i.scdn.co/image/ab67706f00000002ac5edc3e31371c6040cc9e87"
       },
       {
+        "id": "37i9dQZF1DX3NU3NvyoJUz",
+        "name": "80's Love Hits",
+        "description": "The sound of love, as heard in the 80s. Cover - QSQT",
+        "image": "https://i.scdn.co/image/ab67706f0000000268c4ee5a4a6a29966e52373a"
+      },
+      {
         "id": "37i9dQZF1DX2BezBRspddh",
         "name": "Filmi Ghazals",
         "description": "True blue poetry. Let these Bollywood Ghazals take over your day.",
         "image": "https://i.scdn.co/image/ab67706f00000002864dc5d361e61dbcade81b03"
       },
       {
-        "id": "37i9dQZF1DX2XXIQbPhX3y",
-        "name": "Gramophone Classics",
-        "description": "Go down the memory lane with Black & White of Bollywood.",
-        "image": "https://i.scdn.co/image/ab67706f000000024cf59471d552803ac96914b8"
+        "id": "37i9dQZF1DWY1kDGbdPb81",
+        "name": "Chai & Classics",
+        "description": "A cup of tea served with some retro tunes.",
+        "image": "https://i.scdn.co/image/ab67706f00000002a2b6e1286e894661ad262c72"
       }
     ]
   },
@@ -1215,6 +1215,6 @@ export const topHitsHindi = [
       }
     ]
   }
-]
+];
 
 
